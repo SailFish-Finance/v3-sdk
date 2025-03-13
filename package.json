@@ -1,5 +1,5 @@
 {
-  "name": "sailfish-v3-sdk",
+  "name": "@sailfishdex/v3-sdk",
   "version": "1.0.0",
   "description": "SDK for SailFish DEX v3",
   "main": "dist/index.js",
@@ -17,6 +17,10 @@
     "ethereum",
     "educhain"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SailFish-Finance/v3-sdk"
+  },
   "author": "SailFish Team",
   "license": "MIT",
   "dependencies": {

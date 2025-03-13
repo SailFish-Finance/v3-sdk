@@ -5,7 +5,7 @@ A TypeScript SDK for interacting with SailFish DEX v3 on EDUCHAIN. This SDK prov
 ## Installation
 
 ```bash
-npm install sailfish-v3-sdk
+npm install @sailfishdex/v3-sdk
 ```
 
 ## Features
