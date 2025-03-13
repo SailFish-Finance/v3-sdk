@@ -1,5 +1,7 @@
 # SailFish DEX v3 SDK
 
+![SailfishDef](https://github.com/user-attachments/assets/351ccdb5-0c1d-4658-a2a0-3fe3f8278022)
+
 A TypeScript SDK for interacting with SailFish DEX v3 on EDUCHAIN. This SDK provides functionality for finding swap routes, getting quotes, and executing swaps.
 
 ## Installation
