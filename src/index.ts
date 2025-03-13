@@ -2,6 +2,7 @@
 export * from './constants';
 export * from './quoter';
 export * from './router';
+export * from './bridge';
 export * from './types';
 export * from './utils';
 

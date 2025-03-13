@@ -22,6 +22,7 @@
   "dependencies": {
     "@uniswap/sdk-core": "^3.2.2",
     "@uniswap/v3-sdk": "^3.9.0",
+    "axios": "^1.8.3",
     "bignumber.js": "^9.1.1",
     "ethers": "^6.7.1",
     "graphql": "^16.8.0",

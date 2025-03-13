@@ -16,6 +16,7 @@ npm install sailfish-v3-sdk
 - **Swap Execution**: Execute swaps with slippage protection
 - **Multi-hop Support**: Full support for multi-hop routes
 - **Token Approval**: Methods for checking and approving token allowances
+- **Token Bridging**: Bridge EDU tokens between BSC, Arbitrum, and EDUCHAIN
 
 ## Usage
 
@@ -189,6 +190,72 @@ if (!isApproved) {
 }
 ```
 
+### Bridging EDU Tokens
+
+The SDK provides functionality to bridge EDU tokens between different chains:
+
+#### BSC to Arbitrum
+
+```javascript
+const { ethers } = require('ethers');
+const { Bridge } = require('sailfish-v3-sdk');
+
+// Initialize provider for BSC
+const provider = new ethers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
+const signer = new ethers.Wallet(privateKey, provider);
+
+// Initialize Bridge
+const bridge = new Bridge(signer);
+
+// Amount of EDU to bridge
+const amount = '100';
+const address = await signer.getAddress();
+
+// Estimate the fee
+const fee = await bridge.estimateBridgeFee(amount, address);
+console.log(`Estimated fee: ${fee} BNB`);
+
+// Check if EDU tokens are approved
+const isApproved = await bridge.isEduApproved(address, amount);
+if (!isApproved) {
+  const approveTx = await bridge.approveEdu(amount);
+  await approveTx.wait();
+}
+
+// Execute the bridge transaction
+const tx = await bridge.bridgeEduFromBscToArb(amount, address);
+console.log('Transaction sent:', tx.hash);
+```
+
+#### Arbitrum to EDUCHAIN
+
+```javascript
+const { ethers } = require('ethers');
+const { Bridge } = require('sailfish-v3-sdk');
+
+// Initialize provider for Arbitrum
+const provider = new ethers.JsonRpcProvider('https://arb1.arbitrum.io/rpc');
+const signer = new ethers.Wallet(privateKey, provider);
+
+// Initialize Bridge
+const bridge = new Bridge(signer);
+
+// Amount of EDU to bridge
+const amount = '100';
+const address = await signer.getAddress();
+
+// Check if EDU tokens are approved on Arbitrum
+const isApproved = await bridge.isEduApprovedOnArb(address, amount);
+if (!isApproved) {
+  const approveTx = await bridge.approveEduOnArb(amount);
+  await approveTx.wait();
+}
+
+// Execute the bridge transaction
+const tx = await bridge.bridgeEduFromArbToEdu(amount);
+console.log('Transaction sent:', tx.hash);
+```
+
 ## API Reference
 
 ### Quoter
@@ -228,6 +295,30 @@ const router = new Router(providerOrSigner);
 - **createSwapTransaction(tokenIn, tokenOut, fee, amountIn, amountOut, tradeType, options)**: Create a swap transaction
 - **createMultihopSwapTransaction(tokenIn, intermediaryToken, tokenOut, feeTier1, feeTier2, amountIn, amountOut, tradeType, options)**: Create a multi-hop swap transaction
 
+### Bridge
+
+The `Bridge` class is used for bridging EDU tokens between chains.
+
+#### Constructor
+
+```javascript
+const bridge = new Bridge(providerOrSigner);
+```
+
+#### Methods
+
+- **getBnbPrice()**: Get the current BNB price in USD
+- **estimateBridgeFee(amount, address, gasOnDestination)**: Estimate the fee for bridging EDU tokens from BSC to Arbitrum
+- **hasEnoughBnb(address, fee)**: Check if the user has enough BNB for the bridge transaction
+- **hasEnoughEdu(address, amount)**: Check if the user has enough EDU tokens for the bridge transaction
+- **approveEdu(amount)**: Approve EDU tokens for the bridge
+- **isEduApproved(address, amount)**: Check if EDU tokens are approved for the bridge
+- **bridgeEduFromBscToArb(amount, address, gasOnDestination)**: Bridge EDU tokens from BSC to Arbitrum
+- **hasEnoughEduOnArb(address, amount)**: Check if the user has enough EDU tokens on Arbitrum
+- **isEduApprovedOnArb(address, amount)**: Check if EDU tokens are approved for the bridge on Arbitrum
+- **approveEduOnArb(amount)**: Approve EDU tokens for the bridge on Arbitrum
+- **bridgeEduFromArbToEdu(amount)**: Bridge EDU tokens from Arbitrum to EDUCHAIN
+
 ### TradeType
 
 An enum representing the type of trade:
@@ -243,6 +334,8 @@ The SDK includes several examples in the `examples` directory:
 - **execute-swap.js**: Shows how to execute a direct swap transaction
 - **multi-hop-swap.js**: Illustrates working with multi-hop routes
 - **multihop-wiser-esd.js**: Specific example of a multi-hop swap between WISER and ESD tokens using WEDU as an intermediary token
+- **bridge-edu.js**: Shows how to bridge EDU tokens from BSC to Arbitrum using LayerZero
+- **bridge-arb-to-edu.js**: Shows how to bridge EDU tokens from Arbitrum to EDUCHAIN
 
 ## Contract Addresses
 
