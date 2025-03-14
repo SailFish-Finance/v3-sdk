@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
 import { ethers } from "ethers";
+import React, { useEffect, useState } from "react";
 import { Bridge } from "../bridge";
 
 // Add window.ethereum type definition
@@ -205,8 +205,8 @@ const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           provider
         );
 
-        const decimals = await eduContract.decimals();
-        const balanceWei = await eduContract.balanceOf(userAddress);
+        const decimals = await eduContract?.decimals();
+        const balanceWei = await eduContract?.balanceOf(userAddress);
         const balanceFormatted = ethers.formatUnits(balanceWei, decimals);
         setBalance(balanceFormatted);
       } catch (err) {
@@ -324,7 +324,6 @@ const BridgeWidget: React.FC<BridgeWidgetProps> = ({
   // Render the widget
   return (
     <>
-      <h1>Hello</h1>
       <div className={`bridge-widget ${isPopup ? "bridge-widget-popup" : ""}`}>
         {isPopup && (
           <div className="bridge-widget-header">
@@ -538,270 +537,270 @@ const BridgeWidget: React.FC<BridgeWidgetProps> = ({
         </div>
 
         <style>{`
-        .bridge-widget {
-          font-family: 'Inter', sans-serif;
-          background-color: #1a1b23;
-          color: #ffffff;
-          border-radius: 12px;
-          width: 100%;
-          max-width: 480px;
-          overflow: hidden;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-        }
-
-        .bridge-widget-popup {
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          z-index: 1000;
-        }
-
-        .bridge-widget-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 16px 20px;
-          border-bottom: 1px solid #2d2e36;
-        }
-
-        .bridge-widget-header h2 {
-          margin: 0;
-          font-size: 18px;
-          font-weight: 600;
-        }
-
-        .bridge-widget-close {
-          background: none;
-          border: none;
-          color: #8f8f8f;
-          font-size: 24px;
-          cursor: pointer;
-        }
-
-        .bridge-widget-content {
-          padding: 24px;
-          min-height: 300px;
-        }
-
-        .bridge-widget-chains {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 24px;
-        }
-
-        .bridge-widget-chain {
-          flex: 1;
-        }
-
-        .bridge-widget-chain label {
-          display: block;
-          margin-bottom: 8px;
-          font-size: 14px;
-          color: #8f8f8f;
-        }
-
-        .bridge-widget-chain select {
-          width: 100%;
-          padding: 12px;
-          background-color: #2d2e36;
-          border: 1px solid #3a3b43;
-          border-radius: 8px;
-          color: #ffffff;
-          font-size: 16px;
-          appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238f8f8f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-          background-repeat: no-repeat;
-          background-position: right 12px center;
-        }
-
-        .bridge-widget-chain-arrow {
-          margin: 0 12px;
-          font-size: 20px;
-          color: #8f8f8f;
-        }
-
-        .bridge-widget-amount {
-          margin-bottom: 24px;
-        }
-
-        .bridge-widget-amount label {
-          display: block;
-          margin-bottom: 8px;
-          font-size: 14px;
-          color: #8f8f8f;
-        }
-
-        .bridge-widget-amount-input {
-          display: flex;
-          align-items: center;
-          background-color: #2d2e36;
-          border: 1px solid #3a3b43;
-          border-radius: 8px;
-          overflow: hidden;
-        }
-
-        .bridge-widget-amount-input input {
-          flex: 1;
-          padding: 12px;
-          background: transparent;
-          border: none;
-          color: #ffffff;
-          font-size: 16px;
-        }
-
-        .bridge-widget-amount-input span {
-          padding: 0 12px;
-          color: #8f8f8f;
-        }
-
-        .bridge-widget-balance {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-top: 8px;
-          font-size: 14px;
-          color: #8f8f8f;
-        }
-
-        .bridge-widget-max-button {
-          background: none;
-          border: none;
-          color: #3b82f6;
-          cursor: pointer;
-          font-size: 12px;
-          font-weight: 600;
-        }
-
-        .bridge-widget-fee {
-          margin-bottom: 24px;
-          padding: 12px;
-          background-color: #2d2e36;
-          border-radius: 8px;
-          font-size: 14px;
-        }
-
-        .bridge-widget-error {
-          margin-bottom: 24px;
-          padding: 12px;
-          background-color: rgba(239, 68, 68, 0.1);
-          border-left: 3px solid #ef4444;
-          border-radius: 4px;
-          color: #ef4444;
-          font-size: 14px;
-        }
-
-        .bridge-widget-actions {
-          display: flex;
-          justify-content: center;
-        }
-
-        .bridge-widget-button {
-          padding: 12px 24px;
-          border: none;
-          border-radius: 8px;
-          font-size: 16px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: background-color 0.2s;
-          width: 100%;
-        }
-
-        .bridge-widget-connect {
-          background-color: #3b82f6;
-          color: #ffffff;
-        }
-
-        .bridge-widget-approve {
-          background-color: #8b5cf6;
-          color: #ffffff;
-        }
-
-        .bridge-widget-bridge {
-          background-color: #10b981;
-          color: #ffffff;
-        }
-
-        .bridge-widget-back {
-          background-color: #6b7280;
-          color: #ffffff;
-          margin-top: 12px;
-        }
-
-        .bridge-widget-new {
-          background-color: #3b82f6;
-          color: #ffffff;
-        }
-
-        .bridge-widget-button:hover {
-          opacity: 0.9;
-        }
-
-        .bridge-widget-button:disabled {
-          background-color: #4b5563;
-          cursor: not-allowed;
-          opacity: 0.7;
-        }
-
-        .bridge-widget-step {
-          text-align: center;
-        }
-
-        .bridge-widget-step h3 {
-          margin-bottom: 24px;
-          font-size: 18px;
-          font-weight: 600;
-        }
-
-        .bridge-widget-loader {
-          margin: 0 auto 24px;
-          width: 48px;
-          height: 48px;
-          border: 4px solid rgba(59, 130, 246, 0.2);
-          border-left-color: #3b82f6;
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          to {
-            transform: rotate(360deg);
+          .bridge-widget {
+            font-family: "Inter", sans-serif;
+            background-color: #1a1b23;
+            color: #ffffff;
+            border-radius: 12px;
+            width: 100%;
+            max-width: 480px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
           }
-        }
 
-        .bridge-widget-success {
-          margin: 0 auto 24px;
-          width: 48px;
-          height: 48px;
-          background-color: #10b981;
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 24px;
-          color: #ffffff;
-        }
+          .bridge-widget-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1000;
+          }
 
-        .bridge-widget-link {
-          display: inline-block;
-          margin: 16px 0;
-          color: #3b82f6;
-          text-decoration: none;
-        }
+          .bridge-widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #2d2e36;
+          }
 
-        .bridge-widget-link:hover {
-          text-decoration: underline;
-        }
+          .bridge-widget-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+          }
 
-        .bridge-widget-footer {
-          padding: 12px 24px;
-          border-top: 1px solid #2d2e36;
-          text-align: center;
-          font-size: 12px;
-          color: #8f8f8f;
-        }
-      `}</style>
+          .bridge-widget-close {
+            background: none;
+            border: none;
+            color: #8f8f8f;
+            font-size: 24px;
+            cursor: pointer;
+          }
+
+          .bridge-widget-content {
+            padding: 24px;
+            min-height: 300px;
+          }
+
+          .bridge-widget-chains {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+          }
+
+          .bridge-widget-chain {
+            flex: 1;
+          }
+
+          .bridge-widget-chain label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #8f8f8f;
+          }
+
+          .bridge-widget-chain select {
+            width: 100%;
+            padding: 12px;
+            background-color: #2d2e36;
+            border: 1px solid #3a3b43;
+            border-radius: 8px;
+            color: #ffffff;
+            font-size: 16px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238f8f8f' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+          }
+
+          .bridge-widget-chain-arrow {
+            margin: 0 12px;
+            font-size: 20px;
+            color: #8f8f8f;
+          }
+
+          .bridge-widget-amount {
+            margin-bottom: 24px;
+          }
+
+          .bridge-widget-amount label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #8f8f8f;
+          }
+
+          .bridge-widget-amount-input {
+            display: flex;
+            align-items: center;
+            background-color: #2d2e36;
+            border: 1px solid #3a3b43;
+            border-radius: 8px;
+            overflow: hidden;
+          }
+
+          .bridge-widget-amount-input input {
+            flex: 1;
+            padding: 12px;
+            background: transparent;
+            border: none;
+            color: #ffffff;
+            font-size: 16px;
+          }
+
+          .bridge-widget-amount-input span {
+            padding: 0 12px;
+            color: #8f8f8f;
+          }
+
+          .bridge-widget-balance {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 8px;
+            font-size: 14px;
+            color: #8f8f8f;
+          }
+
+          .bridge-widget-max-button {
+            background: none;
+            border: none;
+            color: #3b82f6;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+          }
+
+          .bridge-widget-fee {
+            margin-bottom: 24px;
+            padding: 12px;
+            background-color: #2d2e36;
+            border-radius: 8px;
+            font-size: 14px;
+          }
+
+          .bridge-widget-error {
+            margin-bottom: 24px;
+            padding: 12px;
+            background-color: rgba(239, 68, 68, 0.1);
+            border-left: 3px solid #ef4444;
+            border-radius: 4px;
+            color: #ef4444;
+            font-size: 14px;
+          }
+
+          .bridge-widget-actions {
+            display: flex;
+            justify-content: center;
+          }
+
+          .bridge-widget-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+          }
+
+          .bridge-widget-connect {
+            background-color: #3b82f6;
+            color: #ffffff;
+          }
+
+          .bridge-widget-approve {
+            background-color: #8b5cf6;
+            color: #ffffff;
+          }
+
+          .bridge-widget-bridge {
+            background-color: #10b981;
+            color: #ffffff;
+          }
+
+          .bridge-widget-back {
+            background-color: #6b7280;
+            color: #ffffff;
+            margin-top: 12px;
+          }
+
+          .bridge-widget-new {
+            background-color: #3b82f6;
+            color: #ffffff;
+          }
+
+          .bridge-widget-button:hover {
+            opacity: 0.9;
+          }
+
+          .bridge-widget-button:disabled {
+            background-color: #4b5563;
+            cursor: not-allowed;
+            opacity: 0.7;
+          }
+
+          .bridge-widget-step {
+            text-align: center;
+          }
+
+          .bridge-widget-step h3 {
+            margin-bottom: 24px;
+            font-size: 18px;
+            font-weight: 600;
+          }
+
+          .bridge-widget-loader {
+            margin: 0 auto 24px;
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(59, 130, 246, 0.2);
+            border-left-color: #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+          }
+
+          @keyframes spin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
+
+          .bridge-widget-success {
+            margin: 0 auto 24px;
+            width: 48px;
+            height: 48px;
+            background-color: #10b981;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #ffffff;
+          }
+
+          .bridge-widget-link {
+            display: inline-block;
+            margin: 16px 0;
+            color: #3b82f6;
+            text-decoration: none;
+          }
+
+          .bridge-widget-link:hover {
+            text-decoration: underline;
+          }
+
+          .bridge-widget-footer {
+            padding: 12px 24px;
+            border-top: 1px solid #2d2e36;
+            text-align: center;
+            font-size: 12px;
+            color: #8f8f8f;
+          }
+        `}</style>
       </div>
     </>
   );

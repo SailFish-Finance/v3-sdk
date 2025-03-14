@@ -1,20 +1,15 @@
+"use client";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { BridgeWidget } from "@sailfishdex/v3-sdk";
 import { ethers } from "ethers";
-import dynamic from "next/dynamic";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { BridgeX } from "sailfish-v3-sdk";
-import { useAccount, useNetwork } from "wagmi";
-// Import BridgeWidget with dynamic import to prevent hydration errors
-// const BridgeWidget = dynamic(
-//   () => import('sailfish-v3-sdk').then((mod) => mod.BridgeWidget),
-//   { ssr: false }
-// );
+import { useAccount } from "wagmi";
+
 export default function EmbeddedSimplePage() {
-  const [ethersSigner, setEthersSigner] = useState(null);
+  const [ethersSigner, setEthersSigner] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
-  const { address, isConnected } = useAccount();
-  const { chain } = useNetwork();
+  const { address, isConnected, chainId } = useAccount();
 
   // Only show the UI after mounting to prevent hydration errors
   useEffect(() => {
@@ -26,9 +21,9 @@ export default function EmbeddedSimplePage() {
     if (mounted) {
       console.log("Simple page - Connected:", isConnected);
       console.log("Simple page - Signer:", ethersSigner);
-      console.log("Simple page - Chain:", chain);
+      console.log("Simple page - Chain:", chainId);
     }
-  }, [mounted, isConnected, ethersSigner, chain]);
+  }, [mounted, isConnected, ethersSigner, chainId]);
 
   // Convert wagmi state to ethers signer
   useEffect(() => {
@@ -57,14 +52,14 @@ export default function EmbeddedSimplePage() {
     };
 
     getSigner();
-  }, [mounted, isConnected, address, chain]);
+  }, [mounted, isConnected, address, chainId]);
 
-  const handleSuccess = (txHash) => {
+  const handleSuccess = (txHash: string) => {
     console.log("Bridge transaction successful:", txHash);
     alert(`Bridge transaction successful! TX Hash: ${txHash}`);
   };
 
-  const handleError = (error) => {
+  const handleError = (error: any) => {
     console.error("Bridge error:", error);
     alert(`Bridge error: ${error.message || error}`);
   };
@@ -99,22 +94,21 @@ export default function EmbeddedSimplePage() {
               <p>Loading wallet connection...</p>
             </div>
           ) : (
-            <BridgeX />
-            // <BridgeWidget
-            //   isPopup={false}
-            //   signer={ethersSigner}
-            //   defaultFromChain={
-            //     chain?.id === 56
-            //       ? "bsc"
-            //       : chain?.id === 42161
-            //       ? "arbitrum"
-            //       : "educhain"
-            //   }
-            //   defaultToChain="arbitrum"
-            //   defaultAmount="10"
-            //   onSuccess={handleSuccess}
-            //   onError={handleError}
-            // />
+            <BridgeWidget
+              isPopup={false}
+              signer={ethersSigner}
+              defaultFromChain={
+                chainId === 56
+                  ? "bsc"
+                  : chainId === 42161
+                  ? "arbitrum"
+                  : "educhain"
+              }
+              defaultToChain="arbitrum"
+              defaultAmount="10"
+              onSuccess={handleSuccess}
+              onError={handleError}
+            />
           )}
         </div>
       </main>
