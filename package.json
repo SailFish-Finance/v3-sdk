@@ -2,10 +2,12 @@
   "name": "@sailfishdex/v3-sdk",
   "version": "1.0.1",
   "description": "SDK for SailFish DEX v3",
-  "main": "dist/index.js",
+  "main": "dist/index.cjs.js",
+  "module": "dist/index.esm.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "rollup -c && npm pack",
+    "dev": "rollup -c -w",
     "test": "jest",
     "lint": "eslint src --ext .ts",
     "prepublishOnly": "npm run build"
@@ -23,7 +25,14 @@
   },
   "author": "SailFish Team",
   "license": "MIT",
+  "peerDependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0"
+  },
   "dependencies": {
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-node-resolve": "^16.0.1",
+    "@rollup/plugin-typescript": "^12.1.2",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@uniswap/sdk-core": "^3.2.2",
@@ -34,11 +43,12 @@
     "graphql": "^16.8.0",
     "graphql-request": "^6.1.0",
     "jsbi": "^4.3.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "rollup-plugin-dts": "^6.1.1",
+    "rollup-plugin-postcss": "^4.0.2",
     "styled-jsx": "^5.1.6"
   },
   "devDependencies": {
+    "@rollup/plugin-json": "^6.1.0",
     "@types/jest": "^29.5.3",
     "@types/node": "^20.4.9",
     "@typescript-eslint/eslint-plugin": "^6.3.0",
