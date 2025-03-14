@@ -103,7 +103,7 @@ export default function EmbeddedSimplePage() {
               isPopup={false}
               signer={ethersSigner}
               defaultFromChain={chain?.id === 56 ? "bsc" : chain?.id === 42161 ? "arbitrum" : "educhain"}
-              defaultToChain="educhain"
+              defaultToChain="arbitrum"
               defaultAmount="10"
               onSuccess={handleSuccess}
               onError={handleError}

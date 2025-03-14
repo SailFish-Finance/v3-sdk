@@ -354,17 +354,5 @@
     "files": [
       "static/chunks/dist_index_js.js"
     ]
-  },
-  "pages/embedded.jsx -> sailfish-v3-sdk": {
-    "id": "pages/embedded.jsx -> sailfish-v3-sdk",
-    "files": [
-      "static/chunks/dist_index_js.js"
-    ]
-  },
-  "pages/with-signer.jsx -> sailfish-v3-sdk": {
-    "id": "pages/with-signer.jsx -> sailfish-v3-sdk",
-    "files": [
-      "static/chunks/dist_index_js.js"
-    ]
   }
 }

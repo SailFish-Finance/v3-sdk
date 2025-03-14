@@ -2,8 +2,6 @@
   "/_app": "pages/_app.js",
   "/_error": "pages/_error.js",
   "/_document": "pages/_document.js",
-  "/with-signer": "pages/with-signer.js",
-  "/embedded-simple": "pages/embedded-simple.js",
   "/": "pages/index.js",
-  "/embedded": "pages/embedded.js"
+  "/embedded-simple": "pages/embedded-simple.js"
 }
