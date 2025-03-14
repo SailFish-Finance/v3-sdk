@@ -66,36 +66,9 @@ async function main() {
 
       // For multi-hop routes, we can also demonstrate how to execute them
       if (bestRoute.type === "indirect") {
-        console.log("\nTo execute this multi-hop swap, see multihop-wiser-esd.js in examples folder.");
-        // console.log("1. Create a path by encoding the tokens and fees");
-        // console.log(
-        //   "2. Use the router.exactInput method instead of exactInputSingle"
-        // );
-
-        // Example code for creating the path (not executed)
-        //         console.log("\nExample code:");
-        //         console.log(`
-        // const path = ethers.solidityPacked(
-        //   ['address', 'uint24', 'address', 'uint24', 'address'],
-        //   [
-        //     WISER,
-        //     bestRoute.path[0].feeTier,
-        //     bestRoute.intermediaryToken.address,
-        //     bestRoute.path[1].feeTier,
-        //     ESD
-        //   ]
-        // );
-
-        // const params = {
-        //   path,
-        //   recipient: YOUR_ADDRESS,
-        //   deadline: Math.floor(Date.now() / 1000) + 60 * 20, // 20 minutes
-        //   amountIn: ethers.parseEther('1.0'),
-        //   amountOutMinimum: ethers.parseUnits(quote.amountOut, 6) * 995n / 1000n // 0.5% slippage
-        // };
-
-        // const tx = await router.exactInput(params);
-        //         `);
+        console.log(
+          "\nTo execute this multi-hop swap, see multihop-wiser-esd.js in examples folder."
+        );
       }
     } else {
       throw new Error("No routes found for WISER -> ESD");

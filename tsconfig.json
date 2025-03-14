@@ -9,8 +9,9 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "lib": ["es2020", "dom"],
-    "moduleResolution": "node"
+    "lib": ["es2020", "dom", "dom.iterable"],
+    "moduleResolution": "node",
+    "jsx": "react"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

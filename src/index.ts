@@ -4,6 +4,7 @@ export * from './quoter';
 export * from './router';
 export * from './bridge';
 export * from './types';
+export * from './ui/BridgeWidget';
 export * from './utils';
 
 // Re-export commonly used types from dependencies

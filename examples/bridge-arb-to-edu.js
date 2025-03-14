@@ -5,7 +5,7 @@ const { Bridge } = require("../dist");
 
 // This example requires a private key to sign transactions
 // Replace with your own private key and NEVER share it or commit it to version control
-const PRIVATE_KEY = '';
+const PRIVATE_KEY = 'PRIVATE_KEY';
 
 async function main() {
   try {

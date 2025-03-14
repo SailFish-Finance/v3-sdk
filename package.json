@@ -24,6 +24,8 @@
   "author": "SailFish Team",
   "license": "MIT",
   "dependencies": {
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.4",
     "@uniswap/sdk-core": "^3.2.2",
     "@uniswap/v3-sdk": "^3.9.0",
     "axios": "^1.8.3",
@@ -31,7 +33,10 @@
     "ethers": "^6.7.1",
     "graphql": "^16.8.0",
     "graphql-request": "^6.1.0",
-    "jsbi": "^4.3.0"
+    "jsbi": "^4.3.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "styled-jsx": "^5.1.6"
   },
   "devDependencies": {
     "@types/jest": "^29.5.3",
