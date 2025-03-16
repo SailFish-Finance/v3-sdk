@@ -3,8 +3,10 @@ import { ethers } from "ethers";
 import dynamic from "next/dynamic";
 import Head from "next/head";
 import { useEffect, useState } from "react";
-import { BridgeX } from "sailfish-v3-sdk";
+import { BridgeWidget } from "@sailfishdex/v3-sdk";
 import { useAccount, useNetwork } from "wagmi";
+
+console.log("BridgeWidget:", BridgeWidget);
 // Import BridgeWidget with dynamic import to prevent hydration errors
 // const BridgeWidget = dynamic(
 //   () => import('sailfish-v3-sdk').then((mod) => mod.BridgeWidget),
@@ -99,22 +101,21 @@ export default function EmbeddedSimplePage() {
               <p>Loading wallet connection...</p>
             </div>
           ) : (
-            <BridgeX />
-            // <BridgeWidget
-            //   isPopup={false}
-            //   signer={ethersSigner}
-            //   defaultFromChain={
-            //     chain?.id === 56
-            //       ? "bsc"
-            //       : chain?.id === 42161
-            //       ? "arbitrum"
-            //       : "educhain"
-            //   }
-            //   defaultToChain="arbitrum"
-            //   defaultAmount="10"
-            //   onSuccess={handleSuccess}
-            //   onError={handleError}
-            // />
+            <BridgeWidget
+              isPopup={false}
+              signer={ethersSigner}
+              defaultFromChain={
+                chain?.id === 56
+                  ? "bsc"
+                  : chain?.id === 42161
+                  ? "arbitrum"
+                  : "educhain"
+              }
+              defaultToChain="arbitrum"
+              defaultAmount="10"
+              onSuccess={handleSuccess}
+              onError={handleError}
+            />
           )}
         </div>
       </main>

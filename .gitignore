@@ -38,3 +38,9 @@ coverage/
 # System files
 Thumbs.db
 Desktop.ini
+
+examples/nextjs-test-sdk/.next/
+examples/nextjs-test-sdk/out/
+examples/nextjs-test-sdk/node_modules/
+examples/nextjs-test-sdk/.env
+examples/nextjs-test-sdk/.env.local

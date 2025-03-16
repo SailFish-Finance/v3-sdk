@@ -60,7 +60,7 @@ const ALLOWED_PATHS = [
   { from: "arbitrum", to: "educhain" },
 ];
 
-const BridgeWidget: React.FC<BridgeWidgetProps> = ({
+export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
   onClose,
   isPopup = false,
   defaultFromChain = "bsc",
@@ -805,5 +805,3 @@ const BridgeWidget: React.FC<BridgeWidgetProps> = ({
     </>
   );
 };
-
-export default BridgeWidget;

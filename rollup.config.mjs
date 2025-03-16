@@ -1,10 +1,12 @@
+// rollup.config.mjs (Updated clearly)
 import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
-import dts from "rollup-plugin-dts";
+import peerDepsExternal from "rollup-plugin-peer-deps-external";
+import terser from "@rollup/plugin-terser";
 import postcss from "rollup-plugin-postcss";
-// import packageJson from "./package.json" assert { type: "json" };
+import dts from "rollup-plugin-dts";
 
 export default [
   {
@@ -22,28 +24,24 @@ export default [
       },
     ],
     plugins: [
+      peerDepsExternal(), // explicitly avoids bundling peerDependencies
       resolve({
-        extensions: [".js", ".jsx", ".ts", ".tsx"],
-        skip: ["react", "react-dom"],
+        extensions: [".js", ".jsx", ".ts", ".tsx", ".json"],
+        browser: true,
+        preferBuiltins: false,
       }),
+      json({ compact: true }),
       commonjs(),
-      typescript({
-        tsconfig: "./tsconfig.json",
-        exclude: ["**/*.test.tsx", "**/*.test.ts", "**/*.stories.ts"],
-      }),
-      postcss({ extensions: [".css"], inject: true, extract: false }),
-      // peerDepsExternal(),
-      json({
-        compact: true,
-        namedExports: false, // recommended to fix JSON ABI imports
-      }),
+      typescript({ tsconfig: "./tsconfig.json" }),
     ],
-    external: ["react", "react-dom", "react/jsx-runtime"],
+    external: ["react", "react-dom", "react/jsx-runtime"], // clearly externalize React
   },
+
+  // Types bundle
   {
     input: "dist/index.d.ts",
     output: [{ file: "dist/index.d.ts", format: "esm" }],
     plugins: [dts()],
-    external: [/\.css$/],
+    external: [/\.css$/, "react", "react-dom"],
   },
 ];

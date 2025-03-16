@@ -14,9 +14,9 @@
     "next": "^14.0.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "sailfish-v3-sdk": "file:../../",
     "viem": "^1.19.9",
-    "wagmi": "^1.4.7"
+    "wagmi": "^1.4.7",
+    "@sailfishdex/v3-sdk": "*"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "^28.0.3",

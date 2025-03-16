@@ -7,6 +7,7 @@ import { publicProvider } from 'wagmi/providers/public';
 const educhain = {
   id: 41923,
   name: 'EDUCHAIN',
+  iconUrl: "https://app.sailfish.finance/svgs/edu.svg",
   network: 'educhain',
   nativeCurrency: {
     decimals: 18,

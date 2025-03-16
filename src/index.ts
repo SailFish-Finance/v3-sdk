@@ -4,7 +4,7 @@ export * from "./constants";
 export * from "./quoter";
 export * from "./router";
 export * from "./types";
-export { default as BridgeWidget } from "./ui/BridgeWidget";
+export { BridgeWidget } from "./ui/BridgeWidget";
 export * from "./utils";
 
 // Re-export commonly used types from dependencies

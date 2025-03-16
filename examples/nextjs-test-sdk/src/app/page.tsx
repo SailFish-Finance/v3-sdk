@@ -6,6 +6,8 @@ import Head from "next/head";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 
+console.log("Simple page - Importing BridgeWidget:", BridgeWidget);
+
 export default function EmbeddedSimplePage() {
   const [ethersSigner, setEthersSigner] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
@@ -77,9 +79,6 @@ export default function EmbeddedSimplePage() {
 
       <main className="main">
         <h1 className="title">Simple Embedded Bridge</h1>
-
-        <p className="description">Direct import without dynamic loading</p>
-
         <div className="connect-button-container">
           <ConnectButton />
         </div>
@@ -95,6 +94,7 @@ export default function EmbeddedSimplePage() {
             </div>
           ) : (
             <BridgeWidget
+              onClose={() => console.log("Bridge widget closed")}
               isPopup={false}
               signer={ethersSigner}
               defaultFromChain={
@@ -105,7 +105,7 @@ export default function EmbeddedSimplePage() {
                   : "educhain"
               }
               defaultToChain="arbitrum"
-              defaultAmount="10"
+              defaultAmount="1"
               onSuccess={handleSuccess}
               onError={handleError}
             />
