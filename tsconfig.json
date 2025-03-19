@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "target": "es2020",
-    "module": "commonjs",
+    "module": "ESNext",
     "declaration": true,
     "outDir": "./dist",
     "strict": true,
@@ -9,8 +9,9 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-    "lib": ["es2020", "dom"],
-    "moduleResolution": "node"
+    "lib": ["es2020", "dom", "dom.iterable"],
+    "moduleResolution": "node",
+    "jsx": "react-jsx"
   },
   "include": ["src"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]

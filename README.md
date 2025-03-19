@@ -19,6 +19,7 @@ npm install @sailfishdex/v3-sdk
 - **Multi-hop Support**: Full support for multi-hop routes
 - **Token Approval**: Methods for checking and approving token allowances
 - **Token Bridging**: Bridge EDU tokens between BSC, Arbitrum, and EDUCHAIN
+- **UI Components**: Ready-to-use React components for token bridging
 
 ## Usage
 
@@ -338,6 +339,7 @@ The SDK includes several examples in the `examples` directory:
 - **multihop-wiser-esd.js**: Specific example of a multi-hop swap between WISER and ESD tokens using WEDU as an intermediary token
 - **bridge-edu.js**: Shows how to bridge EDU tokens from BSC to Arbitrum using LayerZero
 - **bridge-arb-to-edu.js**: Shows how to bridge EDU tokens from Arbitrum to EDUCHAIN
+- **bridge-widget-usage.js**: Demonstrates how to use the BridgeWidget React component in a web application
 
 ## Contract Addresses
 

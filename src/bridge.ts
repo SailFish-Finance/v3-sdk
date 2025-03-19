@@ -168,13 +168,27 @@ export class Bridge {
         this.provider
       );
       
-      const decimals = await eduContract.decimals();
-      const balance = await eduContract.balanceOf(address);
+      let decimals;
+      try {
+        decimals = await eduContract.decimals();
+      } catch (error) {
+        console.log('Error fetching EDU decimals. Using default value of 18');
+        decimals = 18;
+      }
+      
+      let balance;
+      try {
+        balance = await eduContract.balanceOf(address);
+      } catch (error) {
+        console.log('Error fetching EDU balance. Using 0 as default');
+        balance = 0;
+      }
       
       return ethers.getBigInt(balance) >= ethers.parseUnits(amount, decimals);
     } catch (error) {
-      console.error('Error checking EDU balance:', error);
-      throw new Error('Failed to check EDU balance');
+      console.log('Error checking EDU balance:', error);
+      console.log('Returning false for hasEnoughEdu check');
+      return false;
     }
   }
 
@@ -426,13 +440,27 @@ export class Bridge {
         this.provider
       );
       
-      const decimals = await eduContract.decimals();
-      const balance = await eduContract.balanceOf(address);
+      let decimals;
+      try {
+        decimals = await eduContract.decimals();
+      } catch (error) {
+        console.log('Error fetching EDU decimals on Arbitrum. Using default value of 18');
+        decimals = 18;
+      }
+      
+      let balance;
+      try {
+        balance = await eduContract.balanceOf(address);
+      } catch (error) {
+        console.log('Error fetching EDU balance on Arbitrum. Using 0 as default');
+        balance = 0;
+      }
       
       return ethers.getBigInt(balance) >= ethers.parseUnits(amount, decimals);
     } catch (error) {
-      console.error('Error checking EDU balance on Arbitrum:', error);
-      throw new Error('Failed to check EDU balance on Arbitrum');
+      console.log('Error checking EDU balance on Arbitrum:', error);
+      console.log('Returning false for hasEnoughEduOnArb check');
+      return false;
     }
   }
 

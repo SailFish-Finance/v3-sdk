@@ -1,7 +1,7 @@
 // Example of executing a swap using the SailFish DEX v3 SDK
 
 const { ethers } = require("ethers");
-const { Quoter, Router, TradeType } = require("../dist");
+const { Quoter, Router, TradeType } = require("../dist/index.cjs");
 
 // This example requires a private key to sign transactions
 // Replace with your own private key and NEVER share it or commit it to version control

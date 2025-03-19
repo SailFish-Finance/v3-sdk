@@ -1,11 +1,11 @@
 // Example of bridging EDU tokens from Arbitrum to EDUCHAIN
 
 const { ethers } = require("ethers");
-const { Bridge } = require("../dist");
+const { Bridge } = require("../dist/index.cjs");
 
 // This example requires a private key to sign transactions
 // Replace with your own private key and NEVER share it or commit it to version control
-const PRIVATE_KEY = '';
+const PRIVATE_KEY = 'PRIVATE_KEY';
 
 async function main() {
   try {

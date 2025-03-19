@@ -1,7 +1,7 @@
 // Example of using the SailFish DEX v3 SDK
 
 const { ethers } = require("ethers");
-const { Quoter, Router, TradeType } = require("../dist");
+const { Quoter, Router, TradeType } = require("../dist/index.cjs");
 
 async function main() {
   try {

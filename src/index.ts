@@ -1,21 +1,23 @@
 // SailFish DEX v3 SDK
-export * from './constants';
-export * from './quoter';
-export * from './router';
-export * from './bridge';
-export * from './types';
-export * from './utils';
+import "./styles.css";
+export * from "./bridge";
+export * from "./constants";
+export * from "./quoter";
+export * from "./router";
+export * from "./types";
+export { BridgeWidget } from "./ui/BridgeWidget";
+export * from "./utils";
 
 // Re-export commonly used types from dependencies
-export { 
-  TradeType, 
-  Percent, 
-  Token as SdkToken, 
-  CurrencyAmount 
-} from '@uniswap/sdk-core';
-export { 
-  Pool as SdkPool, 
-  Route as SdkRoute, 
-  SwapQuoter, 
-  Trade as SdkTrade 
-} from '@uniswap/v3-sdk';
+export {
+  CurrencyAmount,
+  Percent,
+  Token as SdkToken,
+  TradeType,
+} from "@uniswap/sdk-core";
+export {
+  Pool as SdkPool,
+  Route as SdkRoute,
+  Trade as SdkTrade,
+  SwapQuoter,
+} from "@uniswap/v3-sdk";
