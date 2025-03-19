@@ -1,4 +1,5 @@
 // SailFish DEX v3 SDK
+import "./styles.css";
 export * from "./bridge";
 export * from "./constants";
 export * from "./quoter";

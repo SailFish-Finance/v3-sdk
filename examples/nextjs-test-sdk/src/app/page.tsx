@@ -6,8 +6,6 @@ import Head from "next/head";
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
 
-console.log("Simple page - Importing BridgeWidget:", BridgeWidget);
-
 export default function EmbeddedSimplePage() {
   const [ethersSigner, setEthersSigner] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
@@ -77,12 +75,16 @@ export default function EmbeddedSimplePage() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="main">
-        <h1 className="title">Simple Embedded Bridge</h1>
-        <div className="connect-button-container">
+      <nav className="navbar">
+        <div className="navbar-brand">
+          <h2>Bridge EDU</h2>
+        </div>
+        <div className="navbar-connect">
           <ConnectButton />
         </div>
+      </nav>
 
+      <main className="main">
         <div className="bridge-container">
           {!isConnected ? (
             <div className="connect-message">
@@ -94,7 +96,7 @@ export default function EmbeddedSimplePage() {
             </div>
           ) : (
             <BridgeWidget
-              onClose={() => console.log("Bridge widget closed")}
+              onClose={() => console.log("Bridge widget closed")} //when used as a popup
               isPopup={false}
               signer={ethersSigner}
               defaultFromChain={
@@ -120,10 +122,10 @@ export default function EmbeddedSimplePage() {
       <style jsx>{`
         .container {
           min-height: 100vh;
-          padding: 0 2rem;
+          padding: 5rem 2rem 0;
           display: flex;
           flex-direction: column;
-          justify-content: center;
+          justify-content: flex-start;
           align-items: center;
           background-color: #0f172a;
           color: white;
@@ -176,6 +178,35 @@ export default function EmbeddedSimplePage() {
           width: 100%;
           max-width: 500px;
           margin: 0 auto;
+        }
+
+        .navbar {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 1rem 2rem;
+          background-color: #1a2236;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          z-index: 100;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand h2 {
+          margin: 0;
+          font-size: 1.5rem;
+          color: #fff;
+          background: linear-gradient(to right, #3b82f6, #10b981);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+        }
+
+        .navbar-connect {
+          display: flex;
+          justify-content: flex-end;
         }
 
         .connect-message {

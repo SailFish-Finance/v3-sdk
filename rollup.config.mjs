@@ -7,6 +7,7 @@ import peerDepsExternal from "rollup-plugin-peer-deps-external";
 import terser from "@rollup/plugin-terser";
 import postcss from "rollup-plugin-postcss";
 import dts from "rollup-plugin-dts";
+import url from "@rollup/plugin-url";
 
 export default [
   {
@@ -32,6 +33,17 @@ export default [
       }),
       json({ compact: true }),
       commonjs(),
+      postcss({
+        extensions: ['.css'],
+        inject: true,
+        extract: false,
+        minimize: true,
+      }),
+      url({
+        include: ['**/*.otf', '**/*.ttf', '**/*.woff', '**/*.woff2'],
+        limit: Infinity, // Bundle all fonts regardless of size
+        fileName: '[dirname][name][extname]',
+      }),
       typescript({ tsconfig: "./tsconfig.json" }),
     ],
     external: ["react", "react-dom", "react/jsx-runtime"], // clearly externalize React

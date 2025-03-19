@@ -49,6 +49,7 @@
     "@rollup/plugin-node-resolve": "^15.2.3",
     "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^12.1.2",
+    "@rollup/plugin-url": "^8.0.2",
     "@types/jest": "^29.5.3",
     "@types/node": "^20.4.9",
     "@types/react": "^19.0.10",
