@@ -10,7 +10,7 @@ import {
 } from "@rainbow-me/rainbowkit/wallets";
 import { ethers } from "ethers";
 import { cookieStorage, createStorage, http } from "wagmi";
-import { bsc, arbitrum } from 'wagmi/chains';
+import { arbitrum, bsc } from "wagmi/chains";
 
 const projectId = process.env.NEXT_PUBLIC_PROJECT_ID as string;
 
@@ -40,7 +40,7 @@ export const provider = new ethers.JsonRpcProvider(
 export const config = getDefaultConfig({
   appName: "SailFish DEX Bridge",
   projectId,
-  chains: [bsc,arbitrum,educhain],
+  chains: [bsc, arbitrum, educhain],
   transports: {
     [educhain.id]: http(process.env.NEXT_PUBLIC_RPC_URL!),
   },

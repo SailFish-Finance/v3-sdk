@@ -4,12 +4,15 @@ import { Bridge } from "../bridge";
 // import arbitrumLogo from "./assets/arbitrum.svg";
 // import bnbLogo from "./assets/bnb.svg";
 // import eduLogo from "./assets/edu.svg";
+import Arbitrum from "./assets/arbitrum";
+import Bnb from "./assets/bnb";
+import Edu from "./assets/edu";
 import "./fonts/fonts.css";
 
 // SVG asset paths
-const bnbLogo = new URL("./assets/bnb.svg", import.meta.url).href;
-const arbitrumLogo = new URL("./assets/arbitrum.svg", import.meta.url).href;
-const eduLogo = new URL("./assets/edu.svg", import.meta.url).href;
+// const bnbLogo = new URL("./assets/bnb.svg", import.meta.url).href;
+// const arbitrumLogo = new URL("./assets/arbitrum.svg", import.meta.url).href;
+// const eduLogo = new URL("./assets/edu.svg", import.meta.url).href;
 
 // Add window.ethereum type definition
 declare global {
@@ -37,7 +40,7 @@ interface BridgeWidgetProps {
 const CHAINS = {
   bsc: {
     name: "BNB Smart chain",
-    icon: bnbLogo,
+    icon: <Bnb />,
     rpcUrl: "https://bsc-dataseed.binance.org/",
     chainId: 56,
     explorerUrl: "https://bscscan.com",
@@ -46,7 +49,7 @@ const CHAINS = {
   },
   arbitrum: {
     name: "Arbitrum One",
-    icon: arbitrumLogo,
+    icon: <Arbitrum />,
     rpcUrl: "https://arb1.arbitrum.io/rpc",
     chainId: 42161,
     explorerUrl: "https://arbiscan.io",
@@ -55,7 +58,7 @@ const CHAINS = {
   },
   educhain: {
     name: "EDU chain",
-    icon: eduLogo,
+    icon: <Edu />,
     rpcUrl: "https://rpc.edu-chain.raas.gelato.cloud",
     chainId: 41923,
     explorerUrl: "https://educhain.blockscout.com",
@@ -623,17 +626,19 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
               onClick={() => setActiveTab("bta")}
             >
               <span>BSC to ARB</span>
-              <img
-                src={CHAINS.bsc.icon}
+              {/* <img
+                src=
                 alt="BSC"
                 className="bridge-widget-chain-icon"
-              />
+              /> */}
+              {CHAINS.bsc.icon}
               <RightArrow />
-              <img
-                src={CHAINS.arbitrum.icon}
+              {/* <img
+                src=
                 alt="ARB"
                 className="bridge-widget-chain-icon"
-              />
+              /> */}
+              {CHAINS.arbitrum.icon}
             </button>
             <button
               className={`bridge-widget-tab ${
@@ -642,17 +647,19 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
               onClick={() => setActiveTab("ate")}
             >
               <span>ARB to EDU</span>
-              <img
-                src={CHAINS.arbitrum.icon}
+              {CHAINS.arbitrum.icon}
+              {/* <img
+                src=
                 alt="ARB"
                 className="bridge-widget-chain-icon"
-              />
+              /> */}
               <RightArrow />
-              <img
-                src={CHAINS.educhain.icon}
+              {/* <img
+                src=
                 alt="EDU"
                 className="bridge-widget-chain-icon"
-              />
+              /> */}
+              {CHAINS.educhain.icon}
             </button>
           </div>
 
@@ -689,11 +696,12 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
             <div className="bridge-widget-amount-input-container">
               <div className="bridge-widget-amount-input-with-token">
                 <div className="bridge-widget-token">
-                  <img
+                  {/* <img
                     src={CHAINS.educhain.icon}
                     alt="EDU"
                     className="bridge-widget-token-icon"
-                  />
+                  /> */}
+                  {CHAINS.educhain.icon}
                   <span className="bridge-widget-token-symbol">EDU</span>
                 </div>
                 <div className="bridge-widget-amount-input-wrapper">
@@ -722,11 +730,12 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
                   From Network
                 </label>
                 <div className="bridge-widget-network-selector">
-                  <img
-                    src={CHAINS[fromChain].icon}
+                  {/* <img
+                    src=
                     alt={CHAINS[fromChain].name}
                     className="bridge-widget-network-icon"
-                  />
+                  /> */}
+                  {CHAINS[fromChain].icon}
                   <span className="bridge-widget-network-name">
                     {CHAINS[fromChain].name}
                   </span>
@@ -738,11 +747,12 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
                   To Network
                 </label>
                 <div className="bridge-widget-network-selector">
-                  <img
-                    src={CHAINS[toChain].icon}
+                  {/* <img
+                    src=
                     alt={CHAINS[toChain].name}
                     className="bridge-widget-network-icon"
-                  />
+                  /> */}
+                  {CHAINS[toChain].icon}
                   <span className="bridge-widget-network-name">
                     {CHAINS[toChain].name}
                   </span>
@@ -976,11 +986,12 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
 
                 <div className="bridge-widget-gas-display">
                   <div className="bridge-widget-gas-token-icon">
-                    <img
-                      src={CHAINS.arbitrum.icon}
+                    {/* <img
+                      src=
                       alt="ETH"
                       className="bridge-widget-gas-icon"
-                    />
+                    /> */}
+                    {CHAINS.arbitrum.icon}
                   </div>
                   <div className="bridge-widget-gas-amount">{gas}</div>
                   <div className="bridge-widget-gas-label">
@@ -1013,20 +1024,22 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
                     <h3 className="bridge-widget-popup-title">Bridging...</h3>
                     <div className="bridge-widget-popup-networks">
                       <div className="bridge-widget-popup-network">
-                        <img
-                          src={CHAINS[fromChain].icon}
+                        {/* <img
+                          src=
                           alt={CHAINS[fromChain].name}
                           className="bridge-widget-popup-network-icon"
-                        />
+                        /> */}
+                        {CHAINS[fromChain].icon}
                         <span>{CHAINS[fromChain].name}</span>
                       </div>
                       <RightArrow />
                       <div className="bridge-widget-popup-network">
-                        <img
-                          src={CHAINS[toChain].icon}
+                        {/* <img
+                          src=
                           alt={CHAINS[toChain].name}
                           className="bridge-widget-popup-network-icon"
-                        />
+                        /> */}
+                        {CHAINS[toChain].icon}
                         <span>{CHAINS[toChain].name}</span>
                       </div>
                     </div>

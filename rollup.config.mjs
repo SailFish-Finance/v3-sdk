@@ -47,11 +47,9 @@ export default [
       typescript({ tsconfig: "./tsconfig.json" }),
       copy({
         targets: [
-          { src: "src/ui/assets", dest: "dist/ui" },
-          { src: "src/ui/fonts", dest: "dist/ui" },
+          // { src: "src/ui/assets", dest: "dist/ui" },
+          { src: "src/ui/fonts", dest: "dist" },
         ],
-        flatten: false,
-        verbose: true,
       }),
       // url({
       //   include: ["**/*.svg"], // Only process SVG files
