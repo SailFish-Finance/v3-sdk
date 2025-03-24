@@ -41,7 +41,7 @@ const CHAINS = {
   bsc: {
     name: "BNB Smart chain",
     icon: <Bnb />,
-    rpcUrl: "https://bsc-dataseed.binance.org/",
+    rpcUrl: "https://bsc-dataseed1.bnbchain.org",
     chainId: 56,
     explorerUrl: "https://bscscan.com",
     eduAddress: "0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639",
@@ -340,7 +340,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
         window.ethereum.removeAllListeners("chainChanged");
       }
     };
-  }, [signer]);
+  }, [signer, currentSigner]);
 
   // Update default chains when tab changes
   useEffect(() => {
