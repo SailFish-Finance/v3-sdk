@@ -12,7 +12,7 @@ yarn-debug.log*
 yarn-error.log*
 
 # Build files
-dist/
+examples/
 build/
 coverage/
 

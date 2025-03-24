@@ -3,11 +3,11 @@ import commonjs from "@rollup/plugin-commonjs";
 import json from "@rollup/plugin-json";
 import resolve from "@rollup/plugin-node-resolve";
 import typescript from "@rollup/plugin-typescript";
-import peerDepsExternal from "rollup-plugin-peer-deps-external";
-import terser from "@rollup/plugin-terser";
-import postcss from "rollup-plugin-postcss";
-import dts from "rollup-plugin-dts";
 import url from "@rollup/plugin-url";
+import copy from "rollup-plugin-copy";
+import dts from "rollup-plugin-dts";
+import peerDepsExternal from "rollup-plugin-peer-deps-external";
+import postcss from "rollup-plugin-postcss";
 
 export default [
   {
@@ -34,17 +34,31 @@ export default [
       json({ compact: true }),
       commonjs(),
       postcss({
-        extensions: ['.css'],
+        extensions: [".css"],
         inject: true,
         extract: false,
         minimize: true,
       }),
-      url({
-        include: ['**/*.otf', '**/*.ttf', '**/*.woff', '**/*.woff2'],
-        limit: Infinity, // Bundle all fonts regardless of size
-        fileName: '[dirname][name][extname]',
-      }),
+      // url({
+      //   include: ["**/*.otf", "**/*.ttf", "**/*.woff", "**/*.woff2"],
+      //   limit: Infinity, // Bundle all fonts regardless of size
+      //   fileName: "[dirname][name][extname]",
+      // }),
       typescript({ tsconfig: "./tsconfig.json" }),
+      copy({
+        targets: [
+          { src: "src/ui/assets", dest: "dist/ui" },
+          { src: "src/ui/fonts", dest: "dist/ui" },
+        ],
+        flatten: false,
+        verbose: true,
+      }),
+      // url({
+      //   include: ["**/*.svg"], // Only process SVG files
+      //   limit: 0, // Forces SVGs to be copied to dist instead of inlining them
+      //   fileName: "ui/assets/[name].[hash][extname]",
+      //   publicPath: "./",
+      // }),
     ],
     external: ["react", "react-dom", "react/jsx-runtime"], // clearly externalize React
   },

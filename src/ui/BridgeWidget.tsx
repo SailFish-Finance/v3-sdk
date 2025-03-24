@@ -1,11 +1,15 @@
 import { ethers } from "ethers";
 import React, { useEffect, useMemo, useState } from "react";
 import { Bridge } from "../bridge";
+// import arbitrumLogo from "./assets/arbitrum.svg";
+// import bnbLogo from "./assets/bnb.svg";
+// import eduLogo from "./assets/edu.svg";
+import "./fonts/fonts.css";
 
 // SVG asset paths
-const bnbLogo = "/assets/bnb.svg";
-const arbitrumLogo = "/assets/arbitrum.svg";
-const eduLogo = "/assets/edu.svg";
+const bnbLogo = new URL("./assets/bnb.svg", import.meta.url).href;
+const arbitrumLogo = new URL("./assets/arbitrum.svg", import.meta.url).href;
+const eduLogo = new URL("./assets/edu.svg", import.meta.url).href;
 
 // Add window.ethereum type definition
 declare global {
@@ -187,7 +191,7 @@ const ErrorIcon = ({ className }: { className?: string }) => (
 // Toast Notification Component
 interface ToastProps {
   message: string;
-  type: 'success' | 'error' | 'info';
+  type: "success" | "error" | "info";
   visible: boolean;
   onClose: () => void;
 }
@@ -198,21 +202,25 @@ const Toast: React.FC<ToastProps> = ({ message, type, visible, onClose }) => {
       const timer = setTimeout(() => {
         onClose();
       }, 5000); // Auto close after 5 seconds
-      
+
       return () => clearTimeout(timer);
     }
   }, [visible, onClose]);
-  
+
   if (!visible) return null;
-  
+
   return (
     <div className="bridge-widget-toast">
       <div className={`bridge-widget-toast-content ${type}`}>
-        {type === 'success' && <SuccessIcon className="bridge-widget-toast-icon" />}
-        {type === 'error' && <ErrorIcon className="bridge-widget-toast-icon" />}
-        {type === 'info' && <InfoIcon className="bridge-widget-toast-icon" />}
+        {type === "success" && (
+          <SuccessIcon className="bridge-widget-toast-icon" />
+        )}
+        {type === "error" && <ErrorIcon className="bridge-widget-toast-icon" />}
+        {type === "info" && <InfoIcon className="bridge-widget-toast-icon" />}
         <span className="bridge-widget-toast-message">{message}</span>
-        <button className="bridge-widget-toast-close" onClick={onClose}>×</button>
+        <button className="bridge-widget-toast-close" onClick={onClose}>
+          ×
+        </button>
       </div>
     </div>
   );
@@ -896,10 +904,11 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
 
         <div className="bridge-widget-footer">
           <p>
-            Powered by <a 
-              href="https://app.sailfish.finance" 
-              target="_blank" 
-              rel="noopener noreferrer" 
+            Powered by{" "}
+            <a
+              href="https://app.sailfish.finance"
+              target="_blank"
+              rel="noopener noreferrer"
               className="bridge-widget-footer-link"
             >
               SailFish DEX
@@ -1111,8 +1120,12 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
         )}
 
         {/* Toast Notification */}
-        <Toast 
-          message={success ? `Successfully bridged ${amount} EDU to ${CHAINS[toChain].name}` : error || ""}
+        <Toast
+          message={
+            success
+              ? `Successfully bridged ${amount} EDU to ${CHAINS[toChain].name}`
+              : error || ""
+          }
           type={success ? "success" : error ? "error" : "info"}
           visible={!!(success || error)}
           onClose={() => {
