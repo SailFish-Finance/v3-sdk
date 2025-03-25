@@ -26,9 +26,9 @@ npm install @sailfishdex/v3-sdk
 ### Importing the SDK
 
 ```javascript
-const { Quoter, Router, TradeType } = require('sailfish-v3-sdk');
+const { Quoter, Router, TradeType } = require('@sailfishdex/v3-sdk');
 // or using ES modules
-import { Quoter, Router, TradeType } from 'sailfish-v3-sdk';
+import { Quoter, Router, TradeType } from '@sailfishdex/v3-sdk';
 ```
 
 ### Initializing
