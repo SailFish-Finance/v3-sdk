@@ -34,6 +34,7 @@ interface BridgeWidgetProps {
   signer?: ethers.Signer;
   onSuccess?: (txHash: string) => void;
   onError?: (error: Error) => void;
+  theme?: "sailer" | "edu.fun";
 }
 
 // Chain configurations
@@ -100,21 +101,21 @@ const NetworkSwitchArrow = () => (
     >
       <path
         d="M12.5 22C18.0228 22 22.5 17.5228 22.5 12C22.5 6.47715 18.0228 2 12.5 2C6.97715 2 2.5 6.47715 2.5 12C2.5 17.5228 6.97715 22 12.5 22Z"
-        stroke="#2964CC"
+        stroke="var(--color-primary-29)"
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M9 12H15"
-        stroke="#2964CC"
+        stroke="var(--color-primary-29)"
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M13 15L16 12L13 9"
-        stroke="#2964CC"
+        stroke="var(--color-primary-29)"
         strokeWidth="1.5"
         strokeLinecap="round"
         strokeLinejoin="round"
@@ -238,6 +239,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
   signer,
   onSuccess,
   onError,
+  theme = "sailer",
 }) => {
   // State
   const [activeTab, setActiveTab] = useState<TabType>("bta");
@@ -266,6 +268,13 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
   const [nativeBalance, setNativeBalance] = useState<string | null>(null);
   const [eduPrice, setEduPrice] = useState<number>(0.15); // Default estimated price
 
+  //set theme
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      window.document.documentElement.dataset.theme = theme;
+    }
+  }, []);
+
   // Fetch EDU price from CryptoCompare
   useEffect(() => {
     const fetchEduPrice = async () => {
@@ -278,8 +287,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           setEduPrice(data.RAW.EDU.USD.PRICE);
         }
       } catch (err) {
-        console.error("Error fetching EDU price:", err);
-        // Keep using the default price
+        // console.error("Error fetching EDU price:", err);
       }
     };
 
@@ -322,7 +330,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
             setChainId(parseInt(chainId, 16));
           });
         } catch (err) {
-          console.error("Failed to connect wallet:", err);
+          // console.error("Failed to connect wallet:", err);
           setError("Please connect your wallet to use the bridge.");
         }
       } else {
@@ -367,7 +375,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
     if (currentSigner && chainId) {
       return CHAINS[fromChain].chainId !== chainId;
     }
-    return false;
+    return true;
   }, [chainId, currentSigner, fromChain]);
 
   // Check if bridge is supported on the selected path
@@ -389,6 +397,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
     const updateFeeAndBalance = async () => {
       if (
         !currentSigner ||
+        isOnWrongChain ||
         !userAddress ||
         !isValidPath ||
         !amount ||
@@ -437,35 +446,20 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
         }
 
-        if (!hasEnough) {
-          setError(`Insufficient EDU balance on ${CHAINS[fromChain].name}`);
-        } else {
-          setError(null);
-        }
-
-        // Get balance
-        const provider = currentSigner.provider as ethers.Provider;
-        const eduContract = new ethers.Contract(
-          CHAINS[fromChain].eduAddress,
-          [
-            "function balanceOf(address) view returns (uint256)",
-            "function decimals() view returns (uint8)",
-          ],
-          provider
-        );
-
-        const decimals = await eduContract?.decimals();
-        const balanceWei = await eduContract?.balanceOf(userAddress);
-        const balanceFormatted = ethers.formatUnits(balanceWei, decimals);
-        setBalance(balanceFormatted);
+        // if (!hasEnough) {
+        //   setError(`Insufficient EDU balance on ${CHAINS[fromChain].name}`);
+        // } else {
+        //   setError(null);
+        // }
 
         // Get native balance
+        const provider = currentSigner.provider as ethers.Provider;
         const nativeBalanceWei = await provider.getBalance(userAddress);
         const nativeBalanceFormatted = ethers.formatEther(nativeBalanceWei);
         setNativeBalance(nativeBalanceFormatted);
       } catch (err) {
-        console.error("Error updating fee and balance:", err);
-        setError("Failed to get fee or balance information");
+        // console.error("Error updating fee and balance:", err);
+        // setError("Failed to get fee or balance information");
       } finally {
         setLoading(false);
       }
@@ -479,8 +473,34 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
     toChain,
     amount,
     isValidPath,
-    refreshingBalance,
+    isOnWrongChain,
   ]);
+
+  useEffect(() => {
+    const getBalance = async () => {
+      if (!currentSigner || isOnWrongChain) {
+        setBalance("");
+        return;
+      }
+      // Get native balance
+      const provider = currentSigner.provider as ethers.Provider;
+      const eduContract = new ethers.Contract(
+        CHAINS[fromChain].eduAddress,
+        [
+          "function balanceOf(address) view returns (uint256)",
+          "function decimals() view returns (uint8)",
+        ],
+        provider
+      );
+
+      const decimals = await eduContract?.decimals();
+      const balanceWei = await eduContract?.balanceOf(userAddress);
+      const balanceFormatted = ethers.formatUnits(balanceWei, decimals);
+      setBalance(balanceFormatted);
+    };
+
+    getBalance();
+  }, [isOnWrongChain, refreshingBalance]);
 
   // Handle percentage selection
   const handlePercentageSelect = (percentage: number) => {
@@ -507,10 +527,10 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
         method: "wallet_switchEthereumChain",
         params: [{ chainId: `0x${CHAINS[fromChain].chainId.toString(16)}` }],
       });
-    } catch (err) {
-      console.error("Failed to switch network:", err);
+    } catch (error) {
+      // console.error("Failed to switch network:", err);
       setError(
-        `Please switch your wallet to ${CHAINS[fromChain].name} network`
+        `Failed to switch your wallet to ${CHAINS[fromChain].name} network. Try doing it manually from your wallet.`
       );
     }
   };
@@ -542,7 +562,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
       setIsApproved(true);
       setStep("confirmation");
     } catch (err) {
-      console.error("Approval failed:", err);
+      // console.error("Approval failed:", err);
       setError("Failed to approve tokens");
     } finally {
       setLoading(false);
@@ -1148,6 +1168,39 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
         />
 
         <style>{`
+        :root{
+        --bridge-widget-bg-color: var(--popup);
+        --color-primary-41: #4169e1;
+        --color-primary-3a: #3a5fd9;
+        --color-primary-29: #2964cc;
+        --color-tab-hover: rgba(65, 105, 225, 0.1);
+        --color-border-color-1: #3a3b43;
+        --color-bg-1: #2d303e;
+        --percentage-bg: rgba(45, 48, 62, 0.7);
+         --percentage-button-bg: #3a414dx;
+           --percentage-button-bg-hover: #4b5169;
+           --button-disabled: #3c4156;
+           --popup: #1a1b23;
+           --gas-option-hover: #383b4d;
+        }
+
+        [data-theme="edu.fun"] {
+--bridge-widget-bg-color: #071f16;
+--color-primary-41: #02ecbc;
+ --color-primary-3a: #0b4832;
+ --color-primary-29: #09442a;
+ --color-tab-hover: #1e4838;
+  --color-border-color-1: #384942;
+   --color-bg-1: #384942;
+   --percentage-bg: #283836;
+   --percentage-button-bg: #0b4832;
+   --percentage-button-bg-hover: #09442a;
+   --button-disabled: #283836;
+   --popup: #071f16;
+   --gas-option-hover: #283836;
+          }
+
+
           /* Toast Notification Styles */
           .bridge-widget-toast {
             position: fixed;
@@ -1179,7 +1232,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           
           .bridge-widget-toast-content.info {
             background-color: #293a3a;
-            border-left: 4px solid #4169e1;
+            border-left: 4px solid var(--color-primary-41);
           }
           
           .bridge-widget-toast-icon {
@@ -1220,7 +1273,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
           .bridge-widget {
             font-family: "Ubuntu", sans-serif;
-            background-color: #1a1b23;
+            background-color: var(--bridge-widget-bg-color);
             color: #ffffff;
             border-radius: 0.625rem;
             width: 100%;
@@ -1271,7 +1324,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
             justify-content: center;
             background: transparent;
             color: #ffffff;
-            border: 1px solid #4169e1;
+            border: 1px solid var(--color-primary-41);
             border-radius: 0.5rem;
             padding: 0.5rem 1rem;
             font-size: 0.8rem;
@@ -1282,12 +1335,12 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
 
           .bridge-widget-tab.active {
-            background-color: #2964cc;
+            background-color: var(--color-primary-29);
             color: white;
           }
 
           .bridge-widget-tab:hover:not(.active) {
-            background-color: rgba(65, 105, 225, 0.1);
+            background-color: var(--color-tab-hover);
           }
 
           .bridge-widget-chain-icon {
@@ -1322,7 +1375,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           .bridge-widget-percentage {
             display: flex;
             align-items: center;
-            background-color: rgba(45, 48, 62, 0.7);
+            background-color: var(--percentage-bg);
             border-radius: 0.25rem;
             padding: 0.5rem 0.75rem;
             margin-bottom: 1rem;
@@ -1340,7 +1393,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
 
           .bridge-widget-percentage-button {
-            background-color: #3a414d;
+            background-color: var(--percentage-button-bg);
             border: none;
             color: white;
             border-radius: 1rem;
@@ -1352,7 +1405,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
 
           .bridge-widget-percentage-button:hover:not(:disabled) {
-            background-color: #4b5169;
+            background-color: var(--percentage-button-bg-hover);
           }
 
           .bridge-widget-percentage-button:disabled {
@@ -1368,7 +1421,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
             display: flex;
             align-items: center;
             background-color: transparent;
-            border: 1px solid #3a3b43;
+            border: 1px solid var(--color-border-color-1);
             border-radius: 0.25rem;
             padding: 0.5rem 1rem;
           }
@@ -1436,7 +1489,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
             align-items: center;
             gap: 0.5rem;
             background-color: transparent;
-            border: 1px solid #3a3b43;
+            border: 1px solid var(--color-border-color-1);
             border-radius: 0.25rem;
             padding: 0.5rem;
           }
@@ -1452,7 +1505,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
 
           .bridge-widget-transaction-details {
-            background-color: #2d303e;
+            background-color: var(--color-bg-1);
             border-radius: 0.25rem;
             padding: 0.5rem 1rem;
             margin-bottom: 1rem;
@@ -1495,7 +1548,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           .bridge-widget-tooltip .bridge-widget-tooltip-text {
             visibility: hidden;
             width: 220px;
-            background-color: #2d303e;
+            background-color: var(--color-bg-1);
             color: #fff;
             text-align: left;
             border-radius: 6px;
@@ -1509,7 +1562,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
             transition: opacity 0.3s;
             font-size: 0.75rem;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            border: 1px solid #3a3b43;
+            border: 1px solid var(--color-border-color-1);
           }
           
           .bridge-widget-tooltip:hover .bridge-widget-tooltip-text {
@@ -1526,7 +1579,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           .bridge-widget-gas-button {
             background: none;
             border: none;
-            color: #4169e1;
+            color: var(--color-primary-41);
             cursor: pointer;
           }
 
@@ -1534,7 +1587,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
             display: flex;
             align-items: flex-start;
             gap: 0.5rem;
-            background-color: #2d303e;
+            background-color: var(--color-bg-1);
             border-radius: 0.5rem;
             padding: 0.625rem;
             margin-bottom: 1rem;
@@ -1595,35 +1648,35 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
 
           .bridge-widget-connect,
           .bridge-widget-network-switch {
-            background-color: #2964cc;
+            background-color: var(--color-primary-29);
             color: white;
           }
 
           .bridge-widget-connect:hover,
           .bridge-widget-network-switch:hover {
-            background-color: #3a5fd9;
+            background-color: var(--color-primary-3a);
           }
 
           .bridge-widget-approve {
-            background-color: #7b68ee;
+            background-color:  var(--color-primary-29);
             color: white;
           }
 
           .bridge-widget-approve:hover:not(:disabled) {
-            background-color: #6a56e8;
+            background-color: var(--color-primary-3a);
           }
 
           .bridge-widget-bridge {
-            background-color: #2964cc;
+            background-color: var(--color-primary-29);
             color: white;
           }
 
           .bridge-widget-bridge:hover:not(:disabled) {
-            background-color: #3a5fd9;
+            background-color: var(--color-primary-3a);
           }
 
           .bridge-widget-disabled {
-            background-color: #3c4156;
+            background-color: var(--button-disabled);
             color: white;
             opacity: 0.7;
           }
@@ -1643,7 +1696,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
 
           .bridge-widget-footer-link {
-            color: #4169e1;
+            color: var(--color-primary-41);
             text-decoration: none;
             transition: all 0.2s;
           }
@@ -1667,7 +1720,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
 
           .bridge-widget-popup {
-            background-color: #1a1b23;
+            background-color: var(--popup);
             border-radius: 0.625rem;
             width: 100%;
             max-width: 30rem;
@@ -1688,22 +1741,24 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
 
           .bridge-widget-popup-content {
             text-align: center;
+            
           }
 
           .bridge-widget-popup-icon {
             margin: 0 auto 1rem;
             width: 3rem;
-            height: 3rem;
+            height: 3rem; 
           }
 
           .bridge-widget-popup-success-icon {
             color: #28a745;
-            margin-bottom: 1rem;
+            margin: 0 auto 1rem auto;
           }
 
           .bridge-widget-popup-error-icon {
             color: #e63946;
             margin-bottom: 1rem;
+            margin: 0 auto 1rem auto;
           }
 
           .bridge-widget-popup-title {
@@ -1724,7 +1779,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
             display: flex;
             align-items: center;
             gap: 0.25rem;
-            border: 1px solid #3a3b43;
+            border: 1px solid var(--color-border-color-1);
             border-radius: 0.25rem;
             padding: 0.5rem 1rem;
           }
@@ -1736,7 +1791,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
 
           .bridge-widget-popup-details {
-            background-color: #2d303e;
+            background-color: var(--color-bg-1);
             border-radius: 0.25rem;
             padding: 0.75rem;
             margin-bottom: 1rem;
@@ -1754,7 +1809,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
 
           .bridge-widget-popup-success-message {
-            border: 1px solid #3a3b43;
+            border: 1px solid var(--color-border-color-1);
             border-radius: 0.25rem;
             padding: 1rem;
             margin-bottom: 1rem;
@@ -1763,7 +1818,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
 
           .bridge-widget-popup-link {
             display: block;
-            color: #4169e1;
+            color: var(--color-primary-41);
             text-decoration: underline;
             margin-top: 0.5rem;
           }
@@ -1793,8 +1848,8 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           .bridge-widget-gas-option {
             flex: 1;
             padding: 0.75rem 0.5rem;
-            background-color: #2d303e;
-            border: 1px solid #3a3b43;
+            background-color: var(--color-bg-1);
+            border: 1px solid var(--color-border-color-1);
             border-radius: 0.5rem;
             color: white;
             font-size: 0.875rem;
@@ -1803,12 +1858,12 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
 
           .bridge-widget-gas-option:hover {
-            background-color: #383b4d;
+            background-color: var(--gas-option-hover);
           }
 
           .bridge-widget-gas-option.active {
-            background-color: #2964cc;
-            border-color: #2964cc;
+            background-color: var(--color-primary-29);
+            border-color: var(--color-primary-29);
           }
 
           .bridge-widget-gas-display {
@@ -1816,7 +1871,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
             flex-direction: column;
             align-items: center;
             padding: 1.5rem;
-            background-color: #2d303e;
+            background-color: var(--color-bg-1);
             border-radius: 0.5rem;
           }
 
@@ -1843,7 +1898,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
 
           .bridge-widget-loader {
             border: 4px solid rgba(65, 105, 225, 0.2);
-            border-left-color: #4169e1;
+            border-left-color: var(--color-primary-41);
             border-radius: 50%;
             width: 48px;
             height: 48px;
@@ -1864,7 +1919,7 @@ export const BridgeWidget: React.FC<BridgeWidgetProps> = ({
           }
 
           .bg-primary-700 {
-            background-color: #4169e1;
+            background-color: var(--color-primary-41);
           }
 
           .text-white {

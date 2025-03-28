@@ -68,7 +68,7 @@ export default function EmbeddedSimplePage() {
   if (!mounted) return null;
 
   return (
-    <div className="container">
+    <div className="min-h-dvh w-full container mx-auto">
       <Head>
         <title>SailFish DEX - Simple Embedded Bridge</title>
         <meta name="description" content="Bridge EDU tokens between chains" />
@@ -110,6 +110,7 @@ export default function EmbeddedSimplePage() {
               defaultAmount="1"
               onSuccess={handleSuccess}
               onError={handleError}
+              theme="edu.fun"
             />
           )}
         </div>
