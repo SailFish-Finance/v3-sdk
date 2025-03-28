@@ -26,18 +26,20 @@ npm install @sailfishdex/v3-sdk
 ### Importing the SDK
 
 ```javascript
-const { Quoter, Router, TradeType } = require('sailfish-v3-sdk');
+const { Quoter, Router, TradeType } = require("sailfish-v3-sdk");
 // or using ES modules
-import { Quoter, Router, TradeType } from 'sailfish-v3-sdk';
+import { Quoter, Router, TradeType } from "sailfish-v3-sdk";
 ```
 
 ### Initializing
 
 ```javascript
-const { ethers } = require('ethers');
+const { ethers } = require("ethers");
 
 // Initialize provider
-const provider = new ethers.JsonRpcProvider('https://rpc.edu-chain.raas.gelato.cloud');
+const provider = new ethers.JsonRpcProvider(
+  "https://rpc.edu-chain.raas.gelato.cloud"
+);
 
 // Initialize Quoter (for finding routes and getting quotes)
 const quoter = new Quoter(provider);
@@ -55,15 +57,18 @@ const router = new Router(signer);
 
 ```javascript
 // Token addresses
-const WEDU = '0xd02E8c38a8E3db71f8b2ae30B8186d7874934e12';
-const USDC = '0x836d275563bAb5E93Fd6Ca62a95dB7065Da94342';
+const WEDU = "0xd02E8c38a8E3db71f8b2ae30B8186d7874934e12";
+const USDC = "0x836d275563bAb5E93Fd6Ca62a95dB7065Da94342";
 
 // Get the best route
 const routes = await quoter.getBestRoute(WEDU, USDC);
 
-console.log('Found routes:', routes.routes.length);
-console.log('Best route type:', routes.routes[0].type);
-console.log('Best route path:', routes.routes[0].path.map(p => p.id));
+console.log("Found routes:", routes.routes.length);
+console.log("Best route type:", routes.routes[0].type);
+console.log(
+  "Best route path:",
+  routes.routes[0].path.map((p) => p.id)
+);
 ```
 
 ### Getting Quotes
@@ -73,25 +78,25 @@ console.log('Best route path:', routes.routes[0].path.map(p => p.id));
 const quote = await quoter.getQuote(
   WEDU,
   USDC,
-  '1.0',  // amountIn
-  '0',    // amountOut (not used for EXACT_INPUT)
+  "1.0", // amountIn
+  "0", // amountOut (not used for EXACT_INPUT)
   TradeType.EXACT_INPUT
 );
 
-console.log('Quote result:');
-console.log('- Amount in:', quote.amountIn, 'WEDU');
-console.log('- Amount out:', quote.amountOut, 'USDC');
-console.log('- Execution price: 1 WEDU =', quote.executionPrice, 'USDC');
-console.log('- Price impact:', quote.priceImpact, '%');
-console.log('- Fee tier:', quote.feeTier / 10000, '%');
-console.log('- Pool address:', quote.poolAddress);
+console.log("Quote result:");
+console.log("- Amount in:", quote.amountIn, "WEDU");
+console.log("- Amount out:", quote.amountOut, "USDC");
+console.log("- Execution price: 1 WEDU =", quote.executionPrice, "USDC");
+console.log("- Price impact:", quote.priceImpact, "%");
+console.log("- Fee tier:", quote.feeTier / 10000, "%");
+console.log("- Pool address:", quote.poolAddress);
 ```
 
 ### Executing a Swap
 
 ```javascript
 // Amount to swap (0.1 WEDU)
-const amountIn = '0.1';
+const amountIn = "0.1";
 const amountInWei = ethers.parseEther(amountIn);
 
 // Get a quote
@@ -99,7 +104,7 @@ const quote = await quoter.getQuote(
   WEDU,
   USDC,
   amountIn,
-  '0',
+  "0",
   TradeType.EXACT_INPUT
 );
 
@@ -113,26 +118,26 @@ const swapParams = await router.createSwapTransaction(
   TradeType.EXACT_INPUT,
   {
     slippagePercentage: 0.5, // 0.5% slippage tolerance
-    recipient: address
+    recipient: address,
   }
 );
 
 // Execute the swap
 const tx = await router.exactInputSingle(swapParams);
-console.log('Transaction sent:', tx.hash);
+console.log("Transaction sent:", tx.hash);
 
 // Wait for transaction to be mined
 const receipt = await tx.wait();
-console.log('Transaction confirmed in block', receipt.blockNumber);
+console.log("Transaction confirmed in block", receipt.blockNumber);
 ```
 
 ### Multi-hop Swaps
 
 ```javascript
 // Token addresses
-const WISER = '0xF9E03759752BE9fAA70a5556f103dbD385a2471C';
-const WEDU = '0xd02E8c38a8E3db71f8b2ae30B8186d7874934e12';
-const ESD = '0xd282dE0c2bd41556c887f319A5C19fF441dCdf90';
+const WISER = "0xF9E03759752BE9fAA70a5556f103dbD385a2471C";
+const WEDU = "0xd02E8c38a8E3db71f8b2ae30B8186d7874934e12";
+const ESD = "0xd282dE0c2bd41556c887f319A5C19fF441dCdf90";
 
 // Get routes for each hop
 const wiserToWeduRoutes = await quoter.getBestRoute(WISER, WEDU);
@@ -147,7 +152,7 @@ const quote1 = await quoter.getQuote(
   WISER,
   WEDU,
   amountIn,
-  '0',
+  "0",
   TradeType.EXACT_INPUT
 );
 
@@ -155,7 +160,7 @@ const quote2 = await quoter.getQuote(
   WEDU,
   ESD,
   quote1.amountOut,
-  '0',
+  "0",
   TradeType.EXACT_INPUT
 );
 
@@ -171,7 +176,7 @@ const swapParams = await router.createMultihopSwapTransaction(
   TradeType.EXACT_INPUT,
   {
     slippagePercentage: 1.0, // 1% slippage tolerance for multi-hop
-    recipient: address
+    recipient: address,
   }
 );
 
@@ -189,7 +194,7 @@ const isApproved = await router.isTokenApproved(tokenAddress, amount);
 if (!isApproved) {
   const approveTx = await router.approveToken(tokenAddress, amount);
   await approveTx.wait();
-  console.log('Token approved for spending');
+  console.log("Token approved for spending");
 }
 ```
 
@@ -200,18 +205,20 @@ The SDK provides functionality to bridge EDU tokens between different chains:
 #### BSC to Arbitrum
 
 ```javascript
-const { ethers } = require('ethers');
-const { Bridge } = require('sailfish-v3-sdk');
+const { ethers } = require("ethers");
+const { Bridge } = require("sailfish-v3-sdk");
 
 // Initialize provider for BSC
-const provider = new ethers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
+const provider = new ethers.JsonRpcProvider(
+  "https://bsc-dataseed.binance.org/"
+);
 const signer = new ethers.Wallet(privateKey, provider);
 
 // Initialize Bridge
 const bridge = new Bridge(signer);
 
 // Amount of EDU to bridge
-const amount = '100';
+const amount = "100";
 const address = await signer.getAddress();
 
 // Estimate the fee
@@ -227,24 +234,24 @@ if (!isApproved) {
 
 // Execute the bridge transaction
 const tx = await bridge.bridgeEduFromBscToArb(amount, address);
-console.log('Transaction sent:', tx.hash);
+console.log("Transaction sent:", tx.hash);
 ```
 
 #### Arbitrum to EDUCHAIN
 
 ```javascript
-const { ethers } = require('ethers');
-const { Bridge } = require('sailfish-v3-sdk');
+const { ethers } = require("ethers");
+const { Bridge } = require("sailfish-v3-sdk");
 
 // Initialize provider for Arbitrum
-const provider = new ethers.JsonRpcProvider('https://arb1.arbitrum.io/rpc');
+const provider = new ethers.JsonRpcProvider("https://arb1.arbitrum.io/rpc");
 const signer = new ethers.Wallet(privateKey, provider);
 
 // Initialize Bridge
 const bridge = new Bridge(signer);
 
 // Amount of EDU to bridge
-const amount = '100';
+const amount = "100";
 const address = await signer.getAddress();
 
 // Check if EDU tokens are approved on Arbitrum
@@ -256,7 +263,21 @@ if (!isApproved) {
 
 // Execute the bridge transaction
 const tx = await bridge.bridgeEduFromArbToEdu(amount);
-console.log('Transaction sent:', tx.hash);
+console.log("Transaction sent:", tx.hash);
+```
+
+### Bridging Widget
+
+The SDK provides a ready to use Bridging Widget to bridge EDU tokens between different chains.
+
+#### Themes
+
+For now you can make use of the `sailer` or `edu.fun` theme
+
+```javascript
+<BridgeWidget
+...
+theme="sailer" />
 ```
 
 ## API Reference
