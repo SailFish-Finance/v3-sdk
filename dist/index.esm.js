@@ -46,6 +46,3717 @@ function styleInject(css, ref) {
 var css_248z$1 = "@import url(\"https://fonts.googleapis.com/css2?family=Ubuntu:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap\");.ubuntu-light{font-weight:300}.ubuntu-light,.ubuntu-regular{font-family:Ubuntu,sans-serif;font-style:normal}.ubuntu-regular{font-weight:400}.ubuntu-medium{font-weight:500}.ubuntu-bold,.ubuntu-medium{font-family:Ubuntu,sans-serif;font-style:normal}.ubuntu-bold{font-weight:700}.ubuntu-light-italic{font-weight:300}.ubuntu-light-italic,.ubuntu-regular-italic{font-family:Ubuntu,sans-serif;font-style:italic}.ubuntu-regular-italic{font-weight:400}.ubuntu-medium-italic{font-weight:500}.ubuntu-bold-italic,.ubuntu-medium-italic{font-family:Ubuntu,sans-serif;font-style:italic}.ubuntu-bold-italic{font-weight:700}:root,body,button,html,input,select,textarea{font-family:Ubuntu,sans-serif}";
 styleInject(css_248z$1);
 
+function bind(fn, thisArg) {
+  return function wrap() {
+    return fn.apply(thisArg, arguments);
+  };
+}
+
+// utils is a library of generic helper functions non-specific to axios
+
+const {toString: toString$1} = Object.prototype;
+const {getPrototypeOf} = Object;
+
+const kindOf = (cache => thing => {
+    const str = toString$1.call(thing);
+    return cache[str] || (cache[str] = str.slice(8, -1).toLowerCase());
+})(Object.create(null));
+
+const kindOfTest = (type) => {
+  type = type.toLowerCase();
+  return (thing) => kindOf(thing) === type
+};
+
+const typeOfTest = type => thing => typeof thing === type;
+
+/**
+ * Determine if a value is an Array
+ *
+ * @param {Object} val The value to test
+ *
+ * @returns {boolean} True if value is an Array, otherwise false
+ */
+const {isArray} = Array;
+
+/**
+ * Determine if a value is undefined
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if the value is undefined, otherwise false
+ */
+const isUndefined = typeOfTest('undefined');
+
+/**
+ * Determine if a value is a Buffer
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a Buffer, otherwise false
+ */
+function isBuffer(val) {
+  return val !== null && !isUndefined(val) && val.constructor !== null && !isUndefined(val.constructor)
+    && isFunction(val.constructor.isBuffer) && val.constructor.isBuffer(val);
+}
+
+/**
+ * Determine if a value is an ArrayBuffer
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is an ArrayBuffer, otherwise false
+ */
+const isArrayBuffer = kindOfTest('ArrayBuffer');
+
+
+/**
+ * Determine if a value is a view on an ArrayBuffer
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a view on an ArrayBuffer, otherwise false
+ */
+function isArrayBufferView(val) {
+  let result;
+  if ((typeof ArrayBuffer !== 'undefined') && (ArrayBuffer.isView)) {
+    result = ArrayBuffer.isView(val);
+  } else {
+    result = (val) && (val.buffer) && (isArrayBuffer(val.buffer));
+  }
+  return result;
+}
+
+/**
+ * Determine if a value is a String
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a String, otherwise false
+ */
+const isString = typeOfTest('string');
+
+/**
+ * Determine if a value is a Function
+ *
+ * @param {*} val The value to test
+ * @returns {boolean} True if value is a Function, otherwise false
+ */
+const isFunction = typeOfTest('function');
+
+/**
+ * Determine if a value is a Number
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a Number, otherwise false
+ */
+const isNumber = typeOfTest('number');
+
+/**
+ * Determine if a value is an Object
+ *
+ * @param {*} thing The value to test
+ *
+ * @returns {boolean} True if value is an Object, otherwise false
+ */
+const isObject = (thing) => thing !== null && typeof thing === 'object';
+
+/**
+ * Determine if a value is a Boolean
+ *
+ * @param {*} thing The value to test
+ * @returns {boolean} True if value is a Boolean, otherwise false
+ */
+const isBoolean = thing => thing === true || thing === false;
+
+/**
+ * Determine if a value is a plain Object
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a plain Object, otherwise false
+ */
+const isPlainObject = (val) => {
+  if (kindOf(val) !== 'object') {
+    return false;
+  }
+
+  const prototype = getPrototypeOf(val);
+  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in val) && !(Symbol.iterator in val);
+};
+
+/**
+ * Determine if a value is a Date
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a Date, otherwise false
+ */
+const isDate = kindOfTest('Date');
+
+/**
+ * Determine if a value is a File
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a File, otherwise false
+ */
+const isFile = kindOfTest('File');
+
+/**
+ * Determine if a value is a Blob
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a Blob, otherwise false
+ */
+const isBlob = kindOfTest('Blob');
+
+/**
+ * Determine if a value is a FileList
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a File, otherwise false
+ */
+const isFileList = kindOfTest('FileList');
+
+/**
+ * Determine if a value is a Stream
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a Stream, otherwise false
+ */
+const isStream = (val) => isObject(val) && isFunction(val.pipe);
+
+/**
+ * Determine if a value is a FormData
+ *
+ * @param {*} thing The value to test
+ *
+ * @returns {boolean} True if value is an FormData, otherwise false
+ */
+const isFormData = (thing) => {
+  let kind;
+  return thing && (
+    (typeof FormData === 'function' && thing instanceof FormData) || (
+      isFunction(thing.append) && (
+        (kind = kindOf(thing)) === 'formdata' ||
+        // detect form-data instance
+        (kind === 'object' && isFunction(thing.toString) && thing.toString() === '[object FormData]')
+      )
+    )
+  )
+};
+
+/**
+ * Determine if a value is a URLSearchParams object
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a URLSearchParams object, otherwise false
+ */
+const isURLSearchParams = kindOfTest('URLSearchParams');
+
+const [isReadableStream, isRequest, isResponse, isHeaders] = ['ReadableStream', 'Request', 'Response', 'Headers'].map(kindOfTest);
+
+/**
+ * Trim excess whitespace off the beginning and end of a string
+ *
+ * @param {String} str The String to trim
+ *
+ * @returns {String} The String freed of excess whitespace
+ */
+const trim = (str) => str.trim ?
+  str.trim() : str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+
+/**
+ * Iterate over an Array or an Object invoking a function for each item.
+ *
+ * If `obj` is an Array callback will be called passing
+ * the value, index, and complete array for each item.
+ *
+ * If 'obj' is an Object callback will be called passing
+ * the value, key, and complete object for each property.
+ *
+ * @param {Object|Array} obj The object to iterate
+ * @param {Function} fn The callback to invoke for each item
+ *
+ * @param {Boolean} [allOwnKeys = false]
+ * @returns {any}
+ */
+function forEach(obj, fn, {allOwnKeys = false} = {}) {
+  // Don't bother if no value provided
+  if (obj === null || typeof obj === 'undefined') {
+    return;
+  }
+
+  let i;
+  let l;
+
+  // Force an array if not already something iterable
+  if (typeof obj !== 'object') {
+    /*eslint no-param-reassign:0*/
+    obj = [obj];
+  }
+
+  if (isArray(obj)) {
+    // Iterate over array values
+    for (i = 0, l = obj.length; i < l; i++) {
+      fn.call(null, obj[i], i, obj);
+    }
+  } else {
+    // Iterate over object keys
+    const keys = allOwnKeys ? Object.getOwnPropertyNames(obj) : Object.keys(obj);
+    const len = keys.length;
+    let key;
+
+    for (i = 0; i < len; i++) {
+      key = keys[i];
+      fn.call(null, obj[key], key, obj);
+    }
+  }
+}
+
+function findKey(obj, key) {
+  key = key.toLowerCase();
+  const keys = Object.keys(obj);
+  let i = keys.length;
+  let _key;
+  while (i-- > 0) {
+    _key = keys[i];
+    if (key === _key.toLowerCase()) {
+      return _key;
+    }
+  }
+  return null;
+}
+
+const _global = (() => {
+  /*eslint no-undef:0*/
+  if (typeof globalThis !== "undefined") return globalThis;
+  return typeof self !== "undefined" ? self : (typeof window !== 'undefined' ? window : global)
+})();
+
+const isContextDefined = (context) => !isUndefined(context) && context !== _global;
+
+/**
+ * Accepts varargs expecting each argument to be an object, then
+ * immutably merges the properties of each object and returns result.
+ *
+ * When multiple objects contain the same key the later object in
+ * the arguments list will take precedence.
+ *
+ * Example:
+ *
+ * ```js
+ * var result = merge({foo: 123}, {foo: 456});
+ * console.log(result.foo); // outputs 456
+ * ```
+ *
+ * @param {Object} obj1 Object to merge
+ *
+ * @returns {Object} Result of all merge properties
+ */
+function merge(/* obj1, obj2, obj3, ... */) {
+  const {caseless} = isContextDefined(this) && this || {};
+  const result = {};
+  const assignValue = (val, key) => {
+    const targetKey = caseless && findKey(result, key) || key;
+    if (isPlainObject(result[targetKey]) && isPlainObject(val)) {
+      result[targetKey] = merge(result[targetKey], val);
+    } else if (isPlainObject(val)) {
+      result[targetKey] = merge({}, val);
+    } else if (isArray(val)) {
+      result[targetKey] = val.slice();
+    } else {
+      result[targetKey] = val;
+    }
+  };
+
+  for (let i = 0, l = arguments.length; i < l; i++) {
+    arguments[i] && forEach(arguments[i], assignValue);
+  }
+  return result;
+}
+
+/**
+ * Extends object a by mutably adding to it the properties of object b.
+ *
+ * @param {Object} a The object to be extended
+ * @param {Object} b The object to copy properties from
+ * @param {Object} thisArg The object to bind function to
+ *
+ * @param {Boolean} [allOwnKeys]
+ * @returns {Object} The resulting value of object a
+ */
+const extend = (a, b, thisArg, {allOwnKeys}= {}) => {
+  forEach(b, (val, key) => {
+    if (thisArg && isFunction(val)) {
+      a[key] = bind(val, thisArg);
+    } else {
+      a[key] = val;
+    }
+  }, {allOwnKeys});
+  return a;
+};
+
+/**
+ * Remove byte order marker. This catches EF BB BF (the UTF-8 BOM)
+ *
+ * @param {string} content with BOM
+ *
+ * @returns {string} content value without BOM
+ */
+const stripBOM = (content) => {
+  if (content.charCodeAt(0) === 0xFEFF) {
+    content = content.slice(1);
+  }
+  return content;
+};
+
+/**
+ * Inherit the prototype methods from one constructor into another
+ * @param {function} constructor
+ * @param {function} superConstructor
+ * @param {object} [props]
+ * @param {object} [descriptors]
+ *
+ * @returns {void}
+ */
+const inherits = (constructor, superConstructor, props, descriptors) => {
+  constructor.prototype = Object.create(superConstructor.prototype, descriptors);
+  constructor.prototype.constructor = constructor;
+  Object.defineProperty(constructor, 'super', {
+    value: superConstructor.prototype
+  });
+  props && Object.assign(constructor.prototype, props);
+};
+
+/**
+ * Resolve object with deep prototype chain to a flat object
+ * @param {Object} sourceObj source object
+ * @param {Object} [destObj]
+ * @param {Function|Boolean} [filter]
+ * @param {Function} [propFilter]
+ *
+ * @returns {Object}
+ */
+const toFlatObject = (sourceObj, destObj, filter, propFilter) => {
+  let props;
+  let i;
+  let prop;
+  const merged = {};
+
+  destObj = destObj || {};
+  // eslint-disable-next-line no-eq-null,eqeqeq
+  if (sourceObj == null) return destObj;
+
+  do {
+    props = Object.getOwnPropertyNames(sourceObj);
+    i = props.length;
+    while (i-- > 0) {
+      prop = props[i];
+      if ((!propFilter || propFilter(prop, sourceObj, destObj)) && !merged[prop]) {
+        destObj[prop] = sourceObj[prop];
+        merged[prop] = true;
+      }
+    }
+    sourceObj = filter !== false && getPrototypeOf(sourceObj);
+  } while (sourceObj && (!filter || filter(sourceObj, destObj)) && sourceObj !== Object.prototype);
+
+  return destObj;
+};
+
+/**
+ * Determines whether a string ends with the characters of a specified string
+ *
+ * @param {String} str
+ * @param {String} searchString
+ * @param {Number} [position= 0]
+ *
+ * @returns {boolean}
+ */
+const endsWith = (str, searchString, position) => {
+  str = String(str);
+  if (position === undefined || position > str.length) {
+    position = str.length;
+  }
+  position -= searchString.length;
+  const lastIndex = str.indexOf(searchString, position);
+  return lastIndex !== -1 && lastIndex === position;
+};
+
+
+/**
+ * Returns new array from array like object or null if failed
+ *
+ * @param {*} [thing]
+ *
+ * @returns {?Array}
+ */
+const toArray = (thing) => {
+  if (!thing) return null;
+  if (isArray(thing)) return thing;
+  let i = thing.length;
+  if (!isNumber(i)) return null;
+  const arr = new Array(i);
+  while (i-- > 0) {
+    arr[i] = thing[i];
+  }
+  return arr;
+};
+
+/**
+ * Checking if the Uint8Array exists and if it does, it returns a function that checks if the
+ * thing passed in is an instance of Uint8Array
+ *
+ * @param {TypedArray}
+ *
+ * @returns {Array}
+ */
+// eslint-disable-next-line func-names
+const isTypedArray = (TypedArray => {
+  // eslint-disable-next-line func-names
+  return thing => {
+    return TypedArray && thing instanceof TypedArray;
+  };
+})(typeof Uint8Array !== 'undefined' && getPrototypeOf(Uint8Array));
+
+/**
+ * For each entry in the object, call the function with the key and value.
+ *
+ * @param {Object<any, any>} obj - The object to iterate over.
+ * @param {Function} fn - The function to call for each entry.
+ *
+ * @returns {void}
+ */
+const forEachEntry = (obj, fn) => {
+  const generator = obj && obj[Symbol.iterator];
+
+  const iterator = generator.call(obj);
+
+  let result;
+
+  while ((result = iterator.next()) && !result.done) {
+    const pair = result.value;
+    fn.call(obj, pair[0], pair[1]);
+  }
+};
+
+/**
+ * It takes a regular expression and a string, and returns an array of all the matches
+ *
+ * @param {string} regExp - The regular expression to match against.
+ * @param {string} str - The string to search.
+ *
+ * @returns {Array<boolean>}
+ */
+const matchAll = (regExp, str) => {
+  let matches;
+  const arr = [];
+
+  while ((matches = regExp.exec(str)) !== null) {
+    arr.push(matches);
+  }
+
+  return arr;
+};
+
+/* Checking if the kindOfTest function returns true when passed an HTMLFormElement. */
+const isHTMLForm = kindOfTest('HTMLFormElement');
+
+const toCamelCase = str => {
+  return str.toLowerCase().replace(/[-_\s]([a-z\d])(\w*)/g,
+    function replacer(m, p1, p2) {
+      return p1.toUpperCase() + p2;
+    }
+  );
+};
+
+/* Creating a function that will check if an object has a property. */
+const hasOwnProperty = (({hasOwnProperty}) => (obj, prop) => hasOwnProperty.call(obj, prop))(Object.prototype);
+
+/**
+ * Determine if a value is a RegExp object
+ *
+ * @param {*} val The value to test
+ *
+ * @returns {boolean} True if value is a RegExp object, otherwise false
+ */
+const isRegExp = kindOfTest('RegExp');
+
+const reduceDescriptors = (obj, reducer) => {
+  const descriptors = Object.getOwnPropertyDescriptors(obj);
+  const reducedDescriptors = {};
+
+  forEach(descriptors, (descriptor, name) => {
+    let ret;
+    if ((ret = reducer(descriptor, name, obj)) !== false) {
+      reducedDescriptors[name] = ret || descriptor;
+    }
+  });
+
+  Object.defineProperties(obj, reducedDescriptors);
+};
+
+/**
+ * Makes all methods read-only
+ * @param {Object} obj
+ */
+
+const freezeMethods = (obj) => {
+  reduceDescriptors(obj, (descriptor, name) => {
+    // skip restricted props in strict mode
+    if (isFunction(obj) && ['arguments', 'caller', 'callee'].indexOf(name) !== -1) {
+      return false;
+    }
+
+    const value = obj[name];
+
+    if (!isFunction(value)) return;
+
+    descriptor.enumerable = false;
+
+    if ('writable' in descriptor) {
+      descriptor.writable = false;
+      return;
+    }
+
+    if (!descriptor.set) {
+      descriptor.set = () => {
+        throw Error('Can not rewrite read-only method \'' + name + '\'');
+      };
+    }
+  });
+};
+
+const toObjectSet = (arrayOrString, delimiter) => {
+  const obj = {};
+
+  const define = (arr) => {
+    arr.forEach(value => {
+      obj[value] = true;
+    });
+  };
+
+  isArray(arrayOrString) ? define(arrayOrString) : define(String(arrayOrString).split(delimiter));
+
+  return obj;
+};
+
+const noop = () => {};
+
+const toFiniteNumber = (value, defaultValue) => {
+  return value != null && Number.isFinite(value = +value) ? value : defaultValue;
+};
+
+/**
+ * If the thing is a FormData object, return true, otherwise return false.
+ *
+ * @param {unknown} thing - The thing to check.
+ *
+ * @returns {boolean}
+ */
+function isSpecCompliantForm(thing) {
+  return !!(thing && isFunction(thing.append) && thing[Symbol.toStringTag] === 'FormData' && thing[Symbol.iterator]);
+}
+
+const toJSONObject = (obj) => {
+  const stack = new Array(10);
+
+  const visit = (source, i) => {
+
+    if (isObject(source)) {
+      if (stack.indexOf(source) >= 0) {
+        return;
+      }
+
+      if(!('toJSON' in source)) {
+        stack[i] = source;
+        const target = isArray(source) ? [] : {};
+
+        forEach(source, (value, key) => {
+          const reducedValue = visit(value, i + 1);
+          !isUndefined(reducedValue) && (target[key] = reducedValue);
+        });
+
+        stack[i] = undefined;
+
+        return target;
+      }
+    }
+
+    return source;
+  };
+
+  return visit(obj, 0);
+};
+
+const isAsyncFn = kindOfTest('AsyncFunction');
+
+const isThenable = (thing) =>
+  thing && (isObject(thing) || isFunction(thing)) && isFunction(thing.then) && isFunction(thing.catch);
+
+// original code
+// https://github.com/DigitalBrainJS/AxiosPromise/blob/16deab13710ec09779922131f3fa5954320f83ab/lib/utils.js#L11-L34
+
+const _setImmediate = ((setImmediateSupported, postMessageSupported) => {
+  if (setImmediateSupported) {
+    return setImmediate;
+  }
+
+  return postMessageSupported ? ((token, callbacks) => {
+    _global.addEventListener("message", ({source, data}) => {
+      if (source === _global && data === token) {
+        callbacks.length && callbacks.shift()();
+      }
+    }, false);
+
+    return (cb) => {
+      callbacks.push(cb);
+      _global.postMessage(token, "*");
+    }
+  })(`axios@${Math.random()}`, []) : (cb) => setTimeout(cb);
+})(
+  typeof setImmediate === 'function',
+  isFunction(_global.postMessage)
+);
+
+const asap = typeof queueMicrotask !== 'undefined' ?
+  queueMicrotask.bind(_global) : ( typeof process !== 'undefined' && process.nextTick || _setImmediate);
+
+// *********************
+
+var utils$1 = {
+  isArray,
+  isArrayBuffer,
+  isBuffer,
+  isFormData,
+  isArrayBufferView,
+  isString,
+  isNumber,
+  isBoolean,
+  isObject,
+  isPlainObject,
+  isReadableStream,
+  isRequest,
+  isResponse,
+  isHeaders,
+  isUndefined,
+  isDate,
+  isFile,
+  isBlob,
+  isRegExp,
+  isFunction,
+  isStream,
+  isURLSearchParams,
+  isTypedArray,
+  isFileList,
+  forEach,
+  merge,
+  extend,
+  trim,
+  stripBOM,
+  inherits,
+  toFlatObject,
+  kindOf,
+  kindOfTest,
+  endsWith,
+  toArray,
+  forEachEntry,
+  matchAll,
+  isHTMLForm,
+  hasOwnProperty,
+  hasOwnProp: hasOwnProperty, // an alias to avoid ESLint no-prototype-builtins detection
+  reduceDescriptors,
+  freezeMethods,
+  toObjectSet,
+  toCamelCase,
+  noop,
+  toFiniteNumber,
+  findKey,
+  global: _global,
+  isContextDefined,
+  isSpecCompliantForm,
+  toJSONObject,
+  isAsyncFn,
+  isThenable,
+  setImmediate: _setImmediate,
+  asap
+};
+
+/**
+ * Create an Error with the specified message, config, error code, request and response.
+ *
+ * @param {string} message The error message.
+ * @param {string} [code] The error code (for example, 'ECONNABORTED').
+ * @param {Object} [config] The config.
+ * @param {Object} [request] The request.
+ * @param {Object} [response] The response.
+ *
+ * @returns {Error} The created error.
+ */
+function AxiosError$1(message, code, config, request, response) {
+  Error.call(this);
+
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(this, this.constructor);
+  } else {
+    this.stack = (new Error()).stack;
+  }
+
+  this.message = message;
+  this.name = 'AxiosError';
+  code && (this.code = code);
+  config && (this.config = config);
+  request && (this.request = request);
+  if (response) {
+    this.response = response;
+    this.status = response.status ? response.status : null;
+  }
+}
+
+utils$1.inherits(AxiosError$1, Error, {
+  toJSON: function toJSON() {
+    return {
+      // Standard
+      message: this.message,
+      name: this.name,
+      // Microsoft
+      description: this.description,
+      number: this.number,
+      // Mozilla
+      fileName: this.fileName,
+      lineNumber: this.lineNumber,
+      columnNumber: this.columnNumber,
+      stack: this.stack,
+      // Axios
+      config: utils$1.toJSONObject(this.config),
+      code: this.code,
+      status: this.status
+    };
+  }
+});
+
+const prototype$1 = AxiosError$1.prototype;
+const descriptors = {};
+
+[
+  'ERR_BAD_OPTION_VALUE',
+  'ERR_BAD_OPTION',
+  'ECONNABORTED',
+  'ETIMEDOUT',
+  'ERR_NETWORK',
+  'ERR_FR_TOO_MANY_REDIRECTS',
+  'ERR_DEPRECATED',
+  'ERR_BAD_RESPONSE',
+  'ERR_BAD_REQUEST',
+  'ERR_CANCELED',
+  'ERR_NOT_SUPPORT',
+  'ERR_INVALID_URL'
+// eslint-disable-next-line func-names
+].forEach(code => {
+  descriptors[code] = {value: code};
+});
+
+Object.defineProperties(AxiosError$1, descriptors);
+Object.defineProperty(prototype$1, 'isAxiosError', {value: true});
+
+// eslint-disable-next-line func-names
+AxiosError$1.from = (error, code, config, request, response, customProps) => {
+  const axiosError = Object.create(prototype$1);
+
+  utils$1.toFlatObject(error, axiosError, function filter(obj) {
+    return obj !== Error.prototype;
+  }, prop => {
+    return prop !== 'isAxiosError';
+  });
+
+  AxiosError$1.call(axiosError, error.message, code, config, request, response);
+
+  axiosError.cause = error;
+
+  axiosError.name = error.name;
+
+  customProps && Object.assign(axiosError, customProps);
+
+  return axiosError;
+};
+
+// eslint-disable-next-line strict
+var httpAdapter = null;
+
+/**
+ * Determines if the given thing is a array or js object.
+ *
+ * @param {string} thing - The object or array to be visited.
+ *
+ * @returns {boolean}
+ */
+function isVisitable(thing) {
+  return utils$1.isPlainObject(thing) || utils$1.isArray(thing);
+}
+
+/**
+ * It removes the brackets from the end of a string
+ *
+ * @param {string} key - The key of the parameter.
+ *
+ * @returns {string} the key without the brackets.
+ */
+function removeBrackets(key) {
+  return utils$1.endsWith(key, '[]') ? key.slice(0, -2) : key;
+}
+
+/**
+ * It takes a path, a key, and a boolean, and returns a string
+ *
+ * @param {string} path - The path to the current key.
+ * @param {string} key - The key of the current object being iterated over.
+ * @param {string} dots - If true, the key will be rendered with dots instead of brackets.
+ *
+ * @returns {string} The path to the current key.
+ */
+function renderKey(path, key, dots) {
+  if (!path) return key;
+  return path.concat(key).map(function each(token, i) {
+    // eslint-disable-next-line no-param-reassign
+    token = removeBrackets(token);
+    return !dots && i ? '[' + token + ']' : token;
+  }).join(dots ? '.' : '');
+}
+
+/**
+ * If the array is an array and none of its elements are visitable, then it's a flat array.
+ *
+ * @param {Array<any>} arr - The array to check
+ *
+ * @returns {boolean}
+ */
+function isFlatArray(arr) {
+  return utils$1.isArray(arr) && !arr.some(isVisitable);
+}
+
+const predicates = utils$1.toFlatObject(utils$1, {}, null, function filter(prop) {
+  return /^is[A-Z]/.test(prop);
+});
+
+/**
+ * Convert a data object to FormData
+ *
+ * @param {Object} obj
+ * @param {?Object} [formData]
+ * @param {?Object} [options]
+ * @param {Function} [options.visitor]
+ * @param {Boolean} [options.metaTokens = true]
+ * @param {Boolean} [options.dots = false]
+ * @param {?Boolean} [options.indexes = false]
+ *
+ * @returns {Object}
+ **/
+
+/**
+ * It converts an object into a FormData object
+ *
+ * @param {Object<any, any>} obj - The object to convert to form data.
+ * @param {string} formData - The FormData object to append to.
+ * @param {Object<string, any>} options
+ *
+ * @returns
+ */
+function toFormData$1(obj, formData, options) {
+  if (!utils$1.isObject(obj)) {
+    throw new TypeError('target must be an object');
+  }
+
+  // eslint-disable-next-line no-param-reassign
+  formData = formData || new (FormData)();
+
+  // eslint-disable-next-line no-param-reassign
+  options = utils$1.toFlatObject(options, {
+    metaTokens: true,
+    dots: false,
+    indexes: false
+  }, false, function defined(option, source) {
+    // eslint-disable-next-line no-eq-null,eqeqeq
+    return !utils$1.isUndefined(source[option]);
+  });
+
+  const metaTokens = options.metaTokens;
+  // eslint-disable-next-line no-use-before-define
+  const visitor = options.visitor || defaultVisitor;
+  const dots = options.dots;
+  const indexes = options.indexes;
+  const _Blob = options.Blob || typeof Blob !== 'undefined' && Blob;
+  const useBlob = _Blob && utils$1.isSpecCompliantForm(formData);
+
+  if (!utils$1.isFunction(visitor)) {
+    throw new TypeError('visitor must be a function');
+  }
+
+  function convertValue(value) {
+    if (value === null) return '';
+
+    if (utils$1.isDate(value)) {
+      return value.toISOString();
+    }
+
+    if (!useBlob && utils$1.isBlob(value)) {
+      throw new AxiosError$1('Blob is not supported. Use a Buffer instead.');
+    }
+
+    if (utils$1.isArrayBuffer(value) || utils$1.isTypedArray(value)) {
+      return useBlob && typeof Blob === 'function' ? new Blob([value]) : Buffer.from(value);
+    }
+
+    return value;
+  }
+
+  /**
+   * Default visitor.
+   *
+   * @param {*} value
+   * @param {String|Number} key
+   * @param {Array<String|Number>} path
+   * @this {FormData}
+   *
+   * @returns {boolean} return true to visit the each prop of the value recursively
+   */
+  function defaultVisitor(value, key, path) {
+    let arr = value;
+
+    if (value && !path && typeof value === 'object') {
+      if (utils$1.endsWith(key, '{}')) {
+        // eslint-disable-next-line no-param-reassign
+        key = metaTokens ? key : key.slice(0, -2);
+        // eslint-disable-next-line no-param-reassign
+        value = JSON.stringify(value);
+      } else if (
+        (utils$1.isArray(value) && isFlatArray(value)) ||
+        ((utils$1.isFileList(value) || utils$1.endsWith(key, '[]')) && (arr = utils$1.toArray(value))
+        )) {
+        // eslint-disable-next-line no-param-reassign
+        key = removeBrackets(key);
+
+        arr.forEach(function each(el, index) {
+          !(utils$1.isUndefined(el) || el === null) && formData.append(
+            // eslint-disable-next-line no-nested-ternary
+            indexes === true ? renderKey([key], index, dots) : (indexes === null ? key : key + '[]'),
+            convertValue(el)
+          );
+        });
+        return false;
+      }
+    }
+
+    if (isVisitable(value)) {
+      return true;
+    }
+
+    formData.append(renderKey(path, key, dots), convertValue(value));
+
+    return false;
+  }
+
+  const stack = [];
+
+  const exposedHelpers = Object.assign(predicates, {
+    defaultVisitor,
+    convertValue,
+    isVisitable
+  });
+
+  function build(value, path) {
+    if (utils$1.isUndefined(value)) return;
+
+    if (stack.indexOf(value) !== -1) {
+      throw Error('Circular reference detected in ' + path.join('.'));
+    }
+
+    stack.push(value);
+
+    utils$1.forEach(value, function each(el, key) {
+      const result = !(utils$1.isUndefined(el) || el === null) && visitor.call(
+        formData, el, utils$1.isString(key) ? key.trim() : key, path, exposedHelpers
+      );
+
+      if (result === true) {
+        build(el, path ? path.concat(key) : [key]);
+      }
+    });
+
+    stack.pop();
+  }
+
+  if (!utils$1.isObject(obj)) {
+    throw new TypeError('data must be an object');
+  }
+
+  build(obj);
+
+  return formData;
+}
+
+/**
+ * It encodes a string by replacing all characters that are not in the unreserved set with
+ * their percent-encoded equivalents
+ *
+ * @param {string} str - The string to encode.
+ *
+ * @returns {string} The encoded string.
+ */
+function encode$1(str) {
+  const charMap = {
+    '!': '%21',
+    "'": '%27',
+    '(': '%28',
+    ')': '%29',
+    '~': '%7E',
+    '%20': '+',
+    '%00': '\x00'
+  };
+  return encodeURIComponent(str).replace(/[!'()~]|%20|%00/g, function replacer(match) {
+    return charMap[match];
+  });
+}
+
+/**
+ * It takes a params object and converts it to a FormData object
+ *
+ * @param {Object<string, any>} params - The parameters to be converted to a FormData object.
+ * @param {Object<string, any>} options - The options object passed to the Axios constructor.
+ *
+ * @returns {void}
+ */
+function AxiosURLSearchParams(params, options) {
+  this._pairs = [];
+
+  params && toFormData$1(params, this, options);
+}
+
+const prototype = AxiosURLSearchParams.prototype;
+
+prototype.append = function append(name, value) {
+  this._pairs.push([name, value]);
+};
+
+prototype.toString = function toString(encoder) {
+  const _encode = encoder ? function(value) {
+    return encoder.call(this, value, encode$1);
+  } : encode$1;
+
+  return this._pairs.map(function each(pair) {
+    return _encode(pair[0]) + '=' + _encode(pair[1]);
+  }, '').join('&');
+};
+
+/**
+ * It replaces all instances of the characters `:`, `$`, `,`, `+`, `[`, and `]` with their
+ * URI encoded counterparts
+ *
+ * @param {string} val The value to be encoded.
+ *
+ * @returns {string} The encoded value.
+ */
+function encode(val) {
+  return encodeURIComponent(val).
+    replace(/%3A/gi, ':').
+    replace(/%24/g, '$').
+    replace(/%2C/gi, ',').
+    replace(/%20/g, '+').
+    replace(/%5B/gi, '[').
+    replace(/%5D/gi, ']');
+}
+
+/**
+ * Build a URL by appending params to the end
+ *
+ * @param {string} url The base of the url (e.g., http://www.google.com)
+ * @param {object} [params] The params to be appended
+ * @param {?(object|Function)} options
+ *
+ * @returns {string} The formatted url
+ */
+function buildURL(url, params, options) {
+  /*eslint no-param-reassign:0*/
+  if (!params) {
+    return url;
+  }
+  
+  const _encode = options && options.encode || encode;
+
+  if (utils$1.isFunction(options)) {
+    options = {
+      serialize: options
+    };
+  } 
+
+  const serializeFn = options && options.serialize;
+
+  let serializedParams;
+
+  if (serializeFn) {
+    serializedParams = serializeFn(params, options);
+  } else {
+    serializedParams = utils$1.isURLSearchParams(params) ?
+      params.toString() :
+      new AxiosURLSearchParams(params, options).toString(_encode);
+  }
+
+  if (serializedParams) {
+    const hashmarkIndex = url.indexOf("#");
+
+    if (hashmarkIndex !== -1) {
+      url = url.slice(0, hashmarkIndex);
+    }
+    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams;
+  }
+
+  return url;
+}
+
+class InterceptorManager {
+  constructor() {
+    this.handlers = [];
+  }
+
+  /**
+   * Add a new interceptor to the stack
+   *
+   * @param {Function} fulfilled The function to handle `then` for a `Promise`
+   * @param {Function} rejected The function to handle `reject` for a `Promise`
+   *
+   * @return {Number} An ID used to remove interceptor later
+   */
+  use(fulfilled, rejected, options) {
+    this.handlers.push({
+      fulfilled,
+      rejected,
+      synchronous: options ? options.synchronous : false,
+      runWhen: options ? options.runWhen : null
+    });
+    return this.handlers.length - 1;
+  }
+
+  /**
+   * Remove an interceptor from the stack
+   *
+   * @param {Number} id The ID that was returned by `use`
+   *
+   * @returns {Boolean} `true` if the interceptor was removed, `false` otherwise
+   */
+  eject(id) {
+    if (this.handlers[id]) {
+      this.handlers[id] = null;
+    }
+  }
+
+  /**
+   * Clear all interceptors from the stack
+   *
+   * @returns {void}
+   */
+  clear() {
+    if (this.handlers) {
+      this.handlers = [];
+    }
+  }
+
+  /**
+   * Iterate over all the registered interceptors
+   *
+   * This method is particularly useful for skipping over any
+   * interceptors that may have become `null` calling `eject`.
+   *
+   * @param {Function} fn The function to call for each interceptor
+   *
+   * @returns {void}
+   */
+  forEach(fn) {
+    utils$1.forEach(this.handlers, function forEachHandler(h) {
+      if (h !== null) {
+        fn(h);
+      }
+    });
+  }
+}
+
+var transitionalDefaults = {
+  silentJSONParsing: true,
+  forcedJSONParsing: true,
+  clarifyTimeoutError: false
+};
+
+var URLSearchParams$1 = typeof URLSearchParams !== 'undefined' ? URLSearchParams : AxiosURLSearchParams;
+
+var FormData$1 = typeof FormData !== 'undefined' ? FormData : null;
+
+var Blob$1 = typeof Blob !== 'undefined' ? Blob : null;
+
+var platform$1 = {
+  isBrowser: true,
+  classes: {
+    URLSearchParams: URLSearchParams$1,
+    FormData: FormData$1,
+    Blob: Blob$1
+  },
+  protocols: ['http', 'https', 'file', 'blob', 'url', 'data']
+};
+
+const hasBrowserEnv = typeof window !== 'undefined' && typeof document !== 'undefined';
+
+const _navigator = typeof navigator === 'object' && navigator || undefined;
+
+/**
+ * Determine if we're running in a standard browser environment
+ *
+ * This allows axios to run in a web worker, and react-native.
+ * Both environments support XMLHttpRequest, but not fully standard globals.
+ *
+ * web workers:
+ *  typeof window -> undefined
+ *  typeof document -> undefined
+ *
+ * react-native:
+ *  navigator.product -> 'ReactNative'
+ * nativescript
+ *  navigator.product -> 'NativeScript' or 'NS'
+ *
+ * @returns {boolean}
+ */
+const hasStandardBrowserEnv = hasBrowserEnv &&
+  (!_navigator || ['ReactNative', 'NativeScript', 'NS'].indexOf(_navigator.product) < 0);
+
+/**
+ * Determine if we're running in a standard browser webWorker environment
+ *
+ * Although the `isStandardBrowserEnv` method indicates that
+ * `allows axios to run in a web worker`, the WebWorker will still be
+ * filtered out due to its judgment standard
+ * `typeof window !== 'undefined' && typeof document !== 'undefined'`.
+ * This leads to a problem when axios post `FormData` in webWorker
+ */
+const hasStandardBrowserWebWorkerEnv = (() => {
+  return (
+    typeof WorkerGlobalScope !== 'undefined' &&
+    // eslint-disable-next-line no-undef
+    self instanceof WorkerGlobalScope &&
+    typeof self.importScripts === 'function'
+  );
+})();
+
+const origin = hasBrowserEnv && window.location.href || 'http://localhost';
+
+var utils = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  hasBrowserEnv: hasBrowserEnv,
+  hasStandardBrowserEnv: hasStandardBrowserEnv,
+  hasStandardBrowserWebWorkerEnv: hasStandardBrowserWebWorkerEnv,
+  navigator: _navigator,
+  origin: origin
+});
+
+var platform = {
+  ...utils,
+  ...platform$1
+};
+
+function toURLEncodedForm(data, options) {
+  return toFormData$1(data, new platform.classes.URLSearchParams(), Object.assign({
+    visitor: function(value, key, path, helpers) {
+      if (platform.isNode && utils$1.isBuffer(value)) {
+        this.append(key, value.toString('base64'));
+        return false;
+      }
+
+      return helpers.defaultVisitor.apply(this, arguments);
+    }
+  }, options));
+}
+
+/**
+ * It takes a string like `foo[x][y][z]` and returns an array like `['foo', 'x', 'y', 'z']
+ *
+ * @param {string} name - The name of the property to get.
+ *
+ * @returns An array of strings.
+ */
+function parsePropPath(name) {
+  // foo[x][y][z]
+  // foo.x.y.z
+  // foo-x-y-z
+  // foo x y z
+  return utils$1.matchAll(/\w+|\[(\w*)]/g, name).map(match => {
+    return match[0] === '[]' ? '' : match[1] || match[0];
+  });
+}
+
+/**
+ * Convert an array to an object.
+ *
+ * @param {Array<any>} arr - The array to convert to an object.
+ *
+ * @returns An object with the same keys and values as the array.
+ */
+function arrayToObject(arr) {
+  const obj = {};
+  const keys = Object.keys(arr);
+  let i;
+  const len = keys.length;
+  let key;
+  for (i = 0; i < len; i++) {
+    key = keys[i];
+    obj[key] = arr[key];
+  }
+  return obj;
+}
+
+/**
+ * It takes a FormData object and returns a JavaScript object
+ *
+ * @param {string} formData The FormData object to convert to JSON.
+ *
+ * @returns {Object<string, any> | null} The converted object.
+ */
+function formDataToJSON(formData) {
+  function buildPath(path, value, target, index) {
+    let name = path[index++];
+
+    if (name === '__proto__') return true;
+
+    const isNumericKey = Number.isFinite(+name);
+    const isLast = index >= path.length;
+    name = !name && utils$1.isArray(target) ? target.length : name;
+
+    if (isLast) {
+      if (utils$1.hasOwnProp(target, name)) {
+        target[name] = [target[name], value];
+      } else {
+        target[name] = value;
+      }
+
+      return !isNumericKey;
+    }
+
+    if (!target[name] || !utils$1.isObject(target[name])) {
+      target[name] = [];
+    }
+
+    const result = buildPath(path, value, target[name], index);
+
+    if (result && utils$1.isArray(target[name])) {
+      target[name] = arrayToObject(target[name]);
+    }
+
+    return !isNumericKey;
+  }
+
+  if (utils$1.isFormData(formData) && utils$1.isFunction(formData.entries)) {
+    const obj = {};
+
+    utils$1.forEachEntry(formData, (name, value) => {
+      buildPath(parsePropPath(name), value, obj, 0);
+    });
+
+    return obj;
+  }
+
+  return null;
+}
+
+/**
+ * It takes a string, tries to parse it, and if it fails, it returns the stringified version
+ * of the input
+ *
+ * @param {any} rawValue - The value to be stringified.
+ * @param {Function} parser - A function that parses a string into a JavaScript object.
+ * @param {Function} encoder - A function that takes a value and returns a string.
+ *
+ * @returns {string} A stringified version of the rawValue.
+ */
+function stringifySafely(rawValue, parser, encoder) {
+  if (utils$1.isString(rawValue)) {
+    try {
+      (parser || JSON.parse)(rawValue);
+      return utils$1.trim(rawValue);
+    } catch (e) {
+      if (e.name !== 'SyntaxError') {
+        throw e;
+      }
+    }
+  }
+
+  return (encoder || JSON.stringify)(rawValue);
+}
+
+const defaults = {
+
+  transitional: transitionalDefaults,
+
+  adapter: ['xhr', 'http', 'fetch'],
+
+  transformRequest: [function transformRequest(data, headers) {
+    const contentType = headers.getContentType() || '';
+    const hasJSONContentType = contentType.indexOf('application/json') > -1;
+    const isObjectPayload = utils$1.isObject(data);
+
+    if (isObjectPayload && utils$1.isHTMLForm(data)) {
+      data = new FormData(data);
+    }
+
+    const isFormData = utils$1.isFormData(data);
+
+    if (isFormData) {
+      return hasJSONContentType ? JSON.stringify(formDataToJSON(data)) : data;
+    }
+
+    if (utils$1.isArrayBuffer(data) ||
+      utils$1.isBuffer(data) ||
+      utils$1.isStream(data) ||
+      utils$1.isFile(data) ||
+      utils$1.isBlob(data) ||
+      utils$1.isReadableStream(data)
+    ) {
+      return data;
+    }
+    if (utils$1.isArrayBufferView(data)) {
+      return data.buffer;
+    }
+    if (utils$1.isURLSearchParams(data)) {
+      headers.setContentType('application/x-www-form-urlencoded;charset=utf-8', false);
+      return data.toString();
+    }
+
+    let isFileList;
+
+    if (isObjectPayload) {
+      if (contentType.indexOf('application/x-www-form-urlencoded') > -1) {
+        return toURLEncodedForm(data, this.formSerializer).toString();
+      }
+
+      if ((isFileList = utils$1.isFileList(data)) || contentType.indexOf('multipart/form-data') > -1) {
+        const _FormData = this.env && this.env.FormData;
+
+        return toFormData$1(
+          isFileList ? {'files[]': data} : data,
+          _FormData && new _FormData(),
+          this.formSerializer
+        );
+      }
+    }
+
+    if (isObjectPayload || hasJSONContentType ) {
+      headers.setContentType('application/json', false);
+      return stringifySafely(data);
+    }
+
+    return data;
+  }],
+
+  transformResponse: [function transformResponse(data) {
+    const transitional = this.transitional || defaults.transitional;
+    const forcedJSONParsing = transitional && transitional.forcedJSONParsing;
+    const JSONRequested = this.responseType === 'json';
+
+    if (utils$1.isResponse(data) || utils$1.isReadableStream(data)) {
+      return data;
+    }
+
+    if (data && utils$1.isString(data) && ((forcedJSONParsing && !this.responseType) || JSONRequested)) {
+      const silentJSONParsing = transitional && transitional.silentJSONParsing;
+      const strictJSONParsing = !silentJSONParsing && JSONRequested;
+
+      try {
+        return JSON.parse(data);
+      } catch (e) {
+        if (strictJSONParsing) {
+          if (e.name === 'SyntaxError') {
+            throw AxiosError$1.from(e, AxiosError$1.ERR_BAD_RESPONSE, this, null, this.response);
+          }
+          throw e;
+        }
+      }
+    }
+
+    return data;
+  }],
+
+  /**
+   * A timeout in milliseconds to abort a request. If set to 0 (default) a
+   * timeout is not created.
+   */
+  timeout: 0,
+
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
+
+  maxContentLength: -1,
+  maxBodyLength: -1,
+
+  env: {
+    FormData: platform.classes.FormData,
+    Blob: platform.classes.Blob
+  },
+
+  validateStatus: function validateStatus(status) {
+    return status >= 200 && status < 300;
+  },
+
+  headers: {
+    common: {
+      'Accept': 'application/json, text/plain, */*',
+      'Content-Type': undefined
+    }
+  }
+};
+
+utils$1.forEach(['delete', 'get', 'head', 'post', 'put', 'patch'], (method) => {
+  defaults.headers[method] = {};
+});
+
+// RawAxiosHeaders whose duplicates are ignored by node
+// c.f. https://nodejs.org/api/http.html#http_message_headers
+const ignoreDuplicateOf = utils$1.toObjectSet([
+  'age', 'authorization', 'content-length', 'content-type', 'etag',
+  'expires', 'from', 'host', 'if-modified-since', 'if-unmodified-since',
+  'last-modified', 'location', 'max-forwards', 'proxy-authorization',
+  'referer', 'retry-after', 'user-agent'
+]);
+
+/**
+ * Parse headers into an object
+ *
+ * ```
+ * Date: Wed, 27 Aug 2014 08:58:49 GMT
+ * Content-Type: application/json
+ * Connection: keep-alive
+ * Transfer-Encoding: chunked
+ * ```
+ *
+ * @param {String} rawHeaders Headers needing to be parsed
+ *
+ * @returns {Object} Headers parsed into an object
+ */
+var parseHeaders = rawHeaders => {
+  const parsed = {};
+  let key;
+  let val;
+  let i;
+
+  rawHeaders && rawHeaders.split('\n').forEach(function parser(line) {
+    i = line.indexOf(':');
+    key = line.substring(0, i).trim().toLowerCase();
+    val = line.substring(i + 1).trim();
+
+    if (!key || (parsed[key] && ignoreDuplicateOf[key])) {
+      return;
+    }
+
+    if (key === 'set-cookie') {
+      if (parsed[key]) {
+        parsed[key].push(val);
+      } else {
+        parsed[key] = [val];
+      }
+    } else {
+      parsed[key] = parsed[key] ? parsed[key] + ', ' + val : val;
+    }
+  });
+
+  return parsed;
+};
+
+const $internals = Symbol('internals');
+
+function normalizeHeader(header) {
+  return header && String(header).trim().toLowerCase();
+}
+
+function normalizeValue(value) {
+  if (value === false || value == null) {
+    return value;
+  }
+
+  return utils$1.isArray(value) ? value.map(normalizeValue) : String(value);
+}
+
+function parseTokens(str) {
+  const tokens = Object.create(null);
+  const tokensRE = /([^\s,;=]+)\s*(?:=\s*([^,;]+))?/g;
+  let match;
+
+  while ((match = tokensRE.exec(str))) {
+    tokens[match[1]] = match[2];
+  }
+
+  return tokens;
+}
+
+const isValidHeaderName = (str) => /^[-_a-zA-Z0-9^`|~,!#$%&'*+.]+$/.test(str.trim());
+
+function matchHeaderValue(context, value, header, filter, isHeaderNameFilter) {
+  if (utils$1.isFunction(filter)) {
+    return filter.call(this, value, header);
+  }
+
+  if (isHeaderNameFilter) {
+    value = header;
+  }
+
+  if (!utils$1.isString(value)) return;
+
+  if (utils$1.isString(filter)) {
+    return value.indexOf(filter) !== -1;
+  }
+
+  if (utils$1.isRegExp(filter)) {
+    return filter.test(value);
+  }
+}
+
+function formatHeader(header) {
+  return header.trim()
+    .toLowerCase().replace(/([a-z\d])(\w*)/g, (w, char, str) => {
+      return char.toUpperCase() + str;
+    });
+}
+
+function buildAccessors(obj, header) {
+  const accessorName = utils$1.toCamelCase(' ' + header);
+
+  ['get', 'set', 'has'].forEach(methodName => {
+    Object.defineProperty(obj, methodName + accessorName, {
+      value: function(arg1, arg2, arg3) {
+        return this[methodName].call(this, header, arg1, arg2, arg3);
+      },
+      configurable: true
+    });
+  });
+}
+
+let AxiosHeaders$1 = class AxiosHeaders {
+  constructor(headers) {
+    headers && this.set(headers);
+  }
+
+  set(header, valueOrRewrite, rewrite) {
+    const self = this;
+
+    function setHeader(_value, _header, _rewrite) {
+      const lHeader = normalizeHeader(_header);
+
+      if (!lHeader) {
+        throw new Error('header name must be a non-empty string');
+      }
+
+      const key = utils$1.findKey(self, lHeader);
+
+      if(!key || self[key] === undefined || _rewrite === true || (_rewrite === undefined && self[key] !== false)) {
+        self[key || _header] = normalizeValue(_value);
+      }
+    }
+
+    const setHeaders = (headers, _rewrite) =>
+      utils$1.forEach(headers, (_value, _header) => setHeader(_value, _header, _rewrite));
+
+    if (utils$1.isPlainObject(header) || header instanceof this.constructor) {
+      setHeaders(header, valueOrRewrite);
+    } else if(utils$1.isString(header) && (header = header.trim()) && !isValidHeaderName(header)) {
+      setHeaders(parseHeaders(header), valueOrRewrite);
+    } else if (utils$1.isHeaders(header)) {
+      for (const [key, value] of header.entries()) {
+        setHeader(value, key, rewrite);
+      }
+    } else {
+      header != null && setHeader(valueOrRewrite, header, rewrite);
+    }
+
+    return this;
+  }
+
+  get(header, parser) {
+    header = normalizeHeader(header);
+
+    if (header) {
+      const key = utils$1.findKey(this, header);
+
+      if (key) {
+        const value = this[key];
+
+        if (!parser) {
+          return value;
+        }
+
+        if (parser === true) {
+          return parseTokens(value);
+        }
+
+        if (utils$1.isFunction(parser)) {
+          return parser.call(this, value, key);
+        }
+
+        if (utils$1.isRegExp(parser)) {
+          return parser.exec(value);
+        }
+
+        throw new TypeError('parser must be boolean|regexp|function');
+      }
+    }
+  }
+
+  has(header, matcher) {
+    header = normalizeHeader(header);
+
+    if (header) {
+      const key = utils$1.findKey(this, header);
+
+      return !!(key && this[key] !== undefined && (!matcher || matchHeaderValue(this, this[key], key, matcher)));
+    }
+
+    return false;
+  }
+
+  delete(header, matcher) {
+    const self = this;
+    let deleted = false;
+
+    function deleteHeader(_header) {
+      _header = normalizeHeader(_header);
+
+      if (_header) {
+        const key = utils$1.findKey(self, _header);
+
+        if (key && (!matcher || matchHeaderValue(self, self[key], key, matcher))) {
+          delete self[key];
+
+          deleted = true;
+        }
+      }
+    }
+
+    if (utils$1.isArray(header)) {
+      header.forEach(deleteHeader);
+    } else {
+      deleteHeader(header);
+    }
+
+    return deleted;
+  }
+
+  clear(matcher) {
+    const keys = Object.keys(this);
+    let i = keys.length;
+    let deleted = false;
+
+    while (i--) {
+      const key = keys[i];
+      if(!matcher || matchHeaderValue(this, this[key], key, matcher, true)) {
+        delete this[key];
+        deleted = true;
+      }
+    }
+
+    return deleted;
+  }
+
+  normalize(format) {
+    const self = this;
+    const headers = {};
+
+    utils$1.forEach(this, (value, header) => {
+      const key = utils$1.findKey(headers, header);
+
+      if (key) {
+        self[key] = normalizeValue(value);
+        delete self[header];
+        return;
+      }
+
+      const normalized = format ? formatHeader(header) : String(header).trim();
+
+      if (normalized !== header) {
+        delete self[header];
+      }
+
+      self[normalized] = normalizeValue(value);
+
+      headers[normalized] = true;
+    });
+
+    return this;
+  }
+
+  concat(...targets) {
+    return this.constructor.concat(this, ...targets);
+  }
+
+  toJSON(asStrings) {
+    const obj = Object.create(null);
+
+    utils$1.forEach(this, (value, header) => {
+      value != null && value !== false && (obj[header] = asStrings && utils$1.isArray(value) ? value.join(', ') : value);
+    });
+
+    return obj;
+  }
+
+  [Symbol.iterator]() {
+    return Object.entries(this.toJSON())[Symbol.iterator]();
+  }
+
+  toString() {
+    return Object.entries(this.toJSON()).map(([header, value]) => header + ': ' + value).join('\n');
+  }
+
+  get [Symbol.toStringTag]() {
+    return 'AxiosHeaders';
+  }
+
+  static from(thing) {
+    return thing instanceof this ? thing : new this(thing);
+  }
+
+  static concat(first, ...targets) {
+    const computed = new this(first);
+
+    targets.forEach((target) => computed.set(target));
+
+    return computed;
+  }
+
+  static accessor(header) {
+    const internals = this[$internals] = (this[$internals] = {
+      accessors: {}
+    });
+
+    const accessors = internals.accessors;
+    const prototype = this.prototype;
+
+    function defineAccessor(_header) {
+      const lHeader = normalizeHeader(_header);
+
+      if (!accessors[lHeader]) {
+        buildAccessors(prototype, _header);
+        accessors[lHeader] = true;
+      }
+    }
+
+    utils$1.isArray(header) ? header.forEach(defineAccessor) : defineAccessor(header);
+
+    return this;
+  }
+};
+
+AxiosHeaders$1.accessor(['Content-Type', 'Content-Length', 'Accept', 'Accept-Encoding', 'User-Agent', 'Authorization']);
+
+// reserved names hotfix
+utils$1.reduceDescriptors(AxiosHeaders$1.prototype, ({value}, key) => {
+  let mapped = key[0].toUpperCase() + key.slice(1); // map `set` => `Set`
+  return {
+    get: () => value,
+    set(headerValue) {
+      this[mapped] = headerValue;
+    }
+  }
+});
+
+utils$1.freezeMethods(AxiosHeaders$1);
+
+/**
+ * Transform the data for a request or a response
+ *
+ * @param {Array|Function} fns A single function or Array of functions
+ * @param {?Object} response The response object
+ *
+ * @returns {*} The resulting transformed data
+ */
+function transformData(fns, response) {
+  const config = this || defaults;
+  const context = response || config;
+  const headers = AxiosHeaders$1.from(context.headers);
+  let data = context.data;
+
+  utils$1.forEach(fns, function transform(fn) {
+    data = fn.call(config, data, headers.normalize(), response ? response.status : undefined);
+  });
+
+  headers.normalize();
+
+  return data;
+}
+
+function isCancel$1(value) {
+  return !!(value && value.__CANCEL__);
+}
+
+/**
+ * A `CanceledError` is an object that is thrown when an operation is canceled.
+ *
+ * @param {string=} message The message.
+ * @param {Object=} config The config.
+ * @param {Object=} request The request.
+ *
+ * @returns {CanceledError} The created error.
+ */
+function CanceledError$1(message, config, request) {
+  // eslint-disable-next-line no-eq-null,eqeqeq
+  AxiosError$1.call(this, message == null ? 'canceled' : message, AxiosError$1.ERR_CANCELED, config, request);
+  this.name = 'CanceledError';
+}
+
+utils$1.inherits(CanceledError$1, AxiosError$1, {
+  __CANCEL__: true
+});
+
+/**
+ * Resolve or reject a Promise based on response status.
+ *
+ * @param {Function} resolve A function that resolves the promise.
+ * @param {Function} reject A function that rejects the promise.
+ * @param {object} response The response.
+ *
+ * @returns {object} The response.
+ */
+function settle(resolve, reject, response) {
+  const validateStatus = response.config.validateStatus;
+  if (!response.status || !validateStatus || validateStatus(response.status)) {
+    resolve(response);
+  } else {
+    reject(new AxiosError$1(
+      'Request failed with status code ' + response.status,
+      [AxiosError$1.ERR_BAD_REQUEST, AxiosError$1.ERR_BAD_RESPONSE][Math.floor(response.status / 100) - 4],
+      response.config,
+      response.request,
+      response
+    ));
+  }
+}
+
+function parseProtocol(url) {
+  const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
+  return match && match[1] || '';
+}
+
+/**
+ * Calculate data maxRate
+ * @param {Number} [samplesCount= 10]
+ * @param {Number} [min= 1000]
+ * @returns {Function}
+ */
+function speedometer(samplesCount, min) {
+  samplesCount = samplesCount || 10;
+  const bytes = new Array(samplesCount);
+  const timestamps = new Array(samplesCount);
+  let head = 0;
+  let tail = 0;
+  let firstSampleTS;
+
+  min = min !== undefined ? min : 1000;
+
+  return function push(chunkLength) {
+    const now = Date.now();
+
+    const startedAt = timestamps[tail];
+
+    if (!firstSampleTS) {
+      firstSampleTS = now;
+    }
+
+    bytes[head] = chunkLength;
+    timestamps[head] = now;
+
+    let i = tail;
+    let bytesCount = 0;
+
+    while (i !== head) {
+      bytesCount += bytes[i++];
+      i = i % samplesCount;
+    }
+
+    head = (head + 1) % samplesCount;
+
+    if (head === tail) {
+      tail = (tail + 1) % samplesCount;
+    }
+
+    if (now - firstSampleTS < min) {
+      return;
+    }
+
+    const passed = startedAt && now - startedAt;
+
+    return passed ? Math.round(bytesCount * 1000 / passed) : undefined;
+  };
+}
+
+/**
+ * Throttle decorator
+ * @param {Function} fn
+ * @param {Number} freq
+ * @return {Function}
+ */
+function throttle(fn, freq) {
+  let timestamp = 0;
+  let threshold = 1000 / freq;
+  let lastArgs;
+  let timer;
+
+  const invoke = (args, now = Date.now()) => {
+    timestamp = now;
+    lastArgs = null;
+    if (timer) {
+      clearTimeout(timer);
+      timer = null;
+    }
+    fn.apply(null, args);
+  };
+
+  const throttled = (...args) => {
+    const now = Date.now();
+    const passed = now - timestamp;
+    if ( passed >= threshold) {
+      invoke(args, now);
+    } else {
+      lastArgs = args;
+      if (!timer) {
+        timer = setTimeout(() => {
+          timer = null;
+          invoke(lastArgs);
+        }, threshold - passed);
+      }
+    }
+  };
+
+  const flush = () => lastArgs && invoke(lastArgs);
+
+  return [throttled, flush];
+}
+
+const progressEventReducer = (listener, isDownloadStream, freq = 3) => {
+  let bytesNotified = 0;
+  const _speedometer = speedometer(50, 250);
+
+  return throttle(e => {
+    const loaded = e.loaded;
+    const total = e.lengthComputable ? e.total : undefined;
+    const progressBytes = loaded - bytesNotified;
+    const rate = _speedometer(progressBytes);
+    const inRange = loaded <= total;
+
+    bytesNotified = loaded;
+
+    const data = {
+      loaded,
+      total,
+      progress: total ? (loaded / total) : undefined,
+      bytes: progressBytes,
+      rate: rate ? rate : undefined,
+      estimated: rate && total && inRange ? (total - loaded) / rate : undefined,
+      event: e,
+      lengthComputable: total != null,
+      [isDownloadStream ? 'download' : 'upload']: true
+    };
+
+    listener(data);
+  }, freq);
+};
+
+const progressEventDecorator = (total, throttled) => {
+  const lengthComputable = total != null;
+
+  return [(loaded) => throttled[0]({
+    lengthComputable,
+    total,
+    loaded
+  }), throttled[1]];
+};
+
+const asyncDecorator = (fn) => (...args) => utils$1.asap(() => fn(...args));
+
+var isURLSameOrigin = platform.hasStandardBrowserEnv ? ((origin, isMSIE) => (url) => {
+  url = new URL(url, platform.origin);
+
+  return (
+    origin.protocol === url.protocol &&
+    origin.host === url.host &&
+    (isMSIE || origin.port === url.port)
+  );
+})(
+  new URL(platform.origin),
+  platform.navigator && /(msie|trident)/i.test(platform.navigator.userAgent)
+) : () => true;
+
+var cookies = platform.hasStandardBrowserEnv ?
+
+  // Standard browser envs support document.cookie
+  {
+    write(name, value, expires, path, domain, secure) {
+      const cookie = [name + '=' + encodeURIComponent(value)];
+
+      utils$1.isNumber(expires) && cookie.push('expires=' + new Date(expires).toGMTString());
+
+      utils$1.isString(path) && cookie.push('path=' + path);
+
+      utils$1.isString(domain) && cookie.push('domain=' + domain);
+
+      secure === true && cookie.push('secure');
+
+      document.cookie = cookie.join('; ');
+    },
+
+    read(name) {
+      const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+      return (match ? decodeURIComponent(match[3]) : null);
+    },
+
+    remove(name) {
+      this.write(name, '', Date.now() - 86400000);
+    }
+  }
+
+  :
+
+  // Non-standard browser env (web workers, react-native) lack needed support.
+  {
+    write() {},
+    read() {
+      return null;
+    },
+    remove() {}
+  };
+
+/**
+ * Determines whether the specified URL is absolute
+ *
+ * @param {string} url The URL to test
+ *
+ * @returns {boolean} True if the specified URL is absolute, otherwise false
+ */
+function isAbsoluteURL(url) {
+  // A URL is considered absolute if it begins with "<scheme>://" or "//" (protocol-relative URL).
+  // RFC 3986 defines scheme name as a sequence of characters beginning with a letter and followed
+  // by any combination of letters, digits, plus, period, or hyphen.
+  return /^([a-z][a-z\d+\-.]*:)?\/\//i.test(url);
+}
+
+/**
+ * Creates a new URL by combining the specified URLs
+ *
+ * @param {string} baseURL The base URL
+ * @param {string} relativeURL The relative URL
+ *
+ * @returns {string} The combined URL
+ */
+function combineURLs(baseURL, relativeURL) {
+  return relativeURL
+    ? baseURL.replace(/\/?\/$/, '') + '/' + relativeURL.replace(/^\/+/, '')
+    : baseURL;
+}
+
+/**
+ * Creates a new URL by combining the baseURL with the requestedURL,
+ * only when the requestedURL is not already an absolute URL.
+ * If the requestURL is absolute, this function returns the requestedURL untouched.
+ *
+ * @param {string} baseURL The base URL
+ * @param {string} requestedURL Absolute or relative URL to combine
+ *
+ * @returns {string} The combined full path
+ */
+function buildFullPath(baseURL, requestedURL, allowAbsoluteUrls) {
+  let isRelativeUrl = !isAbsoluteURL(requestedURL);
+  if (baseURL && isRelativeUrl || allowAbsoluteUrls == false) {
+    return combineURLs(baseURL, requestedURL);
+  }
+  return requestedURL;
+}
+
+const headersToObject = (thing) => thing instanceof AxiosHeaders$1 ? { ...thing } : thing;
+
+/**
+ * Config-specific merge-function which creates a new config-object
+ * by merging two configuration objects together.
+ *
+ * @param {Object} config1
+ * @param {Object} config2
+ *
+ * @returns {Object} New object resulting from merging config2 to config1
+ */
+function mergeConfig$1(config1, config2) {
+  // eslint-disable-next-line no-param-reassign
+  config2 = config2 || {};
+  const config = {};
+
+  function getMergedValue(target, source, prop, caseless) {
+    if (utils$1.isPlainObject(target) && utils$1.isPlainObject(source)) {
+      return utils$1.merge.call({caseless}, target, source);
+    } else if (utils$1.isPlainObject(source)) {
+      return utils$1.merge({}, source);
+    } else if (utils$1.isArray(source)) {
+      return source.slice();
+    }
+    return source;
+  }
+
+  // eslint-disable-next-line consistent-return
+  function mergeDeepProperties(a, b, prop , caseless) {
+    if (!utils$1.isUndefined(b)) {
+      return getMergedValue(a, b, prop , caseless);
+    } else if (!utils$1.isUndefined(a)) {
+      return getMergedValue(undefined, a, prop , caseless);
+    }
+  }
+
+  // eslint-disable-next-line consistent-return
+  function valueFromConfig2(a, b) {
+    if (!utils$1.isUndefined(b)) {
+      return getMergedValue(undefined, b);
+    }
+  }
+
+  // eslint-disable-next-line consistent-return
+  function defaultToConfig2(a, b) {
+    if (!utils$1.isUndefined(b)) {
+      return getMergedValue(undefined, b);
+    } else if (!utils$1.isUndefined(a)) {
+      return getMergedValue(undefined, a);
+    }
+  }
+
+  // eslint-disable-next-line consistent-return
+  function mergeDirectKeys(a, b, prop) {
+    if (prop in config2) {
+      return getMergedValue(a, b);
+    } else if (prop in config1) {
+      return getMergedValue(undefined, a);
+    }
+  }
+
+  const mergeMap = {
+    url: valueFromConfig2,
+    method: valueFromConfig2,
+    data: valueFromConfig2,
+    baseURL: defaultToConfig2,
+    transformRequest: defaultToConfig2,
+    transformResponse: defaultToConfig2,
+    paramsSerializer: defaultToConfig2,
+    timeout: defaultToConfig2,
+    timeoutMessage: defaultToConfig2,
+    withCredentials: defaultToConfig2,
+    withXSRFToken: defaultToConfig2,
+    adapter: defaultToConfig2,
+    responseType: defaultToConfig2,
+    xsrfCookieName: defaultToConfig2,
+    xsrfHeaderName: defaultToConfig2,
+    onUploadProgress: defaultToConfig2,
+    onDownloadProgress: defaultToConfig2,
+    decompress: defaultToConfig2,
+    maxContentLength: defaultToConfig2,
+    maxBodyLength: defaultToConfig2,
+    beforeRedirect: defaultToConfig2,
+    transport: defaultToConfig2,
+    httpAgent: defaultToConfig2,
+    httpsAgent: defaultToConfig2,
+    cancelToken: defaultToConfig2,
+    socketPath: defaultToConfig2,
+    responseEncoding: defaultToConfig2,
+    validateStatus: mergeDirectKeys,
+    headers: (a, b , prop) => mergeDeepProperties(headersToObject(a), headersToObject(b),prop, true)
+  };
+
+  utils$1.forEach(Object.keys(Object.assign({}, config1, config2)), function computeConfigValue(prop) {
+    const merge = mergeMap[prop] || mergeDeepProperties;
+    const configValue = merge(config1[prop], config2[prop], prop);
+    (utils$1.isUndefined(configValue) && merge !== mergeDirectKeys) || (config[prop] = configValue);
+  });
+
+  return config;
+}
+
+var resolveConfig = (config) => {
+  const newConfig = mergeConfig$1({}, config);
+
+  let {data, withXSRFToken, xsrfHeaderName, xsrfCookieName, headers, auth} = newConfig;
+
+  newConfig.headers = headers = AxiosHeaders$1.from(headers);
+
+  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url, newConfig.allowAbsoluteUrls), config.params, config.paramsSerializer);
+
+  // HTTP basic authentication
+  if (auth) {
+    headers.set('Authorization', 'Basic ' +
+      btoa((auth.username || '') + ':' + (auth.password ? unescape(encodeURIComponent(auth.password)) : ''))
+    );
+  }
+
+  let contentType;
+
+  if (utils$1.isFormData(data)) {
+    if (platform.hasStandardBrowserEnv || platform.hasStandardBrowserWebWorkerEnv) {
+      headers.setContentType(undefined); // Let the browser set it
+    } else if ((contentType = headers.getContentType()) !== false) {
+      // fix semicolon duplication issue for ReactNative FormData implementation
+      const [type, ...tokens] = contentType ? contentType.split(';').map(token => token.trim()).filter(Boolean) : [];
+      headers.setContentType([type || 'multipart/form-data', ...tokens].join('; '));
+    }
+  }
+
+  // Add xsrf header
+  // This is only done if running in a standard browser environment.
+  // Specifically not if we're in a web worker, or react-native.
+
+  if (platform.hasStandardBrowserEnv) {
+    withXSRFToken && utils$1.isFunction(withXSRFToken) && (withXSRFToken = withXSRFToken(newConfig));
+
+    if (withXSRFToken || (withXSRFToken !== false && isURLSameOrigin(newConfig.url))) {
+      // Add xsrf header
+      const xsrfValue = xsrfHeaderName && xsrfCookieName && cookies.read(xsrfCookieName);
+
+      if (xsrfValue) {
+        headers.set(xsrfHeaderName, xsrfValue);
+      }
+    }
+  }
+
+  return newConfig;
+};
+
+const isXHRAdapterSupported = typeof XMLHttpRequest !== 'undefined';
+
+var xhrAdapter = isXHRAdapterSupported && function (config) {
+  return new Promise(function dispatchXhrRequest(resolve, reject) {
+    const _config = resolveConfig(config);
+    let requestData = _config.data;
+    const requestHeaders = AxiosHeaders$1.from(_config.headers).normalize();
+    let {responseType, onUploadProgress, onDownloadProgress} = _config;
+    let onCanceled;
+    let uploadThrottled, downloadThrottled;
+    let flushUpload, flushDownload;
+
+    function done() {
+      flushUpload && flushUpload(); // flush events
+      flushDownload && flushDownload(); // flush events
+
+      _config.cancelToken && _config.cancelToken.unsubscribe(onCanceled);
+
+      _config.signal && _config.signal.removeEventListener('abort', onCanceled);
+    }
+
+    let request = new XMLHttpRequest();
+
+    request.open(_config.method.toUpperCase(), _config.url, true);
+
+    // Set the request timeout in MS
+    request.timeout = _config.timeout;
+
+    function onloadend() {
+      if (!request) {
+        return;
+      }
+      // Prepare the response
+      const responseHeaders = AxiosHeaders$1.from(
+        'getAllResponseHeaders' in request && request.getAllResponseHeaders()
+      );
+      const responseData = !responseType || responseType === 'text' || responseType === 'json' ?
+        request.responseText : request.response;
+      const response = {
+        data: responseData,
+        status: request.status,
+        statusText: request.statusText,
+        headers: responseHeaders,
+        config,
+        request
+      };
+
+      settle(function _resolve(value) {
+        resolve(value);
+        done();
+      }, function _reject(err) {
+        reject(err);
+        done();
+      }, response);
+
+      // Clean up request
+      request = null;
+    }
+
+    if ('onloadend' in request) {
+      // Use onloadend if available
+      request.onloadend = onloadend;
+    } else {
+      // Listen for ready state to emulate onloadend
+      request.onreadystatechange = function handleLoad() {
+        if (!request || request.readyState !== 4) {
+          return;
+        }
+
+        // The request errored out and we didn't get a response, this will be
+        // handled by onerror instead
+        // With one exception: request that using file: protocol, most browsers
+        // will return status as 0 even though it's a successful request
+        if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf('file:') === 0)) {
+          return;
+        }
+        // readystate handler is calling before onerror or ontimeout handlers,
+        // so we should call onloadend on the next 'tick'
+        setTimeout(onloadend);
+      };
+    }
+
+    // Handle browser request cancellation (as opposed to a manual cancellation)
+    request.onabort = function handleAbort() {
+      if (!request) {
+        return;
+      }
+
+      reject(new AxiosError$1('Request aborted', AxiosError$1.ECONNABORTED, config, request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle low level network errors
+    request.onerror = function handleError() {
+      // Real errors are hidden from us by the browser
+      // onerror should only fire if it's a network error
+      reject(new AxiosError$1('Network Error', AxiosError$1.ERR_NETWORK, config, request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Handle timeout
+    request.ontimeout = function handleTimeout() {
+      let timeoutErrorMessage = _config.timeout ? 'timeout of ' + _config.timeout + 'ms exceeded' : 'timeout exceeded';
+      const transitional = _config.transitional || transitionalDefaults;
+      if (_config.timeoutErrorMessage) {
+        timeoutErrorMessage = _config.timeoutErrorMessage;
+      }
+      reject(new AxiosError$1(
+        timeoutErrorMessage,
+        transitional.clarifyTimeoutError ? AxiosError$1.ETIMEDOUT : AxiosError$1.ECONNABORTED,
+        config,
+        request));
+
+      // Clean up request
+      request = null;
+    };
+
+    // Remove Content-Type if data is undefined
+    requestData === undefined && requestHeaders.setContentType(null);
+
+    // Add headers to the request
+    if ('setRequestHeader' in request) {
+      utils$1.forEach(requestHeaders.toJSON(), function setRequestHeader(val, key) {
+        request.setRequestHeader(key, val);
+      });
+    }
+
+    // Add withCredentials to request if needed
+    if (!utils$1.isUndefined(_config.withCredentials)) {
+      request.withCredentials = !!_config.withCredentials;
+    }
+
+    // Add responseType to request if needed
+    if (responseType && responseType !== 'json') {
+      request.responseType = _config.responseType;
+    }
+
+    // Handle progress if needed
+    if (onDownloadProgress) {
+      ([downloadThrottled, flushDownload] = progressEventReducer(onDownloadProgress, true));
+      request.addEventListener('progress', downloadThrottled);
+    }
+
+    // Not all browsers support upload events
+    if (onUploadProgress && request.upload) {
+      ([uploadThrottled, flushUpload] = progressEventReducer(onUploadProgress));
+
+      request.upload.addEventListener('progress', uploadThrottled);
+
+      request.upload.addEventListener('loadend', flushUpload);
+    }
+
+    if (_config.cancelToken || _config.signal) {
+      // Handle cancellation
+      // eslint-disable-next-line func-names
+      onCanceled = cancel => {
+        if (!request) {
+          return;
+        }
+        reject(!cancel || cancel.type ? new CanceledError$1(null, config, request) : cancel);
+        request.abort();
+        request = null;
+      };
+
+      _config.cancelToken && _config.cancelToken.subscribe(onCanceled);
+      if (_config.signal) {
+        _config.signal.aborted ? onCanceled() : _config.signal.addEventListener('abort', onCanceled);
+      }
+    }
+
+    const protocol = parseProtocol(_config.url);
+
+    if (protocol && platform.protocols.indexOf(protocol) === -1) {
+      reject(new AxiosError$1('Unsupported protocol ' + protocol + ':', AxiosError$1.ERR_BAD_REQUEST, config));
+      return;
+    }
+
+
+    // Send the request
+    request.send(requestData || null);
+  });
+};
+
+const composeSignals = (signals, timeout) => {
+  const {length} = (signals = signals ? signals.filter(Boolean) : []);
+
+  if (timeout || length) {
+    let controller = new AbortController();
+
+    let aborted;
+
+    const onabort = function (reason) {
+      if (!aborted) {
+        aborted = true;
+        unsubscribe();
+        const err = reason instanceof Error ? reason : this.reason;
+        controller.abort(err instanceof AxiosError$1 ? err : new CanceledError$1(err instanceof Error ? err.message : err));
+      }
+    };
+
+    let timer = timeout && setTimeout(() => {
+      timer = null;
+      onabort(new AxiosError$1(`timeout ${timeout} of ms exceeded`, AxiosError$1.ETIMEDOUT));
+    }, timeout);
+
+    const unsubscribe = () => {
+      if (signals) {
+        timer && clearTimeout(timer);
+        timer = null;
+        signals.forEach(signal => {
+          signal.unsubscribe ? signal.unsubscribe(onabort) : signal.removeEventListener('abort', onabort);
+        });
+        signals = null;
+      }
+    };
+
+    signals.forEach((signal) => signal.addEventListener('abort', onabort));
+
+    const {signal} = controller;
+
+    signal.unsubscribe = () => utils$1.asap(unsubscribe);
+
+    return signal;
+  }
+};
+
+const streamChunk = function* (chunk, chunkSize) {
+  let len = chunk.byteLength;
+
+  if (len < chunkSize) {
+    yield chunk;
+    return;
+  }
+
+  let pos = 0;
+  let end;
+
+  while (pos < len) {
+    end = pos + chunkSize;
+    yield chunk.slice(pos, end);
+    pos = end;
+  }
+};
+
+const readBytes = async function* (iterable, chunkSize) {
+  for await (const chunk of readStream(iterable)) {
+    yield* streamChunk(chunk, chunkSize);
+  }
+};
+
+const readStream = async function* (stream) {
+  if (stream[Symbol.asyncIterator]) {
+    yield* stream;
+    return;
+  }
+
+  const reader = stream.getReader();
+  try {
+    for (;;) {
+      const {done, value} = await reader.read();
+      if (done) {
+        break;
+      }
+      yield value;
+    }
+  } finally {
+    await reader.cancel();
+  }
+};
+
+const trackStream = (stream, chunkSize, onProgress, onFinish) => {
+  const iterator = readBytes(stream, chunkSize);
+
+  let bytes = 0;
+  let done;
+  let _onFinish = (e) => {
+    if (!done) {
+      done = true;
+      onFinish && onFinish(e);
+    }
+  };
+
+  return new ReadableStream({
+    async pull(controller) {
+      try {
+        const {done, value} = await iterator.next();
+
+        if (done) {
+         _onFinish();
+          controller.close();
+          return;
+        }
+
+        let len = value.byteLength;
+        if (onProgress) {
+          let loadedBytes = bytes += len;
+          onProgress(loadedBytes);
+        }
+        controller.enqueue(new Uint8Array(value));
+      } catch (err) {
+        _onFinish(err);
+        throw err;
+      }
+    },
+    cancel(reason) {
+      _onFinish(reason);
+      return iterator.return();
+    }
+  }, {
+    highWaterMark: 2
+  })
+};
+
+const isFetchSupported = typeof fetch === 'function' && typeof Request === 'function' && typeof Response === 'function';
+const isReadableStreamSupported = isFetchSupported && typeof ReadableStream === 'function';
+
+// used only inside the fetch adapter
+const encodeText = isFetchSupported && (typeof TextEncoder === 'function' ?
+    ((encoder) => (str) => encoder.encode(str))(new TextEncoder()) :
+    async (str) => new Uint8Array(await new Response(str).arrayBuffer())
+);
+
+const test = (fn, ...args) => {
+  try {
+    return !!fn(...args);
+  } catch (e) {
+    return false
+  }
+};
+
+const supportsRequestStream = isReadableStreamSupported && test(() => {
+  let duplexAccessed = false;
+
+  const hasContentType = new Request(platform.origin, {
+    body: new ReadableStream(),
+    method: 'POST',
+    get duplex() {
+      duplexAccessed = true;
+      return 'half';
+    },
+  }).headers.has('Content-Type');
+
+  return duplexAccessed && !hasContentType;
+});
+
+const DEFAULT_CHUNK_SIZE = 64 * 1024;
+
+const supportsResponseStream = isReadableStreamSupported &&
+  test(() => utils$1.isReadableStream(new Response('').body));
+
+
+const resolvers = {
+  stream: supportsResponseStream && ((res) => res.body)
+};
+
+isFetchSupported && (((res) => {
+  ['text', 'arrayBuffer', 'blob', 'formData', 'stream'].forEach(type => {
+    !resolvers[type] && (resolvers[type] = utils$1.isFunction(res[type]) ? (res) => res[type]() :
+      (_, config) => {
+        throw new AxiosError$1(`Response type '${type}' is not supported`, AxiosError$1.ERR_NOT_SUPPORT, config);
+      });
+  });
+})(new Response));
+
+const getBodyLength = async (body) => {
+  if (body == null) {
+    return 0;
+  }
+
+  if(utils$1.isBlob(body)) {
+    return body.size;
+  }
+
+  if(utils$1.isSpecCompliantForm(body)) {
+    const _request = new Request(platform.origin, {
+      method: 'POST',
+      body,
+    });
+    return (await _request.arrayBuffer()).byteLength;
+  }
+
+  if(utils$1.isArrayBufferView(body) || utils$1.isArrayBuffer(body)) {
+    return body.byteLength;
+  }
+
+  if(utils$1.isURLSearchParams(body)) {
+    body = body + '';
+  }
+
+  if(utils$1.isString(body)) {
+    return (await encodeText(body)).byteLength;
+  }
+};
+
+const resolveBodyLength = async (headers, body) => {
+  const length = utils$1.toFiniteNumber(headers.getContentLength());
+
+  return length == null ? getBodyLength(body) : length;
+};
+
+var fetchAdapter = isFetchSupported && (async (config) => {
+  let {
+    url,
+    method,
+    data,
+    signal,
+    cancelToken,
+    timeout,
+    onDownloadProgress,
+    onUploadProgress,
+    responseType,
+    headers,
+    withCredentials = 'same-origin',
+    fetchOptions
+  } = resolveConfig(config);
+
+  responseType = responseType ? (responseType + '').toLowerCase() : 'text';
+
+  let composedSignal = composeSignals([signal, cancelToken && cancelToken.toAbortSignal()], timeout);
+
+  let request;
+
+  const unsubscribe = composedSignal && composedSignal.unsubscribe && (() => {
+      composedSignal.unsubscribe();
+  });
+
+  let requestContentLength;
+
+  try {
+    if (
+      onUploadProgress && supportsRequestStream && method !== 'get' && method !== 'head' &&
+      (requestContentLength = await resolveBodyLength(headers, data)) !== 0
+    ) {
+      let _request = new Request(url, {
+        method: 'POST',
+        body: data,
+        duplex: "half"
+      });
+
+      let contentTypeHeader;
+
+      if (utils$1.isFormData(data) && (contentTypeHeader = _request.headers.get('content-type'))) {
+        headers.setContentType(contentTypeHeader);
+      }
+
+      if (_request.body) {
+        const [onProgress, flush] = progressEventDecorator(
+          requestContentLength,
+          progressEventReducer(asyncDecorator(onUploadProgress))
+        );
+
+        data = trackStream(_request.body, DEFAULT_CHUNK_SIZE, onProgress, flush);
+      }
+    }
+
+    if (!utils$1.isString(withCredentials)) {
+      withCredentials = withCredentials ? 'include' : 'omit';
+    }
+
+    // Cloudflare Workers throws when credentials are defined
+    // see https://github.com/cloudflare/workerd/issues/902
+    const isCredentialsSupported = "credentials" in Request.prototype;
+    request = new Request(url, {
+      ...fetchOptions,
+      signal: composedSignal,
+      method: method.toUpperCase(),
+      headers: headers.normalize().toJSON(),
+      body: data,
+      duplex: "half",
+      credentials: isCredentialsSupported ? withCredentials : undefined
+    });
+
+    let response = await fetch(request);
+
+    const isStreamResponse = supportsResponseStream && (responseType === 'stream' || responseType === 'response');
+
+    if (supportsResponseStream && (onDownloadProgress || (isStreamResponse && unsubscribe))) {
+      const options = {};
+
+      ['status', 'statusText', 'headers'].forEach(prop => {
+        options[prop] = response[prop];
+      });
+
+      const responseContentLength = utils$1.toFiniteNumber(response.headers.get('content-length'));
+
+      const [onProgress, flush] = onDownloadProgress && progressEventDecorator(
+        responseContentLength,
+        progressEventReducer(asyncDecorator(onDownloadProgress), true)
+      ) || [];
+
+      response = new Response(
+        trackStream(response.body, DEFAULT_CHUNK_SIZE, onProgress, () => {
+          flush && flush();
+          unsubscribe && unsubscribe();
+        }),
+        options
+      );
+    }
+
+    responseType = responseType || 'text';
+
+    let responseData = await resolvers[utils$1.findKey(resolvers, responseType) || 'text'](response, config);
+
+    !isStreamResponse && unsubscribe && unsubscribe();
+
+    return await new Promise((resolve, reject) => {
+      settle(resolve, reject, {
+        data: responseData,
+        headers: AxiosHeaders$1.from(response.headers),
+        status: response.status,
+        statusText: response.statusText,
+        config,
+        request
+      });
+    })
+  } catch (err) {
+    unsubscribe && unsubscribe();
+
+    if (err && err.name === 'TypeError' && /fetch/i.test(err.message)) {
+      throw Object.assign(
+        new AxiosError$1('Network Error', AxiosError$1.ERR_NETWORK, config, request),
+        {
+          cause: err.cause || err
+        }
+      )
+    }
+
+    throw AxiosError$1.from(err, err && err.code, config, request);
+  }
+});
+
+const knownAdapters = {
+  http: httpAdapter,
+  xhr: xhrAdapter,
+  fetch: fetchAdapter
+};
+
+utils$1.forEach(knownAdapters, (fn, value) => {
+  if (fn) {
+    try {
+      Object.defineProperty(fn, 'name', {value});
+    } catch (e) {
+      // eslint-disable-next-line no-empty
+    }
+    Object.defineProperty(fn, 'adapterName', {value});
+  }
+});
+
+const renderReason = (reason) => `- ${reason}`;
+
+const isResolvedHandle = (adapter) => utils$1.isFunction(adapter) || adapter === null || adapter === false;
+
+var adapters = {
+  getAdapter: (adapters) => {
+    adapters = utils$1.isArray(adapters) ? adapters : [adapters];
+
+    const {length} = adapters;
+    let nameOrAdapter;
+    let adapter;
+
+    const rejectedReasons = {};
+
+    for (let i = 0; i < length; i++) {
+      nameOrAdapter = adapters[i];
+      let id;
+
+      adapter = nameOrAdapter;
+
+      if (!isResolvedHandle(nameOrAdapter)) {
+        adapter = knownAdapters[(id = String(nameOrAdapter)).toLowerCase()];
+
+        if (adapter === undefined) {
+          throw new AxiosError$1(`Unknown adapter '${id}'`);
+        }
+      }
+
+      if (adapter) {
+        break;
+      }
+
+      rejectedReasons[id || '#' + i] = adapter;
+    }
+
+    if (!adapter) {
+
+      const reasons = Object.entries(rejectedReasons)
+        .map(([id, state]) => `adapter ${id} ` +
+          (state === false ? 'is not supported by the environment' : 'is not available in the build')
+        );
+
+      let s = length ?
+        (reasons.length > 1 ? 'since :\n' + reasons.map(renderReason).join('\n') : ' ' + renderReason(reasons[0])) :
+        'as no adapter specified';
+
+      throw new AxiosError$1(
+        `There is no suitable adapter to dispatch the request ` + s,
+        'ERR_NOT_SUPPORT'
+      );
+    }
+
+    return adapter;
+  },
+  adapters: knownAdapters
+};
+
+/**
+ * Throws a `CanceledError` if cancellation has been requested.
+ *
+ * @param {Object} config The config that is to be used for the request
+ *
+ * @returns {void}
+ */
+function throwIfCancellationRequested(config) {
+  if (config.cancelToken) {
+    config.cancelToken.throwIfRequested();
+  }
+
+  if (config.signal && config.signal.aborted) {
+    throw new CanceledError$1(null, config);
+  }
+}
+
+/**
+ * Dispatch a request to the server using the configured adapter.
+ *
+ * @param {object} config The config that is to be used for the request
+ *
+ * @returns {Promise} The Promise to be fulfilled
+ */
+function dispatchRequest(config) {
+  throwIfCancellationRequested(config);
+
+  config.headers = AxiosHeaders$1.from(config.headers);
+
+  // Transform request data
+  config.data = transformData.call(
+    config,
+    config.transformRequest
+  );
+
+  if (['post', 'put', 'patch'].indexOf(config.method) !== -1) {
+    config.headers.setContentType('application/x-www-form-urlencoded', false);
+  }
+
+  const adapter = adapters.getAdapter(config.adapter || defaults.adapter);
+
+  return adapter(config).then(function onAdapterResolution(response) {
+    throwIfCancellationRequested(config);
+
+    // Transform response data
+    response.data = transformData.call(
+      config,
+      config.transformResponse,
+      response
+    );
+
+    response.headers = AxiosHeaders$1.from(response.headers);
+
+    return response;
+  }, function onAdapterRejection(reason) {
+    if (!isCancel$1(reason)) {
+      throwIfCancellationRequested(config);
+
+      // Transform response data
+      if (reason && reason.response) {
+        reason.response.data = transformData.call(
+          config,
+          config.transformResponse,
+          reason.response
+        );
+        reason.response.headers = AxiosHeaders$1.from(reason.response.headers);
+      }
+    }
+
+    return Promise.reject(reason);
+  });
+}
+
+const VERSION$1 = "1.8.3";
+
+const validators$1 = {};
+
+// eslint-disable-next-line func-names
+['object', 'boolean', 'number', 'function', 'string', 'symbol'].forEach((type, i) => {
+  validators$1[type] = function validator(thing) {
+    return typeof thing === type || 'a' + (i < 1 ? 'n ' : ' ') + type;
+  };
+});
+
+const deprecatedWarnings = {};
+
+/**
+ * Transitional option validator
+ *
+ * @param {function|boolean?} validator - set to false if the transitional option has been removed
+ * @param {string?} version - deprecated version / removed since version
+ * @param {string?} message - some message with additional info
+ *
+ * @returns {function}
+ */
+validators$1.transitional = function transitional(validator, version, message) {
+  function formatMessage(opt, desc) {
+    return '[Axios v' + VERSION$1 + '] Transitional option \'' + opt + '\'' + desc + (message ? '. ' + message : '');
+  }
+
+  // eslint-disable-next-line func-names
+  return (value, opt, opts) => {
+    if (validator === false) {
+      throw new AxiosError$1(
+        formatMessage(opt, ' has been removed' + (version ? ' in ' + version : '')),
+        AxiosError$1.ERR_DEPRECATED
+      );
+    }
+
+    if (version && !deprecatedWarnings[opt]) {
+      deprecatedWarnings[opt] = true;
+      // eslint-disable-next-line no-console
+      console.warn(
+        formatMessage(
+          opt,
+          ' has been deprecated since v' + version + ' and will be removed in the near future'
+        )
+      );
+    }
+
+    return validator ? validator(value, opt, opts) : true;
+  };
+};
+
+validators$1.spelling = function spelling(correctSpelling) {
+  return (value, opt) => {
+    // eslint-disable-next-line no-console
+    console.warn(`${opt} is likely a misspelling of ${correctSpelling}`);
+    return true;
+  }
+};
+
+/**
+ * Assert object's properties type
+ *
+ * @param {object} options
+ * @param {object} schema
+ * @param {boolean?} allowUnknown
+ *
+ * @returns {object}
+ */
+
+function assertOptions(options, schema, allowUnknown) {
+  if (typeof options !== 'object') {
+    throw new AxiosError$1('options must be an object', AxiosError$1.ERR_BAD_OPTION_VALUE);
+  }
+  const keys = Object.keys(options);
+  let i = keys.length;
+  while (i-- > 0) {
+    const opt = keys[i];
+    const validator = schema[opt];
+    if (validator) {
+      const value = options[opt];
+      const result = value === undefined || validator(value, opt, options);
+      if (result !== true) {
+        throw new AxiosError$1('option ' + opt + ' must be ' + result, AxiosError$1.ERR_BAD_OPTION_VALUE);
+      }
+      continue;
+    }
+    if (allowUnknown !== true) {
+      throw new AxiosError$1('Unknown option ' + opt, AxiosError$1.ERR_BAD_OPTION);
+    }
+  }
+}
+
+var validator = {
+  assertOptions,
+  validators: validators$1
+};
+
+const validators = validator.validators;
+
+/**
+ * Create a new instance of Axios
+ *
+ * @param {Object} instanceConfig The default config for the instance
+ *
+ * @return {Axios} A new instance of Axios
+ */
+let Axios$1 = class Axios {
+  constructor(instanceConfig) {
+    this.defaults = instanceConfig;
+    this.interceptors = {
+      request: new InterceptorManager(),
+      response: new InterceptorManager()
+    };
+  }
+
+  /**
+   * Dispatch a request
+   *
+   * @param {String|Object} configOrUrl The config specific for this request (merged with this.defaults)
+   * @param {?Object} config
+   *
+   * @returns {Promise} The Promise to be fulfilled
+   */
+  async request(configOrUrl, config) {
+    try {
+      return await this._request(configOrUrl, config);
+    } catch (err) {
+      if (err instanceof Error) {
+        let dummy = {};
+
+        Error.captureStackTrace ? Error.captureStackTrace(dummy) : (dummy = new Error());
+
+        // slice off the Error: ... line
+        const stack = dummy.stack ? dummy.stack.replace(/^.+\n/, '') : '';
+        try {
+          if (!err.stack) {
+            err.stack = stack;
+            // match without the 2 top stack lines
+          } else if (stack && !String(err.stack).endsWith(stack.replace(/^.+\n.+\n/, ''))) {
+            err.stack += '\n' + stack;
+          }
+        } catch (e) {
+          // ignore the case where "stack" is an un-writable property
+        }
+      }
+
+      throw err;
+    }
+  }
+
+  _request(configOrUrl, config) {
+    /*eslint no-param-reassign:0*/
+    // Allow for axios('example/url'[, config]) a la fetch API
+    if (typeof configOrUrl === 'string') {
+      config = config || {};
+      config.url = configOrUrl;
+    } else {
+      config = configOrUrl || {};
+    }
+
+    config = mergeConfig$1(this.defaults, config);
+
+    const {transitional, paramsSerializer, headers} = config;
+
+    if (transitional !== undefined) {
+      validator.assertOptions(transitional, {
+        silentJSONParsing: validators.transitional(validators.boolean),
+        forcedJSONParsing: validators.transitional(validators.boolean),
+        clarifyTimeoutError: validators.transitional(validators.boolean)
+      }, false);
+    }
+
+    if (paramsSerializer != null) {
+      if (utils$1.isFunction(paramsSerializer)) {
+        config.paramsSerializer = {
+          serialize: paramsSerializer
+        };
+      } else {
+        validator.assertOptions(paramsSerializer, {
+          encode: validators.function,
+          serialize: validators.function
+        }, true);
+      }
+    }
+
+    // Set config.allowAbsoluteUrls
+    if (config.allowAbsoluteUrls !== undefined) ; else if (this.defaults.allowAbsoluteUrls !== undefined) {
+      config.allowAbsoluteUrls = this.defaults.allowAbsoluteUrls;
+    } else {
+      config.allowAbsoluteUrls = true;
+    }
+
+    validator.assertOptions(config, {
+      baseUrl: validators.spelling('baseURL'),
+      withXsrfToken: validators.spelling('withXSRFToken')
+    }, true);
+
+    // Set config.method
+    config.method = (config.method || this.defaults.method || 'get').toLowerCase();
+
+    // Flatten headers
+    let contextHeaders = headers && utils$1.merge(
+      headers.common,
+      headers[config.method]
+    );
+
+    headers && utils$1.forEach(
+      ['delete', 'get', 'head', 'post', 'put', 'patch', 'common'],
+      (method) => {
+        delete headers[method];
+      }
+    );
+
+    config.headers = AxiosHeaders$1.concat(contextHeaders, headers);
+
+    // filter out skipped interceptors
+    const requestInterceptorChain = [];
+    let synchronousRequestInterceptors = true;
+    this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
+      if (typeof interceptor.runWhen === 'function' && interceptor.runWhen(config) === false) {
+        return;
+      }
+
+      synchronousRequestInterceptors = synchronousRequestInterceptors && interceptor.synchronous;
+
+      requestInterceptorChain.unshift(interceptor.fulfilled, interceptor.rejected);
+    });
+
+    const responseInterceptorChain = [];
+    this.interceptors.response.forEach(function pushResponseInterceptors(interceptor) {
+      responseInterceptorChain.push(interceptor.fulfilled, interceptor.rejected);
+    });
+
+    let promise;
+    let i = 0;
+    let len;
+
+    if (!synchronousRequestInterceptors) {
+      const chain = [dispatchRequest.bind(this), undefined];
+      chain.unshift.apply(chain, requestInterceptorChain);
+      chain.push.apply(chain, responseInterceptorChain);
+      len = chain.length;
+
+      promise = Promise.resolve(config);
+
+      while (i < len) {
+        promise = promise.then(chain[i++], chain[i++]);
+      }
+
+      return promise;
+    }
+
+    len = requestInterceptorChain.length;
+
+    let newConfig = config;
+
+    i = 0;
+
+    while (i < len) {
+      const onFulfilled = requestInterceptorChain[i++];
+      const onRejected = requestInterceptorChain[i++];
+      try {
+        newConfig = onFulfilled(newConfig);
+      } catch (error) {
+        onRejected.call(this, error);
+        break;
+      }
+    }
+
+    try {
+      promise = dispatchRequest.call(this, newConfig);
+    } catch (error) {
+      return Promise.reject(error);
+    }
+
+    i = 0;
+    len = responseInterceptorChain.length;
+
+    while (i < len) {
+      promise = promise.then(responseInterceptorChain[i++], responseInterceptorChain[i++]);
+    }
+
+    return promise;
+  }
+
+  getUri(config) {
+    config = mergeConfig$1(this.defaults, config);
+    const fullPath = buildFullPath(config.baseURL, config.url, config.allowAbsoluteUrls);
+    return buildURL(fullPath, config.params, config.paramsSerializer);
+  }
+};
+
+// Provide aliases for supported request methods
+utils$1.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoData(method) {
+  /*eslint func-names:0*/
+  Axios$1.prototype[method] = function(url, config) {
+    return this.request(mergeConfig$1(config || {}, {
+      method,
+      url,
+      data: (config || {}).data
+    }));
+  };
+});
+
+utils$1.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
+  /*eslint func-names:0*/
+
+  function generateHTTPMethod(isForm) {
+    return function httpMethod(url, data, config) {
+      return this.request(mergeConfig$1(config || {}, {
+        method,
+        headers: isForm ? {
+          'Content-Type': 'multipart/form-data'
+        } : {},
+        url,
+        data
+      }));
+    };
+  }
+
+  Axios$1.prototype[method] = generateHTTPMethod();
+
+  Axios$1.prototype[method + 'Form'] = generateHTTPMethod(true);
+});
+
+/**
+ * A `CancelToken` is an object that can be used to request cancellation of an operation.
+ *
+ * @param {Function} executor The executor function.
+ *
+ * @returns {CancelToken}
+ */
+let CancelToken$1 = class CancelToken {
+  constructor(executor) {
+    if (typeof executor !== 'function') {
+      throw new TypeError('executor must be a function.');
+    }
+
+    let resolvePromise;
+
+    this.promise = new Promise(function promiseExecutor(resolve) {
+      resolvePromise = resolve;
+    });
+
+    const token = this;
+
+    // eslint-disable-next-line func-names
+    this.promise.then(cancel => {
+      if (!token._listeners) return;
+
+      let i = token._listeners.length;
+
+      while (i-- > 0) {
+        token._listeners[i](cancel);
+      }
+      token._listeners = null;
+    });
+
+    // eslint-disable-next-line func-names
+    this.promise.then = onfulfilled => {
+      let _resolve;
+      // eslint-disable-next-line func-names
+      const promise = new Promise(resolve => {
+        token.subscribe(resolve);
+        _resolve = resolve;
+      }).then(onfulfilled);
+
+      promise.cancel = function reject() {
+        token.unsubscribe(_resolve);
+      };
+
+      return promise;
+    };
+
+    executor(function cancel(message, config, request) {
+      if (token.reason) {
+        // Cancellation has already been requested
+        return;
+      }
+
+      token.reason = new CanceledError$1(message, config, request);
+      resolvePromise(token.reason);
+    });
+  }
+
+  /**
+   * Throws a `CanceledError` if cancellation has been requested.
+   */
+  throwIfRequested() {
+    if (this.reason) {
+      throw this.reason;
+    }
+  }
+
+  /**
+   * Subscribe to the cancel signal
+   */
+
+  subscribe(listener) {
+    if (this.reason) {
+      listener(this.reason);
+      return;
+    }
+
+    if (this._listeners) {
+      this._listeners.push(listener);
+    } else {
+      this._listeners = [listener];
+    }
+  }
+
+  /**
+   * Unsubscribe from the cancel signal
+   */
+
+  unsubscribe(listener) {
+    if (!this._listeners) {
+      return;
+    }
+    const index = this._listeners.indexOf(listener);
+    if (index !== -1) {
+      this._listeners.splice(index, 1);
+    }
+  }
+
+  toAbortSignal() {
+    const controller = new AbortController();
+
+    const abort = (err) => {
+      controller.abort(err);
+    };
+
+    this.subscribe(abort);
+
+    controller.signal.unsubscribe = () => this.unsubscribe(abort);
+
+    return controller.signal;
+  }
+
+  /**
+   * Returns an object that contains a new `CancelToken` and a function that, when called,
+   * cancels the `CancelToken`.
+   */
+  static source() {
+    let cancel;
+    const token = new CancelToken(function executor(c) {
+      cancel = c;
+    });
+    return {
+      token,
+      cancel
+    };
+  }
+};
+
+/**
+ * Syntactic sugar for invoking a function and expanding an array for arguments.
+ *
+ * Common use case would be to use `Function.prototype.apply`.
+ *
+ *  ```js
+ *  function f(x, y, z) {}
+ *  var args = [1, 2, 3];
+ *  f.apply(null, args);
+ *  ```
+ *
+ * With `spread` this example can be re-written.
+ *
+ *  ```js
+ *  spread(function(x, y, z) {})([1, 2, 3]);
+ *  ```
+ *
+ * @param {Function} callback
+ *
+ * @returns {Function}
+ */
+function spread$1(callback) {
+  return function wrap(arr) {
+    return callback.apply(null, arr);
+  };
+}
+
+/**
+ * Determines whether the payload is an error thrown by Axios
+ *
+ * @param {*} payload The value to test
+ *
+ * @returns {boolean} True if the payload is an error thrown by Axios, otherwise false
+ */
+function isAxiosError$1(payload) {
+  return utils$1.isObject(payload) && (payload.isAxiosError === true);
+}
+
+const HttpStatusCode$1 = {
+  Continue: 100,
+  SwitchingProtocols: 101,
+  Processing: 102,
+  EarlyHints: 103,
+  Ok: 200,
+  Created: 201,
+  Accepted: 202,
+  NonAuthoritativeInformation: 203,
+  NoContent: 204,
+  ResetContent: 205,
+  PartialContent: 206,
+  MultiStatus: 207,
+  AlreadyReported: 208,
+  ImUsed: 226,
+  MultipleChoices: 300,
+  MovedPermanently: 301,
+  Found: 302,
+  SeeOther: 303,
+  NotModified: 304,
+  UseProxy: 305,
+  Unused: 306,
+  TemporaryRedirect: 307,
+  PermanentRedirect: 308,
+  BadRequest: 400,
+  Unauthorized: 401,
+  PaymentRequired: 402,
+  Forbidden: 403,
+  NotFound: 404,
+  MethodNotAllowed: 405,
+  NotAcceptable: 406,
+  ProxyAuthenticationRequired: 407,
+  RequestTimeout: 408,
+  Conflict: 409,
+  Gone: 410,
+  LengthRequired: 411,
+  PreconditionFailed: 412,
+  PayloadTooLarge: 413,
+  UriTooLong: 414,
+  UnsupportedMediaType: 415,
+  RangeNotSatisfiable: 416,
+  ExpectationFailed: 417,
+  ImATeapot: 418,
+  MisdirectedRequest: 421,
+  UnprocessableEntity: 422,
+  Locked: 423,
+  FailedDependency: 424,
+  TooEarly: 425,
+  UpgradeRequired: 426,
+  PreconditionRequired: 428,
+  TooManyRequests: 429,
+  RequestHeaderFieldsTooLarge: 431,
+  UnavailableForLegalReasons: 451,
+  InternalServerError: 500,
+  NotImplemented: 501,
+  BadGateway: 502,
+  ServiceUnavailable: 503,
+  GatewayTimeout: 504,
+  HttpVersionNotSupported: 505,
+  VariantAlsoNegotiates: 506,
+  InsufficientStorage: 507,
+  LoopDetected: 508,
+  NotExtended: 510,
+  NetworkAuthenticationRequired: 511,
+};
+
+Object.entries(HttpStatusCode$1).forEach(([key, value]) => {
+  HttpStatusCode$1[value] = key;
+});
+
+/**
+ * Create an instance of Axios
+ *
+ * @param {Object} defaultConfig The default config for the instance
+ *
+ * @returns {Axios} A new instance of Axios
+ */
+function createInstance(defaultConfig) {
+  const context = new Axios$1(defaultConfig);
+  const instance = bind(Axios$1.prototype.request, context);
+
+  // Copy axios.prototype to instance
+  utils$1.extend(instance, Axios$1.prototype, context, {allOwnKeys: true});
+
+  // Copy context to instance
+  utils$1.extend(instance, context, null, {allOwnKeys: true});
+
+  // Factory for creating new instances
+  instance.create = function create(instanceConfig) {
+    return createInstance(mergeConfig$1(defaultConfig, instanceConfig));
+  };
+
+  return instance;
+}
+
+// Create the default instance to be exported
+const axios = createInstance(defaults);
+
+// Expose Axios class to allow class inheritance
+axios.Axios = Axios$1;
+
+// Expose Cancel & CancelToken
+axios.CanceledError = CanceledError$1;
+axios.CancelToken = CancelToken$1;
+axios.isCancel = isCancel$1;
+axios.VERSION = VERSION$1;
+axios.toFormData = toFormData$1;
+
+// Expose AxiosError class
+axios.AxiosError = AxiosError$1;
+
+// alias for CanceledError for backward compatibility
+axios.Cancel = axios.CanceledError;
+
+// Expose all/spread
+axios.all = function all(promises) {
+  return Promise.all(promises);
+};
+
+axios.spread = spread$1;
+
+// Expose isAxiosError
+axios.isAxiosError = isAxiosError$1;
+
+// Expose mergeConfig
+axios.mergeConfig = mergeConfig$1;
+
+axios.AxiosHeaders = AxiosHeaders$1;
+
+axios.formToJSON = thing => formDataToJSON(utils$1.isHTMLForm(thing) ? new FormData(thing) : thing);
+
+axios.getAdapter = adapters.getAdapter;
+
+axios.HttpStatusCode = HttpStatusCode$1;
+
+axios.default = axios;
+
+// This module is intended to unwrap Axios default export as named.
+// Keep top-level export same with static properties
+// so that it can keep same with es module or cjs
+const {
+  Axios,
+  AxiosError,
+  CanceledError,
+  isCancel,
+  CancelToken,
+  VERSION,
+  all,
+  Cancel,
+  isAxiosError,
+  spread,
+  toFormData,
+  AxiosHeaders,
+  HttpStatusCode,
+  formToJSON,
+  getAdapter,
+  mergeConfig
+} = axios;
+
 /* Do NOT modify this file; see /src.ts/_admin/update-version.ts */
 /**
  *  The current version of Ethers.
@@ -1982,7 +5693,7 @@ function getFormat(value) {
     const name = (signed ? "" : "u") + "fixed" + String(width) + "x" + String(decimals);
     return { signed, width, decimals, name };
 }
-function toString$1(val, decimals) {
+function toString(val, decimals) {
     let negative = "";
     if (val < BN_0$8) {
         negative = "-";
@@ -2071,7 +5782,7 @@ class FixedNumber {
         assertPrivate(guard, _guard$3, "FixedNumber");
         this.#val = value;
         this.#format = format;
-        const _value = toString$1(value, format.decimals);
+        const _value = toString(value, format.decimals);
         defineProperties(this, { format: format.name, _value });
         this.#tens = getTens(format.decimals);
     }
@@ -20310,12 +24021,13 @@ const ADDRESSES = {
     QUOTER: '0x14b4D9238550dc75Cf164FDa471Aa1d8A6A2b0c6',
     QUOTER_V2: '0x83EE12582E3448Ab69E664A2ba69b6AedE112205',
     TICK_LENS: '0xE5D80F26C7dfE594d22e813761104e6c217794Cf',
+    USDC: '0x836d275563bab5e93fd6ca62a95db7065da94342',
 };
 // Chain information
 const CHAIN_ID = 41923;
 const RPC_URL = 'https://rpc.edu-chain.raas.gelato.cloud';
 // Constants
-const MAX_INT128 = 2n ** 128n - 1n;
+const MAX_INT128$1 = 2n ** 128n - 1n;
 const MAX_UINT256 = 2n ** 256n - 1n;
 // ABIs
 const ROUTER_ABI = [
@@ -20843,6 +24555,875 @@ const UNISWAP_V3_FACTORY_ABI = [
         stateMutability: "view"
     }
 ];
+const NFT_POSITION_MANGER_ABI = [
+    {
+        type: "constructor",
+        inputs: [
+            { name: "_factory", type: "address", internalType: "address" },
+            { name: "_WETH9", type: "address", internalType: "address" },
+            {
+                name: "initCodeHash",
+                type: "bytes32",
+                internalType: "bytes32",
+            },
+            { name: "baseURI_", type: "string", internalType: "string" },
+            { name: "name", type: "string", internalType: "string" },
+            { name: "symbol", type: "string", internalType: "string" },
+        ],
+        stateMutability: "nonpayable",
+    },
+    { type: "receive", stateMutability: "payable" },
+    {
+        type: "function",
+        name: "DOMAIN_SEPARATOR",
+        inputs: [],
+        outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "PERMIT_TYPEHASH",
+        inputs: [],
+        outputs: [{ name: "", type: "bytes32", internalType: "bytes32" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "WETH9",
+        inputs: [],
+        outputs: [{ name: "", type: "address", internalType: "address" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "approve",
+        inputs: [
+            { name: "to", type: "address", internalType: "address" },
+            { name: "tokenId", type: "uint256", internalType: "uint256" },
+        ],
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        name: "balanceOf",
+        inputs: [{ name: "owner", type: "address", internalType: "address" }],
+        outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "burn",
+        inputs: [{ name: "tokenId", type: "uint256", internalType: "uint256" }],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "collect",
+        inputs: [
+            {
+                name: "params",
+                type: "tuple",
+                internalType: "struct INonfungiblePositionManager.CollectParams",
+                components: [
+                    { name: "tokenId", type: "uint256", internalType: "uint256" },
+                    {
+                        name: "recipient",
+                        type: "address",
+                        internalType: "address",
+                    },
+                    {
+                        name: "amount0Max",
+                        type: "uint128",
+                        internalType: "uint128",
+                    },
+                    {
+                        name: "amount1Max",
+                        type: "uint128",
+                        internalType: "uint128",
+                    },
+                ],
+            },
+        ],
+        outputs: [
+            { name: "amount0", type: "uint256", internalType: "uint256" },
+            { name: "amount1", type: "uint256", internalType: "uint256" },
+        ],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "collectReward",
+        inputs: [
+            {
+                name: "params",
+                type: "tuple",
+                internalType: "struct INonfungiblePositionManager.CollectRewardParams",
+                components: [
+                    { name: "tokenId", type: "uint256", internalType: "uint256" },
+                    {
+                        name: "recipient",
+                        type: "address",
+                        internalType: "address",
+                    },
+                    {
+                        name: "amountRewardMax",
+                        type: "uint128",
+                        internalType: "uint128",
+                    },
+                ],
+            },
+        ],
+        outputs: [
+            { name: "amountReward", type: "uint256", internalType: "uint256" },
+        ],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "createAndInitializePoolIfNecessary",
+        inputs: [
+            { name: "token0", type: "address", internalType: "address" },
+            { name: "token1", type: "address", internalType: "address" },
+            { name: "fee", type: "uint24", internalType: "uint24" },
+            { name: "sqrtPriceX96", type: "uint160", internalType: "uint160" },
+        ],
+        outputs: [{ name: "pool", type: "address", internalType: "address" }],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "decreaseLiquidity",
+        inputs: [
+            {
+                name: "params",
+                type: "tuple",
+                internalType: "struct INonfungiblePositionManager.DecreaseLiquidityParams",
+                components: [
+                    { name: "tokenId", type: "uint256", internalType: "uint256" },
+                    {
+                        name: "liquidity",
+                        type: "uint128",
+                        internalType: "uint128",
+                    },
+                    {
+                        name: "amount0Min",
+                        type: "uint256",
+                        internalType: "uint256",
+                    },
+                    {
+                        name: "amount1Min",
+                        type: "uint256",
+                        internalType: "uint256",
+                    },
+                    { name: "deadline", type: "uint256", internalType: "uint256" },
+                ],
+            },
+        ],
+        outputs: [
+            { name: "amount0", type: "uint256", internalType: "uint256" },
+            { name: "amount1", type: "uint256", internalType: "uint256" },
+        ],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "factory",
+        inputs: [],
+        outputs: [{ name: "", type: "address", internalType: "address" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "getApproved",
+        inputs: [{ name: "tokenId", type: "uint256", internalType: "uint256" }],
+        outputs: [{ name: "", type: "address", internalType: "address" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "increaseLiquidity",
+        inputs: [
+            {
+                name: "params",
+                type: "tuple",
+                internalType: "struct INonfungiblePositionManager.IncreaseLiquidityParams",
+                components: [
+                    { name: "tokenId", type: "uint256", internalType: "uint256" },
+                    {
+                        name: "amount0Desired",
+                        type: "uint256",
+                        internalType: "uint256",
+                    },
+                    {
+                        name: "amount1Desired",
+                        type: "uint256",
+                        internalType: "uint256",
+                    },
+                    {
+                        name: "amount0Min",
+                        type: "uint256",
+                        internalType: "uint256",
+                    },
+                    {
+                        name: "amount1Min",
+                        type: "uint256",
+                        internalType: "uint256",
+                    },
+                    { name: "deadline", type: "uint256", internalType: "uint256" },
+                ],
+            },
+        ],
+        outputs: [
+            { name: "liquidity", type: "uint128", internalType: "uint128" },
+            { name: "amount0", type: "uint256", internalType: "uint256" },
+            { name: "amount1", type: "uint256", internalType: "uint256" },
+        ],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "isApprovedForAll",
+        inputs: [
+            { name: "owner", type: "address", internalType: "address" },
+            { name: "operator", type: "address", internalType: "address" },
+        ],
+        outputs: [{ name: "", type: "bool", internalType: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "isApprovedOrOwner",
+        inputs: [
+            { name: "spender", type: "address", internalType: "address" },
+            { name: "tokenId", type: "uint256", internalType: "uint256" },
+        ],
+        outputs: [{ name: "", type: "bool", internalType: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "mint",
+        inputs: [
+            {
+                name: "params",
+                type: "tuple",
+                internalType: "struct INonfungiblePositionManager.MintParams",
+                components: [
+                    { name: "token0", type: "address", internalType: "address" },
+                    { name: "token1", type: "address", internalType: "address" },
+                    { name: "fee", type: "uint24", internalType: "uint24" },
+                    { name: "tickLower", type: "int24", internalType: "int24" },
+                    { name: "tickUpper", type: "int24", internalType: "int24" },
+                    {
+                        name: "amount0Desired",
+                        type: "uint256",
+                        internalType: "uint256",
+                    },
+                    {
+                        name: "amount1Desired",
+                        type: "uint256",
+                        internalType: "uint256",
+                    },
+                    {
+                        name: "amount0Min",
+                        type: "uint256",
+                        internalType: "uint256",
+                    },
+                    {
+                        name: "amount1Min",
+                        type: "uint256",
+                        internalType: "uint256",
+                    },
+                    {
+                        name: "recipient",
+                        type: "address",
+                        internalType: "address",
+                    },
+                    { name: "deadline", type: "uint256", internalType: "uint256" },
+                ],
+            },
+        ],
+        outputs: [
+            { name: "tokenId", type: "uint256", internalType: "uint256" },
+            { name: "liquidity", type: "uint128", internalType: "uint128" },
+            { name: "amount0", type: "uint256", internalType: "uint256" },
+            { name: "amount1", type: "uint256", internalType: "uint256" },
+        ],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "multicall",
+        inputs: [{ name: "data", type: "bytes[]", internalType: "bytes[]" }],
+        outputs: [{ name: "results", type: "bytes[]", internalType: "bytes[]" }],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "name",
+        inputs: [],
+        outputs: [{ name: "", type: "string", internalType: "string" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "ownerOf",
+        inputs: [{ name: "tokenId", type: "uint256", internalType: "uint256" }],
+        outputs: [{ name: "", type: "address", internalType: "address" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "permit",
+        inputs: [
+            { name: "spender", type: "address", internalType: "address" },
+            { name: "tokenId", type: "uint256", internalType: "uint256" },
+            { name: "deadline", type: "uint256", internalType: "uint256" },
+            { name: "v", type: "uint8", internalType: "uint8" },
+            { name: "r", type: "bytes32", internalType: "bytes32" },
+            { name: "s", type: "bytes32", internalType: "bytes32" },
+        ],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "positionRewardsOwed",
+        inputs: [{ name: "tokenId", type: "uint256", internalType: "uint256" }],
+        outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        name: "positions",
+        inputs: [{ name: "tokenId", type: "uint256", internalType: "uint256" }],
+        outputs: [
+            { name: "nonce", type: "uint96", internalType: "uint96" },
+            { name: "operator", type: "address", internalType: "address" },
+            { name: "token0", type: "address", internalType: "address" },
+            { name: "token1", type: "address", internalType: "address" },
+            { name: "fee", type: "uint24", internalType: "uint24" },
+            { name: "tickLower", type: "int24", internalType: "int24" },
+            { name: "tickUpper", type: "int24", internalType: "int24" },
+            { name: "liquidity", type: "uint128", internalType: "uint128" },
+            {
+                name: "feeGrowthInside0LastX128",
+                type: "uint256",
+                internalType: "uint256",
+            },
+            {
+                name: "feeGrowthInside1LastX128",
+                type: "uint256",
+                internalType: "uint256",
+            },
+            { name: "tokensOwed0", type: "uint128", internalType: "uint128" },
+            { name: "tokensOwed1", type: "uint128", internalType: "uint128" },
+        ],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "positions2",
+        inputs: [{ name: "tokenId", type: "uint256", internalType: "uint256" }],
+        outputs: [
+            {
+                name: "liquidityStaked",
+                type: "uint128",
+                internalType: "uint128",
+            },
+            { name: "pool", type: "address", internalType: "address" },
+        ],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "refundETH",
+        inputs: [],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "safeTransferFrom",
+        inputs: [
+            { name: "from", type: "address", internalType: "address" },
+            { name: "to", type: "address", internalType: "address" },
+            { name: "tokenId", type: "uint256", internalType: "uint256" },
+        ],
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        name: "safeTransferFrom",
+        inputs: [
+            { name: "from", type: "address", internalType: "address" },
+            { name: "to", type: "address", internalType: "address" },
+            { name: "tokenId", type: "uint256", internalType: "uint256" },
+            { name: "data", type: "bytes", internalType: "bytes" },
+        ],
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        name: "selfPermit",
+        inputs: [
+            { name: "token", type: "address", internalType: "address" },
+            { name: "value", type: "uint256", internalType: "uint256" },
+            { name: "deadline", type: "uint256", internalType: "uint256" },
+            { name: "v", type: "uint8", internalType: "uint8" },
+            { name: "r", type: "bytes32", internalType: "bytes32" },
+            { name: "s", type: "bytes32", internalType: "bytes32" },
+        ],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "selfPermitAllowed",
+        inputs: [
+            { name: "token", type: "address", internalType: "address" },
+            { name: "nonce", type: "uint256", internalType: "uint256" },
+            { name: "expiry", type: "uint256", internalType: "uint256" },
+            { name: "v", type: "uint8", internalType: "uint8" },
+            { name: "r", type: "bytes32", internalType: "bytes32" },
+            { name: "s", type: "bytes32", internalType: "bytes32" },
+        ],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "selfPermitAllowedIfNecessary",
+        inputs: [
+            { name: "token", type: "address", internalType: "address" },
+            { name: "nonce", type: "uint256", internalType: "uint256" },
+            { name: "expiry", type: "uint256", internalType: "uint256" },
+            { name: "v", type: "uint8", internalType: "uint8" },
+            { name: "r", type: "bytes32", internalType: "bytes32" },
+            { name: "s", type: "bytes32", internalType: "bytes32" },
+        ],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "selfPermitIfNecessary",
+        inputs: [
+            { name: "token", type: "address", internalType: "address" },
+            { name: "value", type: "uint256", internalType: "uint256" },
+            { name: "deadline", type: "uint256", internalType: "uint256" },
+            { name: "v", type: "uint8", internalType: "uint8" },
+            { name: "r", type: "bytes32", internalType: "bytes32" },
+            { name: "s", type: "bytes32", internalType: "bytes32" },
+        ],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "setApprovalForAll",
+        inputs: [
+            { name: "operator", type: "address", internalType: "address" },
+            { name: "approved", type: "bool", internalType: "bool" },
+        ],
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        name: "stake",
+        inputs: [],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "stake",
+        inputs: [
+            { name: "tokenId", type: "uint256", internalType: "uint256" },
+            {
+                name: "liquidityStakedDelta",
+                type: "uint128",
+                internalType: "uint128",
+            },
+        ],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "stake",
+        inputs: [{ name: "tokenId", type: "uint256", internalType: "uint256" }],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "supportsInterface",
+        inputs: [{ name: "interfaceId", type: "bytes4", internalType: "bytes4" }],
+        outputs: [{ name: "", type: "bool", internalType: "bool" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "sweepToken",
+        inputs: [
+            { name: "token", type: "address", internalType: "address" },
+            {
+                name: "amountMinimum",
+                type: "uint256",
+                internalType: "uint256",
+            },
+            { name: "recipient", type: "address", internalType: "address" },
+        ],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "symbol",
+        inputs: [],
+        outputs: [{ name: "", type: "string", internalType: "string" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "tokenByIndex",
+        inputs: [{ name: "index", type: "uint256", internalType: "uint256" }],
+        outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "tokenOfOwnerByIndex",
+        inputs: [
+            { name: "owner", type: "address", internalType: "address" },
+            { name: "index", type: "uint256", internalType: "uint256" },
+        ],
+        outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "tokenURI",
+        inputs: [{ name: "tokenId", type: "uint256", internalType: "uint256" }],
+        outputs: [{ name: "", type: "string", internalType: "string" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "totalSupply",
+        inputs: [],
+        outputs: [{ name: "", type: "uint256", internalType: "uint256" }],
+        stateMutability: "view",
+    },
+    {
+        type: "function",
+        name: "transferFrom",
+        inputs: [
+            { name: "from", type: "address", internalType: "address" },
+            { name: "to", type: "address", internalType: "address" },
+            { name: "tokenId", type: "uint256", internalType: "uint256" },
+        ],
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        name: "uniswapV3MintCallback",
+        inputs: [
+            { name: "amount0Owed", type: "uint256", internalType: "uint256" },
+            { name: "amount1Owed", type: "uint256", internalType: "uint256" },
+            { name: "data", type: "bytes", internalType: "bytes" },
+        ],
+        outputs: [],
+        stateMutability: "nonpayable",
+    },
+    {
+        type: "function",
+        name: "unstake",
+        inputs: [
+            { name: "tokenId", type: "uint256", internalType: "uint256" },
+            {
+                name: "liquidityStakedDelta",
+                type: "uint128",
+                internalType: "uint128",
+            },
+        ],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "unstake",
+        inputs: [{ name: "tokenId", type: "uint256", internalType: "uint256" }],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "function",
+        name: "unwrapWETH9",
+        inputs: [
+            {
+                name: "amountMinimum",
+                type: "uint256",
+                internalType: "uint256",
+            },
+            { name: "recipient", type: "address", internalType: "address" },
+        ],
+        outputs: [],
+        stateMutability: "payable",
+    },
+    {
+        type: "event",
+        name: "Approval",
+        inputs: [
+            {
+                name: "owner",
+                type: "address",
+                indexed: true,
+                internalType: "address",
+            },
+            {
+                name: "approved",
+                type: "address",
+                indexed: true,
+                internalType: "address",
+            },
+            {
+                name: "tokenId",
+                type: "uint256",
+                indexed: true,
+                internalType: "uint256",
+            },
+        ],
+        anonymous: false,
+    },
+    {
+        type: "event",
+        name: "ApprovalForAll",
+        inputs: [
+            {
+                name: "owner",
+                type: "address",
+                indexed: true,
+                internalType: "address",
+            },
+            {
+                name: "operator",
+                type: "address",
+                indexed: true,
+                internalType: "address",
+            },
+            {
+                name: "approved",
+                type: "bool",
+                indexed: false,
+                internalType: "bool",
+            },
+        ],
+        anonymous: false,
+    },
+    {
+        type: "event",
+        name: "Collect",
+        inputs: [
+            {
+                name: "tokenId",
+                type: "uint256",
+                indexed: true,
+                internalType: "uint256",
+            },
+            {
+                name: "recipient",
+                type: "address",
+                indexed: false,
+                internalType: "address",
+            },
+            {
+                name: "amount0",
+                type: "uint256",
+                indexed: false,
+                internalType: "uint256",
+            },
+            {
+                name: "amount1",
+                type: "uint256",
+                indexed: false,
+                internalType: "uint256",
+            },
+        ],
+        anonymous: false,
+    },
+    {
+        type: "event",
+        name: "CollectReward",
+        inputs: [
+            {
+                name: "tokenId",
+                type: "uint256",
+                indexed: true,
+                internalType: "uint256",
+            },
+            {
+                name: "recipient",
+                type: "address",
+                indexed: false,
+                internalType: "address",
+            },
+            {
+                name: "amountReward",
+                type: "uint256",
+                indexed: false,
+                internalType: "uint256",
+            },
+        ],
+        anonymous: false,
+    },
+    {
+        type: "event",
+        name: "DecreaseLiquidity",
+        inputs: [
+            {
+                name: "tokenId",
+                type: "uint256",
+                indexed: true,
+                internalType: "uint256",
+            },
+            {
+                name: "liquidity",
+                type: "uint128",
+                indexed: false,
+                internalType: "uint128",
+            },
+            {
+                name: "amount0",
+                type: "uint256",
+                indexed: false,
+                internalType: "uint256",
+            },
+            {
+                name: "amount1",
+                type: "uint256",
+                indexed: false,
+                internalType: "uint256",
+            },
+        ],
+        anonymous: false,
+    },
+    {
+        type: "event",
+        name: "IncreaseLiquidity",
+        inputs: [
+            {
+                name: "tokenId",
+                type: "uint256",
+                indexed: true,
+                internalType: "uint256",
+            },
+            {
+                name: "liquidity",
+                type: "uint128",
+                indexed: false,
+                internalType: "uint128",
+            },
+            {
+                name: "amount0",
+                type: "uint256",
+                indexed: false,
+                internalType: "uint256",
+            },
+            {
+                name: "amount1",
+                type: "uint256",
+                indexed: false,
+                internalType: "uint256",
+            },
+        ],
+        anonymous: false,
+    },
+    {
+        type: "event",
+        name: "Stake",
+        inputs: [
+            {
+                name: "tokenId",
+                type: "uint256",
+                indexed: true,
+                internalType: "uint256",
+            },
+            {
+                name: "amount",
+                type: "uint256",
+                indexed: false,
+                internalType: "uint256",
+            },
+        ],
+        anonymous: false,
+    },
+    {
+        type: "event",
+        name: "Transfer",
+        inputs: [
+            {
+                name: "from",
+                type: "address",
+                indexed: true,
+                internalType: "address",
+            },
+            {
+                name: "to",
+                type: "address",
+                indexed: true,
+                internalType: "address",
+            },
+            {
+                name: "tokenId",
+                type: "uint256",
+                indexed: true,
+                internalType: "uint256",
+            },
+        ],
+        anonymous: false,
+    },
+    {
+        type: "event",
+        name: "Unstake",
+        inputs: [
+            {
+                name: "tokenId",
+                type: "uint256",
+                indexed: true,
+                internalType: "uint256",
+            },
+            {
+                name: "amount",
+                type: "uint256",
+                indexed: false,
+                internalType: "uint256",
+            },
+        ],
+        anonymous: false,
+    },
+    {
+        type: "event",
+        name: "UpdatePosition",
+        inputs: [
+            {
+                name: "tokenId",
+                type: "uint256",
+                indexed: false,
+                internalType: "uint256",
+            },
+        ],
+        anonymous: false,
+    },
+    { type: "error", name: "T", inputs: [] },
+];
 const UNISWAP_V3_POOL_ABI = [
     {
         type: "function",
@@ -20903,3718 +25484,7 @@ const FEE_TO_TICK_SPACING = {
     [FEE_TIERS.HIGH]: 200
 };
 // Subgraph endpoint
-const SUBGRAPH_URL = 'https://api.goldsky.com/api/public/project_cm5nst0b7iiqy01t6hxww7gao/subgraphs/sailfish-v3-occ-mainnet/1.0.0/gn';
-
-function bind(fn, thisArg) {
-  return function wrap() {
-    return fn.apply(thisArg, arguments);
-  };
-}
-
-// utils is a library of generic helper functions non-specific to axios
-
-const {toString} = Object.prototype;
-const {getPrototypeOf} = Object;
-
-const kindOf = (cache => thing => {
-    const str = toString.call(thing);
-    return cache[str] || (cache[str] = str.slice(8, -1).toLowerCase());
-})(Object.create(null));
-
-const kindOfTest = (type) => {
-  type = type.toLowerCase();
-  return (thing) => kindOf(thing) === type
-};
-
-const typeOfTest = type => thing => typeof thing === type;
-
-/**
- * Determine if a value is an Array
- *
- * @param {Object} val The value to test
- *
- * @returns {boolean} True if value is an Array, otherwise false
- */
-const {isArray} = Array;
-
-/**
- * Determine if a value is undefined
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if the value is undefined, otherwise false
- */
-const isUndefined = typeOfTest('undefined');
-
-/**
- * Determine if a value is a Buffer
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a Buffer, otherwise false
- */
-function isBuffer(val) {
-  return val !== null && !isUndefined(val) && val.constructor !== null && !isUndefined(val.constructor)
-    && isFunction(val.constructor.isBuffer) && val.constructor.isBuffer(val);
-}
-
-/**
- * Determine if a value is an ArrayBuffer
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is an ArrayBuffer, otherwise false
- */
-const isArrayBuffer = kindOfTest('ArrayBuffer');
-
-
-/**
- * Determine if a value is a view on an ArrayBuffer
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a view on an ArrayBuffer, otherwise false
- */
-function isArrayBufferView(val) {
-  let result;
-  if ((typeof ArrayBuffer !== 'undefined') && (ArrayBuffer.isView)) {
-    result = ArrayBuffer.isView(val);
-  } else {
-    result = (val) && (val.buffer) && (isArrayBuffer(val.buffer));
-  }
-  return result;
-}
-
-/**
- * Determine if a value is a String
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a String, otherwise false
- */
-const isString = typeOfTest('string');
-
-/**
- * Determine if a value is a Function
- *
- * @param {*} val The value to test
- * @returns {boolean} True if value is a Function, otherwise false
- */
-const isFunction = typeOfTest('function');
-
-/**
- * Determine if a value is a Number
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a Number, otherwise false
- */
-const isNumber = typeOfTest('number');
-
-/**
- * Determine if a value is an Object
- *
- * @param {*} thing The value to test
- *
- * @returns {boolean} True if value is an Object, otherwise false
- */
-const isObject = (thing) => thing !== null && typeof thing === 'object';
-
-/**
- * Determine if a value is a Boolean
- *
- * @param {*} thing The value to test
- * @returns {boolean} True if value is a Boolean, otherwise false
- */
-const isBoolean = thing => thing === true || thing === false;
-
-/**
- * Determine if a value is a plain Object
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a plain Object, otherwise false
- */
-const isPlainObject = (val) => {
-  if (kindOf(val) !== 'object') {
-    return false;
-  }
-
-  const prototype = getPrototypeOf(val);
-  return (prototype === null || prototype === Object.prototype || Object.getPrototypeOf(prototype) === null) && !(Symbol.toStringTag in val) && !(Symbol.iterator in val);
-};
-
-/**
- * Determine if a value is a Date
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a Date, otherwise false
- */
-const isDate = kindOfTest('Date');
-
-/**
- * Determine if a value is a File
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a File, otherwise false
- */
-const isFile = kindOfTest('File');
-
-/**
- * Determine if a value is a Blob
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a Blob, otherwise false
- */
-const isBlob = kindOfTest('Blob');
-
-/**
- * Determine if a value is a FileList
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a File, otherwise false
- */
-const isFileList = kindOfTest('FileList');
-
-/**
- * Determine if a value is a Stream
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a Stream, otherwise false
- */
-const isStream = (val) => isObject(val) && isFunction(val.pipe);
-
-/**
- * Determine if a value is a FormData
- *
- * @param {*} thing The value to test
- *
- * @returns {boolean} True if value is an FormData, otherwise false
- */
-const isFormData = (thing) => {
-  let kind;
-  return thing && (
-    (typeof FormData === 'function' && thing instanceof FormData) || (
-      isFunction(thing.append) && (
-        (kind = kindOf(thing)) === 'formdata' ||
-        // detect form-data instance
-        (kind === 'object' && isFunction(thing.toString) && thing.toString() === '[object FormData]')
-      )
-    )
-  )
-};
-
-/**
- * Determine if a value is a URLSearchParams object
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a URLSearchParams object, otherwise false
- */
-const isURLSearchParams = kindOfTest('URLSearchParams');
-
-const [isReadableStream, isRequest, isResponse, isHeaders] = ['ReadableStream', 'Request', 'Response', 'Headers'].map(kindOfTest);
-
-/**
- * Trim excess whitespace off the beginning and end of a string
- *
- * @param {String} str The String to trim
- *
- * @returns {String} The String freed of excess whitespace
- */
-const trim = (str) => str.trim ?
-  str.trim() : str.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
-
-/**
- * Iterate over an Array or an Object invoking a function for each item.
- *
- * If `obj` is an Array callback will be called passing
- * the value, index, and complete array for each item.
- *
- * If 'obj' is an Object callback will be called passing
- * the value, key, and complete object for each property.
- *
- * @param {Object|Array} obj The object to iterate
- * @param {Function} fn The callback to invoke for each item
- *
- * @param {Boolean} [allOwnKeys = false]
- * @returns {any}
- */
-function forEach(obj, fn, {allOwnKeys = false} = {}) {
-  // Don't bother if no value provided
-  if (obj === null || typeof obj === 'undefined') {
-    return;
-  }
-
-  let i;
-  let l;
-
-  // Force an array if not already something iterable
-  if (typeof obj !== 'object') {
-    /*eslint no-param-reassign:0*/
-    obj = [obj];
-  }
-
-  if (isArray(obj)) {
-    // Iterate over array values
-    for (i = 0, l = obj.length; i < l; i++) {
-      fn.call(null, obj[i], i, obj);
-    }
-  } else {
-    // Iterate over object keys
-    const keys = allOwnKeys ? Object.getOwnPropertyNames(obj) : Object.keys(obj);
-    const len = keys.length;
-    let key;
-
-    for (i = 0; i < len; i++) {
-      key = keys[i];
-      fn.call(null, obj[key], key, obj);
-    }
-  }
-}
-
-function findKey(obj, key) {
-  key = key.toLowerCase();
-  const keys = Object.keys(obj);
-  let i = keys.length;
-  let _key;
-  while (i-- > 0) {
-    _key = keys[i];
-    if (key === _key.toLowerCase()) {
-      return _key;
-    }
-  }
-  return null;
-}
-
-const _global = (() => {
-  /*eslint no-undef:0*/
-  if (typeof globalThis !== "undefined") return globalThis;
-  return typeof self !== "undefined" ? self : (typeof window !== 'undefined' ? window : global)
-})();
-
-const isContextDefined = (context) => !isUndefined(context) && context !== _global;
-
-/**
- * Accepts varargs expecting each argument to be an object, then
- * immutably merges the properties of each object and returns result.
- *
- * When multiple objects contain the same key the later object in
- * the arguments list will take precedence.
- *
- * Example:
- *
- * ```js
- * var result = merge({foo: 123}, {foo: 456});
- * console.log(result.foo); // outputs 456
- * ```
- *
- * @param {Object} obj1 Object to merge
- *
- * @returns {Object} Result of all merge properties
- */
-function merge(/* obj1, obj2, obj3, ... */) {
-  const {caseless} = isContextDefined(this) && this || {};
-  const result = {};
-  const assignValue = (val, key) => {
-    const targetKey = caseless && findKey(result, key) || key;
-    if (isPlainObject(result[targetKey]) && isPlainObject(val)) {
-      result[targetKey] = merge(result[targetKey], val);
-    } else if (isPlainObject(val)) {
-      result[targetKey] = merge({}, val);
-    } else if (isArray(val)) {
-      result[targetKey] = val.slice();
-    } else {
-      result[targetKey] = val;
-    }
-  };
-
-  for (let i = 0, l = arguments.length; i < l; i++) {
-    arguments[i] && forEach(arguments[i], assignValue);
-  }
-  return result;
-}
-
-/**
- * Extends object a by mutably adding to it the properties of object b.
- *
- * @param {Object} a The object to be extended
- * @param {Object} b The object to copy properties from
- * @param {Object} thisArg The object to bind function to
- *
- * @param {Boolean} [allOwnKeys]
- * @returns {Object} The resulting value of object a
- */
-const extend = (a, b, thisArg, {allOwnKeys}= {}) => {
-  forEach(b, (val, key) => {
-    if (thisArg && isFunction(val)) {
-      a[key] = bind(val, thisArg);
-    } else {
-      a[key] = val;
-    }
-  }, {allOwnKeys});
-  return a;
-};
-
-/**
- * Remove byte order marker. This catches EF BB BF (the UTF-8 BOM)
- *
- * @param {string} content with BOM
- *
- * @returns {string} content value without BOM
- */
-const stripBOM = (content) => {
-  if (content.charCodeAt(0) === 0xFEFF) {
-    content = content.slice(1);
-  }
-  return content;
-};
-
-/**
- * Inherit the prototype methods from one constructor into another
- * @param {function} constructor
- * @param {function} superConstructor
- * @param {object} [props]
- * @param {object} [descriptors]
- *
- * @returns {void}
- */
-const inherits = (constructor, superConstructor, props, descriptors) => {
-  constructor.prototype = Object.create(superConstructor.prototype, descriptors);
-  constructor.prototype.constructor = constructor;
-  Object.defineProperty(constructor, 'super', {
-    value: superConstructor.prototype
-  });
-  props && Object.assign(constructor.prototype, props);
-};
-
-/**
- * Resolve object with deep prototype chain to a flat object
- * @param {Object} sourceObj source object
- * @param {Object} [destObj]
- * @param {Function|Boolean} [filter]
- * @param {Function} [propFilter]
- *
- * @returns {Object}
- */
-const toFlatObject = (sourceObj, destObj, filter, propFilter) => {
-  let props;
-  let i;
-  let prop;
-  const merged = {};
-
-  destObj = destObj || {};
-  // eslint-disable-next-line no-eq-null,eqeqeq
-  if (sourceObj == null) return destObj;
-
-  do {
-    props = Object.getOwnPropertyNames(sourceObj);
-    i = props.length;
-    while (i-- > 0) {
-      prop = props[i];
-      if ((!propFilter || propFilter(prop, sourceObj, destObj)) && !merged[prop]) {
-        destObj[prop] = sourceObj[prop];
-        merged[prop] = true;
-      }
-    }
-    sourceObj = filter !== false && getPrototypeOf(sourceObj);
-  } while (sourceObj && (!filter || filter(sourceObj, destObj)) && sourceObj !== Object.prototype);
-
-  return destObj;
-};
-
-/**
- * Determines whether a string ends with the characters of a specified string
- *
- * @param {String} str
- * @param {String} searchString
- * @param {Number} [position= 0]
- *
- * @returns {boolean}
- */
-const endsWith = (str, searchString, position) => {
-  str = String(str);
-  if (position === undefined || position > str.length) {
-    position = str.length;
-  }
-  position -= searchString.length;
-  const lastIndex = str.indexOf(searchString, position);
-  return lastIndex !== -1 && lastIndex === position;
-};
-
-
-/**
- * Returns new array from array like object or null if failed
- *
- * @param {*} [thing]
- *
- * @returns {?Array}
- */
-const toArray = (thing) => {
-  if (!thing) return null;
-  if (isArray(thing)) return thing;
-  let i = thing.length;
-  if (!isNumber(i)) return null;
-  const arr = new Array(i);
-  while (i-- > 0) {
-    arr[i] = thing[i];
-  }
-  return arr;
-};
-
-/**
- * Checking if the Uint8Array exists and if it does, it returns a function that checks if the
- * thing passed in is an instance of Uint8Array
- *
- * @param {TypedArray}
- *
- * @returns {Array}
- */
-// eslint-disable-next-line func-names
-const isTypedArray = (TypedArray => {
-  // eslint-disable-next-line func-names
-  return thing => {
-    return TypedArray && thing instanceof TypedArray;
-  };
-})(typeof Uint8Array !== 'undefined' && getPrototypeOf(Uint8Array));
-
-/**
- * For each entry in the object, call the function with the key and value.
- *
- * @param {Object<any, any>} obj - The object to iterate over.
- * @param {Function} fn - The function to call for each entry.
- *
- * @returns {void}
- */
-const forEachEntry = (obj, fn) => {
-  const generator = obj && obj[Symbol.iterator];
-
-  const iterator = generator.call(obj);
-
-  let result;
-
-  while ((result = iterator.next()) && !result.done) {
-    const pair = result.value;
-    fn.call(obj, pair[0], pair[1]);
-  }
-};
-
-/**
- * It takes a regular expression and a string, and returns an array of all the matches
- *
- * @param {string} regExp - The regular expression to match against.
- * @param {string} str - The string to search.
- *
- * @returns {Array<boolean>}
- */
-const matchAll = (regExp, str) => {
-  let matches;
-  const arr = [];
-
-  while ((matches = regExp.exec(str)) !== null) {
-    arr.push(matches);
-  }
-
-  return arr;
-};
-
-/* Checking if the kindOfTest function returns true when passed an HTMLFormElement. */
-const isHTMLForm = kindOfTest('HTMLFormElement');
-
-const toCamelCase = str => {
-  return str.toLowerCase().replace(/[-_\s]([a-z\d])(\w*)/g,
-    function replacer(m, p1, p2) {
-      return p1.toUpperCase() + p2;
-    }
-  );
-};
-
-/* Creating a function that will check if an object has a property. */
-const hasOwnProperty = (({hasOwnProperty}) => (obj, prop) => hasOwnProperty.call(obj, prop))(Object.prototype);
-
-/**
- * Determine if a value is a RegExp object
- *
- * @param {*} val The value to test
- *
- * @returns {boolean} True if value is a RegExp object, otherwise false
- */
-const isRegExp = kindOfTest('RegExp');
-
-const reduceDescriptors = (obj, reducer) => {
-  const descriptors = Object.getOwnPropertyDescriptors(obj);
-  const reducedDescriptors = {};
-
-  forEach(descriptors, (descriptor, name) => {
-    let ret;
-    if ((ret = reducer(descriptor, name, obj)) !== false) {
-      reducedDescriptors[name] = ret || descriptor;
-    }
-  });
-
-  Object.defineProperties(obj, reducedDescriptors);
-};
-
-/**
- * Makes all methods read-only
- * @param {Object} obj
- */
-
-const freezeMethods = (obj) => {
-  reduceDescriptors(obj, (descriptor, name) => {
-    // skip restricted props in strict mode
-    if (isFunction(obj) && ['arguments', 'caller', 'callee'].indexOf(name) !== -1) {
-      return false;
-    }
-
-    const value = obj[name];
-
-    if (!isFunction(value)) return;
-
-    descriptor.enumerable = false;
-
-    if ('writable' in descriptor) {
-      descriptor.writable = false;
-      return;
-    }
-
-    if (!descriptor.set) {
-      descriptor.set = () => {
-        throw Error('Can not rewrite read-only method \'' + name + '\'');
-      };
-    }
-  });
-};
-
-const toObjectSet = (arrayOrString, delimiter) => {
-  const obj = {};
-
-  const define = (arr) => {
-    arr.forEach(value => {
-      obj[value] = true;
-    });
-  };
-
-  isArray(arrayOrString) ? define(arrayOrString) : define(String(arrayOrString).split(delimiter));
-
-  return obj;
-};
-
-const noop = () => {};
-
-const toFiniteNumber = (value, defaultValue) => {
-  return value != null && Number.isFinite(value = +value) ? value : defaultValue;
-};
-
-/**
- * If the thing is a FormData object, return true, otherwise return false.
- *
- * @param {unknown} thing - The thing to check.
- *
- * @returns {boolean}
- */
-function isSpecCompliantForm(thing) {
-  return !!(thing && isFunction(thing.append) && thing[Symbol.toStringTag] === 'FormData' && thing[Symbol.iterator]);
-}
-
-const toJSONObject = (obj) => {
-  const stack = new Array(10);
-
-  const visit = (source, i) => {
-
-    if (isObject(source)) {
-      if (stack.indexOf(source) >= 0) {
-        return;
-      }
-
-      if(!('toJSON' in source)) {
-        stack[i] = source;
-        const target = isArray(source) ? [] : {};
-
-        forEach(source, (value, key) => {
-          const reducedValue = visit(value, i + 1);
-          !isUndefined(reducedValue) && (target[key] = reducedValue);
-        });
-
-        stack[i] = undefined;
-
-        return target;
-      }
-    }
-
-    return source;
-  };
-
-  return visit(obj, 0);
-};
-
-const isAsyncFn = kindOfTest('AsyncFunction');
-
-const isThenable = (thing) =>
-  thing && (isObject(thing) || isFunction(thing)) && isFunction(thing.then) && isFunction(thing.catch);
-
-// original code
-// https://github.com/DigitalBrainJS/AxiosPromise/blob/16deab13710ec09779922131f3fa5954320f83ab/lib/utils.js#L11-L34
-
-const _setImmediate = ((setImmediateSupported, postMessageSupported) => {
-  if (setImmediateSupported) {
-    return setImmediate;
-  }
-
-  return postMessageSupported ? ((token, callbacks) => {
-    _global.addEventListener("message", ({source, data}) => {
-      if (source === _global && data === token) {
-        callbacks.length && callbacks.shift()();
-      }
-    }, false);
-
-    return (cb) => {
-      callbacks.push(cb);
-      _global.postMessage(token, "*");
-    }
-  })(`axios@${Math.random()}`, []) : (cb) => setTimeout(cb);
-})(
-  typeof setImmediate === 'function',
-  isFunction(_global.postMessage)
-);
-
-const asap = typeof queueMicrotask !== 'undefined' ?
-  queueMicrotask.bind(_global) : ( typeof process !== 'undefined' && process.nextTick || _setImmediate);
-
-// *********************
-
-var utils$1 = {
-  isArray,
-  isArrayBuffer,
-  isBuffer,
-  isFormData,
-  isArrayBufferView,
-  isString,
-  isNumber,
-  isBoolean,
-  isObject,
-  isPlainObject,
-  isReadableStream,
-  isRequest,
-  isResponse,
-  isHeaders,
-  isUndefined,
-  isDate,
-  isFile,
-  isBlob,
-  isRegExp,
-  isFunction,
-  isStream,
-  isURLSearchParams,
-  isTypedArray,
-  isFileList,
-  forEach,
-  merge,
-  extend,
-  trim,
-  stripBOM,
-  inherits,
-  toFlatObject,
-  kindOf,
-  kindOfTest,
-  endsWith,
-  toArray,
-  forEachEntry,
-  matchAll,
-  isHTMLForm,
-  hasOwnProperty,
-  hasOwnProp: hasOwnProperty, // an alias to avoid ESLint no-prototype-builtins detection
-  reduceDescriptors,
-  freezeMethods,
-  toObjectSet,
-  toCamelCase,
-  noop,
-  toFiniteNumber,
-  findKey,
-  global: _global,
-  isContextDefined,
-  isSpecCompliantForm,
-  toJSONObject,
-  isAsyncFn,
-  isThenable,
-  setImmediate: _setImmediate,
-  asap
-};
-
-/**
- * Create an Error with the specified message, config, error code, request and response.
- *
- * @param {string} message The error message.
- * @param {string} [code] The error code (for example, 'ECONNABORTED').
- * @param {Object} [config] The config.
- * @param {Object} [request] The request.
- * @param {Object} [response] The response.
- *
- * @returns {Error} The created error.
- */
-function AxiosError$1(message, code, config, request, response) {
-  Error.call(this);
-
-  if (Error.captureStackTrace) {
-    Error.captureStackTrace(this, this.constructor);
-  } else {
-    this.stack = (new Error()).stack;
-  }
-
-  this.message = message;
-  this.name = 'AxiosError';
-  code && (this.code = code);
-  config && (this.config = config);
-  request && (this.request = request);
-  if (response) {
-    this.response = response;
-    this.status = response.status ? response.status : null;
-  }
-}
-
-utils$1.inherits(AxiosError$1, Error, {
-  toJSON: function toJSON() {
-    return {
-      // Standard
-      message: this.message,
-      name: this.name,
-      // Microsoft
-      description: this.description,
-      number: this.number,
-      // Mozilla
-      fileName: this.fileName,
-      lineNumber: this.lineNumber,
-      columnNumber: this.columnNumber,
-      stack: this.stack,
-      // Axios
-      config: utils$1.toJSONObject(this.config),
-      code: this.code,
-      status: this.status
-    };
-  }
-});
-
-const prototype$1 = AxiosError$1.prototype;
-const descriptors = {};
-
-[
-  'ERR_BAD_OPTION_VALUE',
-  'ERR_BAD_OPTION',
-  'ECONNABORTED',
-  'ETIMEDOUT',
-  'ERR_NETWORK',
-  'ERR_FR_TOO_MANY_REDIRECTS',
-  'ERR_DEPRECATED',
-  'ERR_BAD_RESPONSE',
-  'ERR_BAD_REQUEST',
-  'ERR_CANCELED',
-  'ERR_NOT_SUPPORT',
-  'ERR_INVALID_URL'
-// eslint-disable-next-line func-names
-].forEach(code => {
-  descriptors[code] = {value: code};
-});
-
-Object.defineProperties(AxiosError$1, descriptors);
-Object.defineProperty(prototype$1, 'isAxiosError', {value: true});
-
-// eslint-disable-next-line func-names
-AxiosError$1.from = (error, code, config, request, response, customProps) => {
-  const axiosError = Object.create(prototype$1);
-
-  utils$1.toFlatObject(error, axiosError, function filter(obj) {
-    return obj !== Error.prototype;
-  }, prop => {
-    return prop !== 'isAxiosError';
-  });
-
-  AxiosError$1.call(axiosError, error.message, code, config, request, response);
-
-  axiosError.cause = error;
-
-  axiosError.name = error.name;
-
-  customProps && Object.assign(axiosError, customProps);
-
-  return axiosError;
-};
-
-// eslint-disable-next-line strict
-var httpAdapter = null;
-
-/**
- * Determines if the given thing is a array or js object.
- *
- * @param {string} thing - The object or array to be visited.
- *
- * @returns {boolean}
- */
-function isVisitable(thing) {
-  return utils$1.isPlainObject(thing) || utils$1.isArray(thing);
-}
-
-/**
- * It removes the brackets from the end of a string
- *
- * @param {string} key - The key of the parameter.
- *
- * @returns {string} the key without the brackets.
- */
-function removeBrackets(key) {
-  return utils$1.endsWith(key, '[]') ? key.slice(0, -2) : key;
-}
-
-/**
- * It takes a path, a key, and a boolean, and returns a string
- *
- * @param {string} path - The path to the current key.
- * @param {string} key - The key of the current object being iterated over.
- * @param {string} dots - If true, the key will be rendered with dots instead of brackets.
- *
- * @returns {string} The path to the current key.
- */
-function renderKey(path, key, dots) {
-  if (!path) return key;
-  return path.concat(key).map(function each(token, i) {
-    // eslint-disable-next-line no-param-reassign
-    token = removeBrackets(token);
-    return !dots && i ? '[' + token + ']' : token;
-  }).join(dots ? '.' : '');
-}
-
-/**
- * If the array is an array and none of its elements are visitable, then it's a flat array.
- *
- * @param {Array<any>} arr - The array to check
- *
- * @returns {boolean}
- */
-function isFlatArray(arr) {
-  return utils$1.isArray(arr) && !arr.some(isVisitable);
-}
-
-const predicates = utils$1.toFlatObject(utils$1, {}, null, function filter(prop) {
-  return /^is[A-Z]/.test(prop);
-});
-
-/**
- * Convert a data object to FormData
- *
- * @param {Object} obj
- * @param {?Object} [formData]
- * @param {?Object} [options]
- * @param {Function} [options.visitor]
- * @param {Boolean} [options.metaTokens = true]
- * @param {Boolean} [options.dots = false]
- * @param {?Boolean} [options.indexes = false]
- *
- * @returns {Object}
- **/
-
-/**
- * It converts an object into a FormData object
- *
- * @param {Object<any, any>} obj - The object to convert to form data.
- * @param {string} formData - The FormData object to append to.
- * @param {Object<string, any>} options
- *
- * @returns
- */
-function toFormData$1(obj, formData, options) {
-  if (!utils$1.isObject(obj)) {
-    throw new TypeError('target must be an object');
-  }
-
-  // eslint-disable-next-line no-param-reassign
-  formData = formData || new (FormData)();
-
-  // eslint-disable-next-line no-param-reassign
-  options = utils$1.toFlatObject(options, {
-    metaTokens: true,
-    dots: false,
-    indexes: false
-  }, false, function defined(option, source) {
-    // eslint-disable-next-line no-eq-null,eqeqeq
-    return !utils$1.isUndefined(source[option]);
-  });
-
-  const metaTokens = options.metaTokens;
-  // eslint-disable-next-line no-use-before-define
-  const visitor = options.visitor || defaultVisitor;
-  const dots = options.dots;
-  const indexes = options.indexes;
-  const _Blob = options.Blob || typeof Blob !== 'undefined' && Blob;
-  const useBlob = _Blob && utils$1.isSpecCompliantForm(formData);
-
-  if (!utils$1.isFunction(visitor)) {
-    throw new TypeError('visitor must be a function');
-  }
-
-  function convertValue(value) {
-    if (value === null) return '';
-
-    if (utils$1.isDate(value)) {
-      return value.toISOString();
-    }
-
-    if (!useBlob && utils$1.isBlob(value)) {
-      throw new AxiosError$1('Blob is not supported. Use a Buffer instead.');
-    }
-
-    if (utils$1.isArrayBuffer(value) || utils$1.isTypedArray(value)) {
-      return useBlob && typeof Blob === 'function' ? new Blob([value]) : Buffer.from(value);
-    }
-
-    return value;
-  }
-
-  /**
-   * Default visitor.
-   *
-   * @param {*} value
-   * @param {String|Number} key
-   * @param {Array<String|Number>} path
-   * @this {FormData}
-   *
-   * @returns {boolean} return true to visit the each prop of the value recursively
-   */
-  function defaultVisitor(value, key, path) {
-    let arr = value;
-
-    if (value && !path && typeof value === 'object') {
-      if (utils$1.endsWith(key, '{}')) {
-        // eslint-disable-next-line no-param-reassign
-        key = metaTokens ? key : key.slice(0, -2);
-        // eslint-disable-next-line no-param-reassign
-        value = JSON.stringify(value);
-      } else if (
-        (utils$1.isArray(value) && isFlatArray(value)) ||
-        ((utils$1.isFileList(value) || utils$1.endsWith(key, '[]')) && (arr = utils$1.toArray(value))
-        )) {
-        // eslint-disable-next-line no-param-reassign
-        key = removeBrackets(key);
-
-        arr.forEach(function each(el, index) {
-          !(utils$1.isUndefined(el) || el === null) && formData.append(
-            // eslint-disable-next-line no-nested-ternary
-            indexes === true ? renderKey([key], index, dots) : (indexes === null ? key : key + '[]'),
-            convertValue(el)
-          );
-        });
-        return false;
-      }
-    }
-
-    if (isVisitable(value)) {
-      return true;
-    }
-
-    formData.append(renderKey(path, key, dots), convertValue(value));
-
-    return false;
-  }
-
-  const stack = [];
-
-  const exposedHelpers = Object.assign(predicates, {
-    defaultVisitor,
-    convertValue,
-    isVisitable
-  });
-
-  function build(value, path) {
-    if (utils$1.isUndefined(value)) return;
-
-    if (stack.indexOf(value) !== -1) {
-      throw Error('Circular reference detected in ' + path.join('.'));
-    }
-
-    stack.push(value);
-
-    utils$1.forEach(value, function each(el, key) {
-      const result = !(utils$1.isUndefined(el) || el === null) && visitor.call(
-        formData, el, utils$1.isString(key) ? key.trim() : key, path, exposedHelpers
-      );
-
-      if (result === true) {
-        build(el, path ? path.concat(key) : [key]);
-      }
-    });
-
-    stack.pop();
-  }
-
-  if (!utils$1.isObject(obj)) {
-    throw new TypeError('data must be an object');
-  }
-
-  build(obj);
-
-  return formData;
-}
-
-/**
- * It encodes a string by replacing all characters that are not in the unreserved set with
- * their percent-encoded equivalents
- *
- * @param {string} str - The string to encode.
- *
- * @returns {string} The encoded string.
- */
-function encode$1(str) {
-  const charMap = {
-    '!': '%21',
-    "'": '%27',
-    '(': '%28',
-    ')': '%29',
-    '~': '%7E',
-    '%20': '+',
-    '%00': '\x00'
-  };
-  return encodeURIComponent(str).replace(/[!'()~]|%20|%00/g, function replacer(match) {
-    return charMap[match];
-  });
-}
-
-/**
- * It takes a params object and converts it to a FormData object
- *
- * @param {Object<string, any>} params - The parameters to be converted to a FormData object.
- * @param {Object<string, any>} options - The options object passed to the Axios constructor.
- *
- * @returns {void}
- */
-function AxiosURLSearchParams(params, options) {
-  this._pairs = [];
-
-  params && toFormData$1(params, this, options);
-}
-
-const prototype = AxiosURLSearchParams.prototype;
-
-prototype.append = function append(name, value) {
-  this._pairs.push([name, value]);
-};
-
-prototype.toString = function toString(encoder) {
-  const _encode = encoder ? function(value) {
-    return encoder.call(this, value, encode$1);
-  } : encode$1;
-
-  return this._pairs.map(function each(pair) {
-    return _encode(pair[0]) + '=' + _encode(pair[1]);
-  }, '').join('&');
-};
-
-/**
- * It replaces all instances of the characters `:`, `$`, `,`, `+`, `[`, and `]` with their
- * URI encoded counterparts
- *
- * @param {string} val The value to be encoded.
- *
- * @returns {string} The encoded value.
- */
-function encode(val) {
-  return encodeURIComponent(val).
-    replace(/%3A/gi, ':').
-    replace(/%24/g, '$').
-    replace(/%2C/gi, ',').
-    replace(/%20/g, '+').
-    replace(/%5B/gi, '[').
-    replace(/%5D/gi, ']');
-}
-
-/**
- * Build a URL by appending params to the end
- *
- * @param {string} url The base of the url (e.g., http://www.google.com)
- * @param {object} [params] The params to be appended
- * @param {?(object|Function)} options
- *
- * @returns {string} The formatted url
- */
-function buildURL(url, params, options) {
-  /*eslint no-param-reassign:0*/
-  if (!params) {
-    return url;
-  }
-  
-  const _encode = options && options.encode || encode;
-
-  if (utils$1.isFunction(options)) {
-    options = {
-      serialize: options
-    };
-  } 
-
-  const serializeFn = options && options.serialize;
-
-  let serializedParams;
-
-  if (serializeFn) {
-    serializedParams = serializeFn(params, options);
-  } else {
-    serializedParams = utils$1.isURLSearchParams(params) ?
-      params.toString() :
-      new AxiosURLSearchParams(params, options).toString(_encode);
-  }
-
-  if (serializedParams) {
-    const hashmarkIndex = url.indexOf("#");
-
-    if (hashmarkIndex !== -1) {
-      url = url.slice(0, hashmarkIndex);
-    }
-    url += (url.indexOf('?') === -1 ? '?' : '&') + serializedParams;
-  }
-
-  return url;
-}
-
-class InterceptorManager {
-  constructor() {
-    this.handlers = [];
-  }
-
-  /**
-   * Add a new interceptor to the stack
-   *
-   * @param {Function} fulfilled The function to handle `then` for a `Promise`
-   * @param {Function} rejected The function to handle `reject` for a `Promise`
-   *
-   * @return {Number} An ID used to remove interceptor later
-   */
-  use(fulfilled, rejected, options) {
-    this.handlers.push({
-      fulfilled,
-      rejected,
-      synchronous: options ? options.synchronous : false,
-      runWhen: options ? options.runWhen : null
-    });
-    return this.handlers.length - 1;
-  }
-
-  /**
-   * Remove an interceptor from the stack
-   *
-   * @param {Number} id The ID that was returned by `use`
-   *
-   * @returns {Boolean} `true` if the interceptor was removed, `false` otherwise
-   */
-  eject(id) {
-    if (this.handlers[id]) {
-      this.handlers[id] = null;
-    }
-  }
-
-  /**
-   * Clear all interceptors from the stack
-   *
-   * @returns {void}
-   */
-  clear() {
-    if (this.handlers) {
-      this.handlers = [];
-    }
-  }
-
-  /**
-   * Iterate over all the registered interceptors
-   *
-   * This method is particularly useful for skipping over any
-   * interceptors that may have become `null` calling `eject`.
-   *
-   * @param {Function} fn The function to call for each interceptor
-   *
-   * @returns {void}
-   */
-  forEach(fn) {
-    utils$1.forEach(this.handlers, function forEachHandler(h) {
-      if (h !== null) {
-        fn(h);
-      }
-    });
-  }
-}
-
-var transitionalDefaults = {
-  silentJSONParsing: true,
-  forcedJSONParsing: true,
-  clarifyTimeoutError: false
-};
-
-var URLSearchParams$1 = typeof URLSearchParams !== 'undefined' ? URLSearchParams : AxiosURLSearchParams;
-
-var FormData$1 = typeof FormData !== 'undefined' ? FormData : null;
-
-var Blob$1 = typeof Blob !== 'undefined' ? Blob : null;
-
-var platform$1 = {
-  isBrowser: true,
-  classes: {
-    URLSearchParams: URLSearchParams$1,
-    FormData: FormData$1,
-    Blob: Blob$1
-  },
-  protocols: ['http', 'https', 'file', 'blob', 'url', 'data']
-};
-
-const hasBrowserEnv = typeof window !== 'undefined' && typeof document !== 'undefined';
-
-const _navigator = typeof navigator === 'object' && navigator || undefined;
-
-/**
- * Determine if we're running in a standard browser environment
- *
- * This allows axios to run in a web worker, and react-native.
- * Both environments support XMLHttpRequest, but not fully standard globals.
- *
- * web workers:
- *  typeof window -> undefined
- *  typeof document -> undefined
- *
- * react-native:
- *  navigator.product -> 'ReactNative'
- * nativescript
- *  navigator.product -> 'NativeScript' or 'NS'
- *
- * @returns {boolean}
- */
-const hasStandardBrowserEnv = hasBrowserEnv &&
-  (!_navigator || ['ReactNative', 'NativeScript', 'NS'].indexOf(_navigator.product) < 0);
-
-/**
- * Determine if we're running in a standard browser webWorker environment
- *
- * Although the `isStandardBrowserEnv` method indicates that
- * `allows axios to run in a web worker`, the WebWorker will still be
- * filtered out due to its judgment standard
- * `typeof window !== 'undefined' && typeof document !== 'undefined'`.
- * This leads to a problem when axios post `FormData` in webWorker
- */
-const hasStandardBrowserWebWorkerEnv = (() => {
-  return (
-    typeof WorkerGlobalScope !== 'undefined' &&
-    // eslint-disable-next-line no-undef
-    self instanceof WorkerGlobalScope &&
-    typeof self.importScripts === 'function'
-  );
-})();
-
-const origin = hasBrowserEnv && window.location.href || 'http://localhost';
-
-var utils = /*#__PURE__*/Object.freeze({
-  __proto__: null,
-  hasBrowserEnv: hasBrowserEnv,
-  hasStandardBrowserEnv: hasStandardBrowserEnv,
-  hasStandardBrowserWebWorkerEnv: hasStandardBrowserWebWorkerEnv,
-  navigator: _navigator,
-  origin: origin
-});
-
-var platform = {
-  ...utils,
-  ...platform$1
-};
-
-function toURLEncodedForm(data, options) {
-  return toFormData$1(data, new platform.classes.URLSearchParams(), Object.assign({
-    visitor: function(value, key, path, helpers) {
-      if (platform.isNode && utils$1.isBuffer(value)) {
-        this.append(key, value.toString('base64'));
-        return false;
-      }
-
-      return helpers.defaultVisitor.apply(this, arguments);
-    }
-  }, options));
-}
-
-/**
- * It takes a string like `foo[x][y][z]` and returns an array like `['foo', 'x', 'y', 'z']
- *
- * @param {string} name - The name of the property to get.
- *
- * @returns An array of strings.
- */
-function parsePropPath(name) {
-  // foo[x][y][z]
-  // foo.x.y.z
-  // foo-x-y-z
-  // foo x y z
-  return utils$1.matchAll(/\w+|\[(\w*)]/g, name).map(match => {
-    return match[0] === '[]' ? '' : match[1] || match[0];
-  });
-}
-
-/**
- * Convert an array to an object.
- *
- * @param {Array<any>} arr - The array to convert to an object.
- *
- * @returns An object with the same keys and values as the array.
- */
-function arrayToObject(arr) {
-  const obj = {};
-  const keys = Object.keys(arr);
-  let i;
-  const len = keys.length;
-  let key;
-  for (i = 0; i < len; i++) {
-    key = keys[i];
-    obj[key] = arr[key];
-  }
-  return obj;
-}
-
-/**
- * It takes a FormData object and returns a JavaScript object
- *
- * @param {string} formData The FormData object to convert to JSON.
- *
- * @returns {Object<string, any> | null} The converted object.
- */
-function formDataToJSON(formData) {
-  function buildPath(path, value, target, index) {
-    let name = path[index++];
-
-    if (name === '__proto__') return true;
-
-    const isNumericKey = Number.isFinite(+name);
-    const isLast = index >= path.length;
-    name = !name && utils$1.isArray(target) ? target.length : name;
-
-    if (isLast) {
-      if (utils$1.hasOwnProp(target, name)) {
-        target[name] = [target[name], value];
-      } else {
-        target[name] = value;
-      }
-
-      return !isNumericKey;
-    }
-
-    if (!target[name] || !utils$1.isObject(target[name])) {
-      target[name] = [];
-    }
-
-    const result = buildPath(path, value, target[name], index);
-
-    if (result && utils$1.isArray(target[name])) {
-      target[name] = arrayToObject(target[name]);
-    }
-
-    return !isNumericKey;
-  }
-
-  if (utils$1.isFormData(formData) && utils$1.isFunction(formData.entries)) {
-    const obj = {};
-
-    utils$1.forEachEntry(formData, (name, value) => {
-      buildPath(parsePropPath(name), value, obj, 0);
-    });
-
-    return obj;
-  }
-
-  return null;
-}
-
-/**
- * It takes a string, tries to parse it, and if it fails, it returns the stringified version
- * of the input
- *
- * @param {any} rawValue - The value to be stringified.
- * @param {Function} parser - A function that parses a string into a JavaScript object.
- * @param {Function} encoder - A function that takes a value and returns a string.
- *
- * @returns {string} A stringified version of the rawValue.
- */
-function stringifySafely(rawValue, parser, encoder) {
-  if (utils$1.isString(rawValue)) {
-    try {
-      (parser || JSON.parse)(rawValue);
-      return utils$1.trim(rawValue);
-    } catch (e) {
-      if (e.name !== 'SyntaxError') {
-        throw e;
-      }
-    }
-  }
-
-  return (encoder || JSON.stringify)(rawValue);
-}
-
-const defaults = {
-
-  transitional: transitionalDefaults,
-
-  adapter: ['xhr', 'http', 'fetch'],
-
-  transformRequest: [function transformRequest(data, headers) {
-    const contentType = headers.getContentType() || '';
-    const hasJSONContentType = contentType.indexOf('application/json') > -1;
-    const isObjectPayload = utils$1.isObject(data);
-
-    if (isObjectPayload && utils$1.isHTMLForm(data)) {
-      data = new FormData(data);
-    }
-
-    const isFormData = utils$1.isFormData(data);
-
-    if (isFormData) {
-      return hasJSONContentType ? JSON.stringify(formDataToJSON(data)) : data;
-    }
-
-    if (utils$1.isArrayBuffer(data) ||
-      utils$1.isBuffer(data) ||
-      utils$1.isStream(data) ||
-      utils$1.isFile(data) ||
-      utils$1.isBlob(data) ||
-      utils$1.isReadableStream(data)
-    ) {
-      return data;
-    }
-    if (utils$1.isArrayBufferView(data)) {
-      return data.buffer;
-    }
-    if (utils$1.isURLSearchParams(data)) {
-      headers.setContentType('application/x-www-form-urlencoded;charset=utf-8', false);
-      return data.toString();
-    }
-
-    let isFileList;
-
-    if (isObjectPayload) {
-      if (contentType.indexOf('application/x-www-form-urlencoded') > -1) {
-        return toURLEncodedForm(data, this.formSerializer).toString();
-      }
-
-      if ((isFileList = utils$1.isFileList(data)) || contentType.indexOf('multipart/form-data') > -1) {
-        const _FormData = this.env && this.env.FormData;
-
-        return toFormData$1(
-          isFileList ? {'files[]': data} : data,
-          _FormData && new _FormData(),
-          this.formSerializer
-        );
-      }
-    }
-
-    if (isObjectPayload || hasJSONContentType ) {
-      headers.setContentType('application/json', false);
-      return stringifySafely(data);
-    }
-
-    return data;
-  }],
-
-  transformResponse: [function transformResponse(data) {
-    const transitional = this.transitional || defaults.transitional;
-    const forcedJSONParsing = transitional && transitional.forcedJSONParsing;
-    const JSONRequested = this.responseType === 'json';
-
-    if (utils$1.isResponse(data) || utils$1.isReadableStream(data)) {
-      return data;
-    }
-
-    if (data && utils$1.isString(data) && ((forcedJSONParsing && !this.responseType) || JSONRequested)) {
-      const silentJSONParsing = transitional && transitional.silentJSONParsing;
-      const strictJSONParsing = !silentJSONParsing && JSONRequested;
-
-      try {
-        return JSON.parse(data);
-      } catch (e) {
-        if (strictJSONParsing) {
-          if (e.name === 'SyntaxError') {
-            throw AxiosError$1.from(e, AxiosError$1.ERR_BAD_RESPONSE, this, null, this.response);
-          }
-          throw e;
-        }
-      }
-    }
-
-    return data;
-  }],
-
-  /**
-   * A timeout in milliseconds to abort a request. If set to 0 (default) a
-   * timeout is not created.
-   */
-  timeout: 0,
-
-  xsrfCookieName: 'XSRF-TOKEN',
-  xsrfHeaderName: 'X-XSRF-TOKEN',
-
-  maxContentLength: -1,
-  maxBodyLength: -1,
-
-  env: {
-    FormData: platform.classes.FormData,
-    Blob: platform.classes.Blob
-  },
-
-  validateStatus: function validateStatus(status) {
-    return status >= 200 && status < 300;
-  },
-
-  headers: {
-    common: {
-      'Accept': 'application/json, text/plain, */*',
-      'Content-Type': undefined
-    }
-  }
-};
-
-utils$1.forEach(['delete', 'get', 'head', 'post', 'put', 'patch'], (method) => {
-  defaults.headers[method] = {};
-});
-
-// RawAxiosHeaders whose duplicates are ignored by node
-// c.f. https://nodejs.org/api/http.html#http_message_headers
-const ignoreDuplicateOf = utils$1.toObjectSet([
-  'age', 'authorization', 'content-length', 'content-type', 'etag',
-  'expires', 'from', 'host', 'if-modified-since', 'if-unmodified-since',
-  'last-modified', 'location', 'max-forwards', 'proxy-authorization',
-  'referer', 'retry-after', 'user-agent'
-]);
-
-/**
- * Parse headers into an object
- *
- * ```
- * Date: Wed, 27 Aug 2014 08:58:49 GMT
- * Content-Type: application/json
- * Connection: keep-alive
- * Transfer-Encoding: chunked
- * ```
- *
- * @param {String} rawHeaders Headers needing to be parsed
- *
- * @returns {Object} Headers parsed into an object
- */
-var parseHeaders = rawHeaders => {
-  const parsed = {};
-  let key;
-  let val;
-  let i;
-
-  rawHeaders && rawHeaders.split('\n').forEach(function parser(line) {
-    i = line.indexOf(':');
-    key = line.substring(0, i).trim().toLowerCase();
-    val = line.substring(i + 1).trim();
-
-    if (!key || (parsed[key] && ignoreDuplicateOf[key])) {
-      return;
-    }
-
-    if (key === 'set-cookie') {
-      if (parsed[key]) {
-        parsed[key].push(val);
-      } else {
-        parsed[key] = [val];
-      }
-    } else {
-      parsed[key] = parsed[key] ? parsed[key] + ', ' + val : val;
-    }
-  });
-
-  return parsed;
-};
-
-const $internals = Symbol('internals');
-
-function normalizeHeader(header) {
-  return header && String(header).trim().toLowerCase();
-}
-
-function normalizeValue(value) {
-  if (value === false || value == null) {
-    return value;
-  }
-
-  return utils$1.isArray(value) ? value.map(normalizeValue) : String(value);
-}
-
-function parseTokens(str) {
-  const tokens = Object.create(null);
-  const tokensRE = /([^\s,;=]+)\s*(?:=\s*([^,;]+))?/g;
-  let match;
-
-  while ((match = tokensRE.exec(str))) {
-    tokens[match[1]] = match[2];
-  }
-
-  return tokens;
-}
-
-const isValidHeaderName = (str) => /^[-_a-zA-Z0-9^`|~,!#$%&'*+.]+$/.test(str.trim());
-
-function matchHeaderValue(context, value, header, filter, isHeaderNameFilter) {
-  if (utils$1.isFunction(filter)) {
-    return filter.call(this, value, header);
-  }
-
-  if (isHeaderNameFilter) {
-    value = header;
-  }
-
-  if (!utils$1.isString(value)) return;
-
-  if (utils$1.isString(filter)) {
-    return value.indexOf(filter) !== -1;
-  }
-
-  if (utils$1.isRegExp(filter)) {
-    return filter.test(value);
-  }
-}
-
-function formatHeader(header) {
-  return header.trim()
-    .toLowerCase().replace(/([a-z\d])(\w*)/g, (w, char, str) => {
-      return char.toUpperCase() + str;
-    });
-}
-
-function buildAccessors(obj, header) {
-  const accessorName = utils$1.toCamelCase(' ' + header);
-
-  ['get', 'set', 'has'].forEach(methodName => {
-    Object.defineProperty(obj, methodName + accessorName, {
-      value: function(arg1, arg2, arg3) {
-        return this[methodName].call(this, header, arg1, arg2, arg3);
-      },
-      configurable: true
-    });
-  });
-}
-
-let AxiosHeaders$1 = class AxiosHeaders {
-  constructor(headers) {
-    headers && this.set(headers);
-  }
-
-  set(header, valueOrRewrite, rewrite) {
-    const self = this;
-
-    function setHeader(_value, _header, _rewrite) {
-      const lHeader = normalizeHeader(_header);
-
-      if (!lHeader) {
-        throw new Error('header name must be a non-empty string');
-      }
-
-      const key = utils$1.findKey(self, lHeader);
-
-      if(!key || self[key] === undefined || _rewrite === true || (_rewrite === undefined && self[key] !== false)) {
-        self[key || _header] = normalizeValue(_value);
-      }
-    }
-
-    const setHeaders = (headers, _rewrite) =>
-      utils$1.forEach(headers, (_value, _header) => setHeader(_value, _header, _rewrite));
-
-    if (utils$1.isPlainObject(header) || header instanceof this.constructor) {
-      setHeaders(header, valueOrRewrite);
-    } else if(utils$1.isString(header) && (header = header.trim()) && !isValidHeaderName(header)) {
-      setHeaders(parseHeaders(header), valueOrRewrite);
-    } else if (utils$1.isHeaders(header)) {
-      for (const [key, value] of header.entries()) {
-        setHeader(value, key, rewrite);
-      }
-    } else {
-      header != null && setHeader(valueOrRewrite, header, rewrite);
-    }
-
-    return this;
-  }
-
-  get(header, parser) {
-    header = normalizeHeader(header);
-
-    if (header) {
-      const key = utils$1.findKey(this, header);
-
-      if (key) {
-        const value = this[key];
-
-        if (!parser) {
-          return value;
-        }
-
-        if (parser === true) {
-          return parseTokens(value);
-        }
-
-        if (utils$1.isFunction(parser)) {
-          return parser.call(this, value, key);
-        }
-
-        if (utils$1.isRegExp(parser)) {
-          return parser.exec(value);
-        }
-
-        throw new TypeError('parser must be boolean|regexp|function');
-      }
-    }
-  }
-
-  has(header, matcher) {
-    header = normalizeHeader(header);
-
-    if (header) {
-      const key = utils$1.findKey(this, header);
-
-      return !!(key && this[key] !== undefined && (!matcher || matchHeaderValue(this, this[key], key, matcher)));
-    }
-
-    return false;
-  }
-
-  delete(header, matcher) {
-    const self = this;
-    let deleted = false;
-
-    function deleteHeader(_header) {
-      _header = normalizeHeader(_header);
-
-      if (_header) {
-        const key = utils$1.findKey(self, _header);
-
-        if (key && (!matcher || matchHeaderValue(self, self[key], key, matcher))) {
-          delete self[key];
-
-          deleted = true;
-        }
-      }
-    }
-
-    if (utils$1.isArray(header)) {
-      header.forEach(deleteHeader);
-    } else {
-      deleteHeader(header);
-    }
-
-    return deleted;
-  }
-
-  clear(matcher) {
-    const keys = Object.keys(this);
-    let i = keys.length;
-    let deleted = false;
-
-    while (i--) {
-      const key = keys[i];
-      if(!matcher || matchHeaderValue(this, this[key], key, matcher, true)) {
-        delete this[key];
-        deleted = true;
-      }
-    }
-
-    return deleted;
-  }
-
-  normalize(format) {
-    const self = this;
-    const headers = {};
-
-    utils$1.forEach(this, (value, header) => {
-      const key = utils$1.findKey(headers, header);
-
-      if (key) {
-        self[key] = normalizeValue(value);
-        delete self[header];
-        return;
-      }
-
-      const normalized = format ? formatHeader(header) : String(header).trim();
-
-      if (normalized !== header) {
-        delete self[header];
-      }
-
-      self[normalized] = normalizeValue(value);
-
-      headers[normalized] = true;
-    });
-
-    return this;
-  }
-
-  concat(...targets) {
-    return this.constructor.concat(this, ...targets);
-  }
-
-  toJSON(asStrings) {
-    const obj = Object.create(null);
-
-    utils$1.forEach(this, (value, header) => {
-      value != null && value !== false && (obj[header] = asStrings && utils$1.isArray(value) ? value.join(', ') : value);
-    });
-
-    return obj;
-  }
-
-  [Symbol.iterator]() {
-    return Object.entries(this.toJSON())[Symbol.iterator]();
-  }
-
-  toString() {
-    return Object.entries(this.toJSON()).map(([header, value]) => header + ': ' + value).join('\n');
-  }
-
-  get [Symbol.toStringTag]() {
-    return 'AxiosHeaders';
-  }
-
-  static from(thing) {
-    return thing instanceof this ? thing : new this(thing);
-  }
-
-  static concat(first, ...targets) {
-    const computed = new this(first);
-
-    targets.forEach((target) => computed.set(target));
-
-    return computed;
-  }
-
-  static accessor(header) {
-    const internals = this[$internals] = (this[$internals] = {
-      accessors: {}
-    });
-
-    const accessors = internals.accessors;
-    const prototype = this.prototype;
-
-    function defineAccessor(_header) {
-      const lHeader = normalizeHeader(_header);
-
-      if (!accessors[lHeader]) {
-        buildAccessors(prototype, _header);
-        accessors[lHeader] = true;
-      }
-    }
-
-    utils$1.isArray(header) ? header.forEach(defineAccessor) : defineAccessor(header);
-
-    return this;
-  }
-};
-
-AxiosHeaders$1.accessor(['Content-Type', 'Content-Length', 'Accept', 'Accept-Encoding', 'User-Agent', 'Authorization']);
-
-// reserved names hotfix
-utils$1.reduceDescriptors(AxiosHeaders$1.prototype, ({value}, key) => {
-  let mapped = key[0].toUpperCase() + key.slice(1); // map `set` => `Set`
-  return {
-    get: () => value,
-    set(headerValue) {
-      this[mapped] = headerValue;
-    }
-  }
-});
-
-utils$1.freezeMethods(AxiosHeaders$1);
-
-/**
- * Transform the data for a request or a response
- *
- * @param {Array|Function} fns A single function or Array of functions
- * @param {?Object} response The response object
- *
- * @returns {*} The resulting transformed data
- */
-function transformData(fns, response) {
-  const config = this || defaults;
-  const context = response || config;
-  const headers = AxiosHeaders$1.from(context.headers);
-  let data = context.data;
-
-  utils$1.forEach(fns, function transform(fn) {
-    data = fn.call(config, data, headers.normalize(), response ? response.status : undefined);
-  });
-
-  headers.normalize();
-
-  return data;
-}
-
-function isCancel$1(value) {
-  return !!(value && value.__CANCEL__);
-}
-
-/**
- * A `CanceledError` is an object that is thrown when an operation is canceled.
- *
- * @param {string=} message The message.
- * @param {Object=} config The config.
- * @param {Object=} request The request.
- *
- * @returns {CanceledError} The created error.
- */
-function CanceledError$1(message, config, request) {
-  // eslint-disable-next-line no-eq-null,eqeqeq
-  AxiosError$1.call(this, message == null ? 'canceled' : message, AxiosError$1.ERR_CANCELED, config, request);
-  this.name = 'CanceledError';
-}
-
-utils$1.inherits(CanceledError$1, AxiosError$1, {
-  __CANCEL__: true
-});
-
-/**
- * Resolve or reject a Promise based on response status.
- *
- * @param {Function} resolve A function that resolves the promise.
- * @param {Function} reject A function that rejects the promise.
- * @param {object} response The response.
- *
- * @returns {object} The response.
- */
-function settle(resolve, reject, response) {
-  const validateStatus = response.config.validateStatus;
-  if (!response.status || !validateStatus || validateStatus(response.status)) {
-    resolve(response);
-  } else {
-    reject(new AxiosError$1(
-      'Request failed with status code ' + response.status,
-      [AxiosError$1.ERR_BAD_REQUEST, AxiosError$1.ERR_BAD_RESPONSE][Math.floor(response.status / 100) - 4],
-      response.config,
-      response.request,
-      response
-    ));
-  }
-}
-
-function parseProtocol(url) {
-  const match = /^([-+\w]{1,25})(:?\/\/|:)/.exec(url);
-  return match && match[1] || '';
-}
-
-/**
- * Calculate data maxRate
- * @param {Number} [samplesCount= 10]
- * @param {Number} [min= 1000]
- * @returns {Function}
- */
-function speedometer(samplesCount, min) {
-  samplesCount = samplesCount || 10;
-  const bytes = new Array(samplesCount);
-  const timestamps = new Array(samplesCount);
-  let head = 0;
-  let tail = 0;
-  let firstSampleTS;
-
-  min = min !== undefined ? min : 1000;
-
-  return function push(chunkLength) {
-    const now = Date.now();
-
-    const startedAt = timestamps[tail];
-
-    if (!firstSampleTS) {
-      firstSampleTS = now;
-    }
-
-    bytes[head] = chunkLength;
-    timestamps[head] = now;
-
-    let i = tail;
-    let bytesCount = 0;
-
-    while (i !== head) {
-      bytesCount += bytes[i++];
-      i = i % samplesCount;
-    }
-
-    head = (head + 1) % samplesCount;
-
-    if (head === tail) {
-      tail = (tail + 1) % samplesCount;
-    }
-
-    if (now - firstSampleTS < min) {
-      return;
-    }
-
-    const passed = startedAt && now - startedAt;
-
-    return passed ? Math.round(bytesCount * 1000 / passed) : undefined;
-  };
-}
-
-/**
- * Throttle decorator
- * @param {Function} fn
- * @param {Number} freq
- * @return {Function}
- */
-function throttle(fn, freq) {
-  let timestamp = 0;
-  let threshold = 1000 / freq;
-  let lastArgs;
-  let timer;
-
-  const invoke = (args, now = Date.now()) => {
-    timestamp = now;
-    lastArgs = null;
-    if (timer) {
-      clearTimeout(timer);
-      timer = null;
-    }
-    fn.apply(null, args);
-  };
-
-  const throttled = (...args) => {
-    const now = Date.now();
-    const passed = now - timestamp;
-    if ( passed >= threshold) {
-      invoke(args, now);
-    } else {
-      lastArgs = args;
-      if (!timer) {
-        timer = setTimeout(() => {
-          timer = null;
-          invoke(lastArgs);
-        }, threshold - passed);
-      }
-    }
-  };
-
-  const flush = () => lastArgs && invoke(lastArgs);
-
-  return [throttled, flush];
-}
-
-const progressEventReducer = (listener, isDownloadStream, freq = 3) => {
-  let bytesNotified = 0;
-  const _speedometer = speedometer(50, 250);
-
-  return throttle(e => {
-    const loaded = e.loaded;
-    const total = e.lengthComputable ? e.total : undefined;
-    const progressBytes = loaded - bytesNotified;
-    const rate = _speedometer(progressBytes);
-    const inRange = loaded <= total;
-
-    bytesNotified = loaded;
-
-    const data = {
-      loaded,
-      total,
-      progress: total ? (loaded / total) : undefined,
-      bytes: progressBytes,
-      rate: rate ? rate : undefined,
-      estimated: rate && total && inRange ? (total - loaded) / rate : undefined,
-      event: e,
-      lengthComputable: total != null,
-      [isDownloadStream ? 'download' : 'upload']: true
-    };
-
-    listener(data);
-  }, freq);
-};
-
-const progressEventDecorator = (total, throttled) => {
-  const lengthComputable = total != null;
-
-  return [(loaded) => throttled[0]({
-    lengthComputable,
-    total,
-    loaded
-  }), throttled[1]];
-};
-
-const asyncDecorator = (fn) => (...args) => utils$1.asap(() => fn(...args));
-
-var isURLSameOrigin = platform.hasStandardBrowserEnv ? ((origin, isMSIE) => (url) => {
-  url = new URL(url, platform.origin);
-
-  return (
-    origin.protocol === url.protocol &&
-    origin.host === url.host &&
-    (isMSIE || origin.port === url.port)
-  );
-})(
-  new URL(platform.origin),
-  platform.navigator && /(msie|trident)/i.test(platform.navigator.userAgent)
-) : () => true;
-
-var cookies = platform.hasStandardBrowserEnv ?
-
-  // Standard browser envs support document.cookie
-  {
-    write(name, value, expires, path, domain, secure) {
-      const cookie = [name + '=' + encodeURIComponent(value)];
-
-      utils$1.isNumber(expires) && cookie.push('expires=' + new Date(expires).toGMTString());
-
-      utils$1.isString(path) && cookie.push('path=' + path);
-
-      utils$1.isString(domain) && cookie.push('domain=' + domain);
-
-      secure === true && cookie.push('secure');
-
-      document.cookie = cookie.join('; ');
-    },
-
-    read(name) {
-      const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
-      return (match ? decodeURIComponent(match[3]) : null);
-    },
-
-    remove(name) {
-      this.write(name, '', Date.now() - 86400000);
-    }
-  }
-
-  :
-
-  // Non-standard browser env (web workers, react-native) lack needed support.
-  {
-    write() {},
-    read() {
-      return null;
-    },
-    remove() {}
-  };
-
-/**
- * Determines whether the specified URL is absolute
- *
- * @param {string} url The URL to test
- *
- * @returns {boolean} True if the specified URL is absolute, otherwise false
- */
-function isAbsoluteURL(url) {
-  // A URL is considered absolute if it begins with "<scheme>://" or "//" (protocol-relative URL).
-  // RFC 3986 defines scheme name as a sequence of characters beginning with a letter and followed
-  // by any combination of letters, digits, plus, period, or hyphen.
-  return /^([a-z][a-z\d+\-.]*:)?\/\//i.test(url);
-}
-
-/**
- * Creates a new URL by combining the specified URLs
- *
- * @param {string} baseURL The base URL
- * @param {string} relativeURL The relative URL
- *
- * @returns {string} The combined URL
- */
-function combineURLs(baseURL, relativeURL) {
-  return relativeURL
-    ? baseURL.replace(/\/?\/$/, '') + '/' + relativeURL.replace(/^\/+/, '')
-    : baseURL;
-}
-
-/**
- * Creates a new URL by combining the baseURL with the requestedURL,
- * only when the requestedURL is not already an absolute URL.
- * If the requestURL is absolute, this function returns the requestedURL untouched.
- *
- * @param {string} baseURL The base URL
- * @param {string} requestedURL Absolute or relative URL to combine
- *
- * @returns {string} The combined full path
- */
-function buildFullPath(baseURL, requestedURL, allowAbsoluteUrls) {
-  let isRelativeUrl = !isAbsoluteURL(requestedURL);
-  if (baseURL && isRelativeUrl || allowAbsoluteUrls == false) {
-    return combineURLs(baseURL, requestedURL);
-  }
-  return requestedURL;
-}
-
-const headersToObject = (thing) => thing instanceof AxiosHeaders$1 ? { ...thing } : thing;
-
-/**
- * Config-specific merge-function which creates a new config-object
- * by merging two configuration objects together.
- *
- * @param {Object} config1
- * @param {Object} config2
- *
- * @returns {Object} New object resulting from merging config2 to config1
- */
-function mergeConfig$1(config1, config2) {
-  // eslint-disable-next-line no-param-reassign
-  config2 = config2 || {};
-  const config = {};
-
-  function getMergedValue(target, source, prop, caseless) {
-    if (utils$1.isPlainObject(target) && utils$1.isPlainObject(source)) {
-      return utils$1.merge.call({caseless}, target, source);
-    } else if (utils$1.isPlainObject(source)) {
-      return utils$1.merge({}, source);
-    } else if (utils$1.isArray(source)) {
-      return source.slice();
-    }
-    return source;
-  }
-
-  // eslint-disable-next-line consistent-return
-  function mergeDeepProperties(a, b, prop , caseless) {
-    if (!utils$1.isUndefined(b)) {
-      return getMergedValue(a, b, prop , caseless);
-    } else if (!utils$1.isUndefined(a)) {
-      return getMergedValue(undefined, a, prop , caseless);
-    }
-  }
-
-  // eslint-disable-next-line consistent-return
-  function valueFromConfig2(a, b) {
-    if (!utils$1.isUndefined(b)) {
-      return getMergedValue(undefined, b);
-    }
-  }
-
-  // eslint-disable-next-line consistent-return
-  function defaultToConfig2(a, b) {
-    if (!utils$1.isUndefined(b)) {
-      return getMergedValue(undefined, b);
-    } else if (!utils$1.isUndefined(a)) {
-      return getMergedValue(undefined, a);
-    }
-  }
-
-  // eslint-disable-next-line consistent-return
-  function mergeDirectKeys(a, b, prop) {
-    if (prop in config2) {
-      return getMergedValue(a, b);
-    } else if (prop in config1) {
-      return getMergedValue(undefined, a);
-    }
-  }
-
-  const mergeMap = {
-    url: valueFromConfig2,
-    method: valueFromConfig2,
-    data: valueFromConfig2,
-    baseURL: defaultToConfig2,
-    transformRequest: defaultToConfig2,
-    transformResponse: defaultToConfig2,
-    paramsSerializer: defaultToConfig2,
-    timeout: defaultToConfig2,
-    timeoutMessage: defaultToConfig2,
-    withCredentials: defaultToConfig2,
-    withXSRFToken: defaultToConfig2,
-    adapter: defaultToConfig2,
-    responseType: defaultToConfig2,
-    xsrfCookieName: defaultToConfig2,
-    xsrfHeaderName: defaultToConfig2,
-    onUploadProgress: defaultToConfig2,
-    onDownloadProgress: defaultToConfig2,
-    decompress: defaultToConfig2,
-    maxContentLength: defaultToConfig2,
-    maxBodyLength: defaultToConfig2,
-    beforeRedirect: defaultToConfig2,
-    transport: defaultToConfig2,
-    httpAgent: defaultToConfig2,
-    httpsAgent: defaultToConfig2,
-    cancelToken: defaultToConfig2,
-    socketPath: defaultToConfig2,
-    responseEncoding: defaultToConfig2,
-    validateStatus: mergeDirectKeys,
-    headers: (a, b , prop) => mergeDeepProperties(headersToObject(a), headersToObject(b),prop, true)
-  };
-
-  utils$1.forEach(Object.keys(Object.assign({}, config1, config2)), function computeConfigValue(prop) {
-    const merge = mergeMap[prop] || mergeDeepProperties;
-    const configValue = merge(config1[prop], config2[prop], prop);
-    (utils$1.isUndefined(configValue) && merge !== mergeDirectKeys) || (config[prop] = configValue);
-  });
-
-  return config;
-}
-
-var resolveConfig = (config) => {
-  const newConfig = mergeConfig$1({}, config);
-
-  let {data, withXSRFToken, xsrfHeaderName, xsrfCookieName, headers, auth} = newConfig;
-
-  newConfig.headers = headers = AxiosHeaders$1.from(headers);
-
-  newConfig.url = buildURL(buildFullPath(newConfig.baseURL, newConfig.url, newConfig.allowAbsoluteUrls), config.params, config.paramsSerializer);
-
-  // HTTP basic authentication
-  if (auth) {
-    headers.set('Authorization', 'Basic ' +
-      btoa((auth.username || '') + ':' + (auth.password ? unescape(encodeURIComponent(auth.password)) : ''))
-    );
-  }
-
-  let contentType;
-
-  if (utils$1.isFormData(data)) {
-    if (platform.hasStandardBrowserEnv || platform.hasStandardBrowserWebWorkerEnv) {
-      headers.setContentType(undefined); // Let the browser set it
-    } else if ((contentType = headers.getContentType()) !== false) {
-      // fix semicolon duplication issue for ReactNative FormData implementation
-      const [type, ...tokens] = contentType ? contentType.split(';').map(token => token.trim()).filter(Boolean) : [];
-      headers.setContentType([type || 'multipart/form-data', ...tokens].join('; '));
-    }
-  }
-
-  // Add xsrf header
-  // This is only done if running in a standard browser environment.
-  // Specifically not if we're in a web worker, or react-native.
-
-  if (platform.hasStandardBrowserEnv) {
-    withXSRFToken && utils$1.isFunction(withXSRFToken) && (withXSRFToken = withXSRFToken(newConfig));
-
-    if (withXSRFToken || (withXSRFToken !== false && isURLSameOrigin(newConfig.url))) {
-      // Add xsrf header
-      const xsrfValue = xsrfHeaderName && xsrfCookieName && cookies.read(xsrfCookieName);
-
-      if (xsrfValue) {
-        headers.set(xsrfHeaderName, xsrfValue);
-      }
-    }
-  }
-
-  return newConfig;
-};
-
-const isXHRAdapterSupported = typeof XMLHttpRequest !== 'undefined';
-
-var xhrAdapter = isXHRAdapterSupported && function (config) {
-  return new Promise(function dispatchXhrRequest(resolve, reject) {
-    const _config = resolveConfig(config);
-    let requestData = _config.data;
-    const requestHeaders = AxiosHeaders$1.from(_config.headers).normalize();
-    let {responseType, onUploadProgress, onDownloadProgress} = _config;
-    let onCanceled;
-    let uploadThrottled, downloadThrottled;
-    let flushUpload, flushDownload;
-
-    function done() {
-      flushUpload && flushUpload(); // flush events
-      flushDownload && flushDownload(); // flush events
-
-      _config.cancelToken && _config.cancelToken.unsubscribe(onCanceled);
-
-      _config.signal && _config.signal.removeEventListener('abort', onCanceled);
-    }
-
-    let request = new XMLHttpRequest();
-
-    request.open(_config.method.toUpperCase(), _config.url, true);
-
-    // Set the request timeout in MS
-    request.timeout = _config.timeout;
-
-    function onloadend() {
-      if (!request) {
-        return;
-      }
-      // Prepare the response
-      const responseHeaders = AxiosHeaders$1.from(
-        'getAllResponseHeaders' in request && request.getAllResponseHeaders()
-      );
-      const responseData = !responseType || responseType === 'text' || responseType === 'json' ?
-        request.responseText : request.response;
-      const response = {
-        data: responseData,
-        status: request.status,
-        statusText: request.statusText,
-        headers: responseHeaders,
-        config,
-        request
-      };
-
-      settle(function _resolve(value) {
-        resolve(value);
-        done();
-      }, function _reject(err) {
-        reject(err);
-        done();
-      }, response);
-
-      // Clean up request
-      request = null;
-    }
-
-    if ('onloadend' in request) {
-      // Use onloadend if available
-      request.onloadend = onloadend;
-    } else {
-      // Listen for ready state to emulate onloadend
-      request.onreadystatechange = function handleLoad() {
-        if (!request || request.readyState !== 4) {
-          return;
-        }
-
-        // The request errored out and we didn't get a response, this will be
-        // handled by onerror instead
-        // With one exception: request that using file: protocol, most browsers
-        // will return status as 0 even though it's a successful request
-        if (request.status === 0 && !(request.responseURL && request.responseURL.indexOf('file:') === 0)) {
-          return;
-        }
-        // readystate handler is calling before onerror or ontimeout handlers,
-        // so we should call onloadend on the next 'tick'
-        setTimeout(onloadend);
-      };
-    }
-
-    // Handle browser request cancellation (as opposed to a manual cancellation)
-    request.onabort = function handleAbort() {
-      if (!request) {
-        return;
-      }
-
-      reject(new AxiosError$1('Request aborted', AxiosError$1.ECONNABORTED, config, request));
-
-      // Clean up request
-      request = null;
-    };
-
-    // Handle low level network errors
-    request.onerror = function handleError() {
-      // Real errors are hidden from us by the browser
-      // onerror should only fire if it's a network error
-      reject(new AxiosError$1('Network Error', AxiosError$1.ERR_NETWORK, config, request));
-
-      // Clean up request
-      request = null;
-    };
-
-    // Handle timeout
-    request.ontimeout = function handleTimeout() {
-      let timeoutErrorMessage = _config.timeout ? 'timeout of ' + _config.timeout + 'ms exceeded' : 'timeout exceeded';
-      const transitional = _config.transitional || transitionalDefaults;
-      if (_config.timeoutErrorMessage) {
-        timeoutErrorMessage = _config.timeoutErrorMessage;
-      }
-      reject(new AxiosError$1(
-        timeoutErrorMessage,
-        transitional.clarifyTimeoutError ? AxiosError$1.ETIMEDOUT : AxiosError$1.ECONNABORTED,
-        config,
-        request));
-
-      // Clean up request
-      request = null;
-    };
-
-    // Remove Content-Type if data is undefined
-    requestData === undefined && requestHeaders.setContentType(null);
-
-    // Add headers to the request
-    if ('setRequestHeader' in request) {
-      utils$1.forEach(requestHeaders.toJSON(), function setRequestHeader(val, key) {
-        request.setRequestHeader(key, val);
-      });
-    }
-
-    // Add withCredentials to request if needed
-    if (!utils$1.isUndefined(_config.withCredentials)) {
-      request.withCredentials = !!_config.withCredentials;
-    }
-
-    // Add responseType to request if needed
-    if (responseType && responseType !== 'json') {
-      request.responseType = _config.responseType;
-    }
-
-    // Handle progress if needed
-    if (onDownloadProgress) {
-      ([downloadThrottled, flushDownload] = progressEventReducer(onDownloadProgress, true));
-      request.addEventListener('progress', downloadThrottled);
-    }
-
-    // Not all browsers support upload events
-    if (onUploadProgress && request.upload) {
-      ([uploadThrottled, flushUpload] = progressEventReducer(onUploadProgress));
-
-      request.upload.addEventListener('progress', uploadThrottled);
-
-      request.upload.addEventListener('loadend', flushUpload);
-    }
-
-    if (_config.cancelToken || _config.signal) {
-      // Handle cancellation
-      // eslint-disable-next-line func-names
-      onCanceled = cancel => {
-        if (!request) {
-          return;
-        }
-        reject(!cancel || cancel.type ? new CanceledError$1(null, config, request) : cancel);
-        request.abort();
-        request = null;
-      };
-
-      _config.cancelToken && _config.cancelToken.subscribe(onCanceled);
-      if (_config.signal) {
-        _config.signal.aborted ? onCanceled() : _config.signal.addEventListener('abort', onCanceled);
-      }
-    }
-
-    const protocol = parseProtocol(_config.url);
-
-    if (protocol && platform.protocols.indexOf(protocol) === -1) {
-      reject(new AxiosError$1('Unsupported protocol ' + protocol + ':', AxiosError$1.ERR_BAD_REQUEST, config));
-      return;
-    }
-
-
-    // Send the request
-    request.send(requestData || null);
-  });
-};
-
-const composeSignals = (signals, timeout) => {
-  const {length} = (signals = signals ? signals.filter(Boolean) : []);
-
-  if (timeout || length) {
-    let controller = new AbortController();
-
-    let aborted;
-
-    const onabort = function (reason) {
-      if (!aborted) {
-        aborted = true;
-        unsubscribe();
-        const err = reason instanceof Error ? reason : this.reason;
-        controller.abort(err instanceof AxiosError$1 ? err : new CanceledError$1(err instanceof Error ? err.message : err));
-      }
-    };
-
-    let timer = timeout && setTimeout(() => {
-      timer = null;
-      onabort(new AxiosError$1(`timeout ${timeout} of ms exceeded`, AxiosError$1.ETIMEDOUT));
-    }, timeout);
-
-    const unsubscribe = () => {
-      if (signals) {
-        timer && clearTimeout(timer);
-        timer = null;
-        signals.forEach(signal => {
-          signal.unsubscribe ? signal.unsubscribe(onabort) : signal.removeEventListener('abort', onabort);
-        });
-        signals = null;
-      }
-    };
-
-    signals.forEach((signal) => signal.addEventListener('abort', onabort));
-
-    const {signal} = controller;
-
-    signal.unsubscribe = () => utils$1.asap(unsubscribe);
-
-    return signal;
-  }
-};
-
-const streamChunk = function* (chunk, chunkSize) {
-  let len = chunk.byteLength;
-
-  if (len < chunkSize) {
-    yield chunk;
-    return;
-  }
-
-  let pos = 0;
-  let end;
-
-  while (pos < len) {
-    end = pos + chunkSize;
-    yield chunk.slice(pos, end);
-    pos = end;
-  }
-};
-
-const readBytes = async function* (iterable, chunkSize) {
-  for await (const chunk of readStream(iterable)) {
-    yield* streamChunk(chunk, chunkSize);
-  }
-};
-
-const readStream = async function* (stream) {
-  if (stream[Symbol.asyncIterator]) {
-    yield* stream;
-    return;
-  }
-
-  const reader = stream.getReader();
-  try {
-    for (;;) {
-      const {done, value} = await reader.read();
-      if (done) {
-        break;
-      }
-      yield value;
-    }
-  } finally {
-    await reader.cancel();
-  }
-};
-
-const trackStream = (stream, chunkSize, onProgress, onFinish) => {
-  const iterator = readBytes(stream, chunkSize);
-
-  let bytes = 0;
-  let done;
-  let _onFinish = (e) => {
-    if (!done) {
-      done = true;
-      onFinish && onFinish(e);
-    }
-  };
-
-  return new ReadableStream({
-    async pull(controller) {
-      try {
-        const {done, value} = await iterator.next();
-
-        if (done) {
-         _onFinish();
-          controller.close();
-          return;
-        }
-
-        let len = value.byteLength;
-        if (onProgress) {
-          let loadedBytes = bytes += len;
-          onProgress(loadedBytes);
-        }
-        controller.enqueue(new Uint8Array(value));
-      } catch (err) {
-        _onFinish(err);
-        throw err;
-      }
-    },
-    cancel(reason) {
-      _onFinish(reason);
-      return iterator.return();
-    }
-  }, {
-    highWaterMark: 2
-  })
-};
-
-const isFetchSupported = typeof fetch === 'function' && typeof Request === 'function' && typeof Response === 'function';
-const isReadableStreamSupported = isFetchSupported && typeof ReadableStream === 'function';
-
-// used only inside the fetch adapter
-const encodeText = isFetchSupported && (typeof TextEncoder === 'function' ?
-    ((encoder) => (str) => encoder.encode(str))(new TextEncoder()) :
-    async (str) => new Uint8Array(await new Response(str).arrayBuffer())
-);
-
-const test = (fn, ...args) => {
-  try {
-    return !!fn(...args);
-  } catch (e) {
-    return false
-  }
-};
-
-const supportsRequestStream = isReadableStreamSupported && test(() => {
-  let duplexAccessed = false;
-
-  const hasContentType = new Request(platform.origin, {
-    body: new ReadableStream(),
-    method: 'POST',
-    get duplex() {
-      duplexAccessed = true;
-      return 'half';
-    },
-  }).headers.has('Content-Type');
-
-  return duplexAccessed && !hasContentType;
-});
-
-const DEFAULT_CHUNK_SIZE = 64 * 1024;
-
-const supportsResponseStream = isReadableStreamSupported &&
-  test(() => utils$1.isReadableStream(new Response('').body));
-
-
-const resolvers = {
-  stream: supportsResponseStream && ((res) => res.body)
-};
-
-isFetchSupported && (((res) => {
-  ['text', 'arrayBuffer', 'blob', 'formData', 'stream'].forEach(type => {
-    !resolvers[type] && (resolvers[type] = utils$1.isFunction(res[type]) ? (res) => res[type]() :
-      (_, config) => {
-        throw new AxiosError$1(`Response type '${type}' is not supported`, AxiosError$1.ERR_NOT_SUPPORT, config);
-      });
-  });
-})(new Response));
-
-const getBodyLength = async (body) => {
-  if (body == null) {
-    return 0;
-  }
-
-  if(utils$1.isBlob(body)) {
-    return body.size;
-  }
-
-  if(utils$1.isSpecCompliantForm(body)) {
-    const _request = new Request(platform.origin, {
-      method: 'POST',
-      body,
-    });
-    return (await _request.arrayBuffer()).byteLength;
-  }
-
-  if(utils$1.isArrayBufferView(body) || utils$1.isArrayBuffer(body)) {
-    return body.byteLength;
-  }
-
-  if(utils$1.isURLSearchParams(body)) {
-    body = body + '';
-  }
-
-  if(utils$1.isString(body)) {
-    return (await encodeText(body)).byteLength;
-  }
-};
-
-const resolveBodyLength = async (headers, body) => {
-  const length = utils$1.toFiniteNumber(headers.getContentLength());
-
-  return length == null ? getBodyLength(body) : length;
-};
-
-var fetchAdapter = isFetchSupported && (async (config) => {
-  let {
-    url,
-    method,
-    data,
-    signal,
-    cancelToken,
-    timeout,
-    onDownloadProgress,
-    onUploadProgress,
-    responseType,
-    headers,
-    withCredentials = 'same-origin',
-    fetchOptions
-  } = resolveConfig(config);
-
-  responseType = responseType ? (responseType + '').toLowerCase() : 'text';
-
-  let composedSignal = composeSignals([signal, cancelToken && cancelToken.toAbortSignal()], timeout);
-
-  let request;
-
-  const unsubscribe = composedSignal && composedSignal.unsubscribe && (() => {
-      composedSignal.unsubscribe();
-  });
-
-  let requestContentLength;
-
-  try {
-    if (
-      onUploadProgress && supportsRequestStream && method !== 'get' && method !== 'head' &&
-      (requestContentLength = await resolveBodyLength(headers, data)) !== 0
-    ) {
-      let _request = new Request(url, {
-        method: 'POST',
-        body: data,
-        duplex: "half"
-      });
-
-      let contentTypeHeader;
-
-      if (utils$1.isFormData(data) && (contentTypeHeader = _request.headers.get('content-type'))) {
-        headers.setContentType(contentTypeHeader);
-      }
-
-      if (_request.body) {
-        const [onProgress, flush] = progressEventDecorator(
-          requestContentLength,
-          progressEventReducer(asyncDecorator(onUploadProgress))
-        );
-
-        data = trackStream(_request.body, DEFAULT_CHUNK_SIZE, onProgress, flush);
-      }
-    }
-
-    if (!utils$1.isString(withCredentials)) {
-      withCredentials = withCredentials ? 'include' : 'omit';
-    }
-
-    // Cloudflare Workers throws when credentials are defined
-    // see https://github.com/cloudflare/workerd/issues/902
-    const isCredentialsSupported = "credentials" in Request.prototype;
-    request = new Request(url, {
-      ...fetchOptions,
-      signal: composedSignal,
-      method: method.toUpperCase(),
-      headers: headers.normalize().toJSON(),
-      body: data,
-      duplex: "half",
-      credentials: isCredentialsSupported ? withCredentials : undefined
-    });
-
-    let response = await fetch(request);
-
-    const isStreamResponse = supportsResponseStream && (responseType === 'stream' || responseType === 'response');
-
-    if (supportsResponseStream && (onDownloadProgress || (isStreamResponse && unsubscribe))) {
-      const options = {};
-
-      ['status', 'statusText', 'headers'].forEach(prop => {
-        options[prop] = response[prop];
-      });
-
-      const responseContentLength = utils$1.toFiniteNumber(response.headers.get('content-length'));
-
-      const [onProgress, flush] = onDownloadProgress && progressEventDecorator(
-        responseContentLength,
-        progressEventReducer(asyncDecorator(onDownloadProgress), true)
-      ) || [];
-
-      response = new Response(
-        trackStream(response.body, DEFAULT_CHUNK_SIZE, onProgress, () => {
-          flush && flush();
-          unsubscribe && unsubscribe();
-        }),
-        options
-      );
-    }
-
-    responseType = responseType || 'text';
-
-    let responseData = await resolvers[utils$1.findKey(resolvers, responseType) || 'text'](response, config);
-
-    !isStreamResponse && unsubscribe && unsubscribe();
-
-    return await new Promise((resolve, reject) => {
-      settle(resolve, reject, {
-        data: responseData,
-        headers: AxiosHeaders$1.from(response.headers),
-        status: response.status,
-        statusText: response.statusText,
-        config,
-        request
-      });
-    })
-  } catch (err) {
-    unsubscribe && unsubscribe();
-
-    if (err && err.name === 'TypeError' && /fetch/i.test(err.message)) {
-      throw Object.assign(
-        new AxiosError$1('Network Error', AxiosError$1.ERR_NETWORK, config, request),
-        {
-          cause: err.cause || err
-        }
-      )
-    }
-
-    throw AxiosError$1.from(err, err && err.code, config, request);
-  }
-});
-
-const knownAdapters = {
-  http: httpAdapter,
-  xhr: xhrAdapter,
-  fetch: fetchAdapter
-};
-
-utils$1.forEach(knownAdapters, (fn, value) => {
-  if (fn) {
-    try {
-      Object.defineProperty(fn, 'name', {value});
-    } catch (e) {
-      // eslint-disable-next-line no-empty
-    }
-    Object.defineProperty(fn, 'adapterName', {value});
-  }
-});
-
-const renderReason = (reason) => `- ${reason}`;
-
-const isResolvedHandle = (adapter) => utils$1.isFunction(adapter) || adapter === null || adapter === false;
-
-var adapters = {
-  getAdapter: (adapters) => {
-    adapters = utils$1.isArray(adapters) ? adapters : [adapters];
-
-    const {length} = adapters;
-    let nameOrAdapter;
-    let adapter;
-
-    const rejectedReasons = {};
-
-    for (let i = 0; i < length; i++) {
-      nameOrAdapter = adapters[i];
-      let id;
-
-      adapter = nameOrAdapter;
-
-      if (!isResolvedHandle(nameOrAdapter)) {
-        adapter = knownAdapters[(id = String(nameOrAdapter)).toLowerCase()];
-
-        if (adapter === undefined) {
-          throw new AxiosError$1(`Unknown adapter '${id}'`);
-        }
-      }
-
-      if (adapter) {
-        break;
-      }
-
-      rejectedReasons[id || '#' + i] = adapter;
-    }
-
-    if (!adapter) {
-
-      const reasons = Object.entries(rejectedReasons)
-        .map(([id, state]) => `adapter ${id} ` +
-          (state === false ? 'is not supported by the environment' : 'is not available in the build')
-        );
-
-      let s = length ?
-        (reasons.length > 1 ? 'since :\n' + reasons.map(renderReason).join('\n') : ' ' + renderReason(reasons[0])) :
-        'as no adapter specified';
-
-      throw new AxiosError$1(
-        `There is no suitable adapter to dispatch the request ` + s,
-        'ERR_NOT_SUPPORT'
-      );
-    }
-
-    return adapter;
-  },
-  adapters: knownAdapters
-};
-
-/**
- * Throws a `CanceledError` if cancellation has been requested.
- *
- * @param {Object} config The config that is to be used for the request
- *
- * @returns {void}
- */
-function throwIfCancellationRequested(config) {
-  if (config.cancelToken) {
-    config.cancelToken.throwIfRequested();
-  }
-
-  if (config.signal && config.signal.aborted) {
-    throw new CanceledError$1(null, config);
-  }
-}
-
-/**
- * Dispatch a request to the server using the configured adapter.
- *
- * @param {object} config The config that is to be used for the request
- *
- * @returns {Promise} The Promise to be fulfilled
- */
-function dispatchRequest(config) {
-  throwIfCancellationRequested(config);
-
-  config.headers = AxiosHeaders$1.from(config.headers);
-
-  // Transform request data
-  config.data = transformData.call(
-    config,
-    config.transformRequest
-  );
-
-  if (['post', 'put', 'patch'].indexOf(config.method) !== -1) {
-    config.headers.setContentType('application/x-www-form-urlencoded', false);
-  }
-
-  const adapter = adapters.getAdapter(config.adapter || defaults.adapter);
-
-  return adapter(config).then(function onAdapterResolution(response) {
-    throwIfCancellationRequested(config);
-
-    // Transform response data
-    response.data = transformData.call(
-      config,
-      config.transformResponse,
-      response
-    );
-
-    response.headers = AxiosHeaders$1.from(response.headers);
-
-    return response;
-  }, function onAdapterRejection(reason) {
-    if (!isCancel$1(reason)) {
-      throwIfCancellationRequested(config);
-
-      // Transform response data
-      if (reason && reason.response) {
-        reason.response.data = transformData.call(
-          config,
-          config.transformResponse,
-          reason.response
-        );
-        reason.response.headers = AxiosHeaders$1.from(reason.response.headers);
-      }
-    }
-
-    return Promise.reject(reason);
-  });
-}
-
-const VERSION$1 = "1.8.3";
-
-const validators$1 = {};
-
-// eslint-disable-next-line func-names
-['object', 'boolean', 'number', 'function', 'string', 'symbol'].forEach((type, i) => {
-  validators$1[type] = function validator(thing) {
-    return typeof thing === type || 'a' + (i < 1 ? 'n ' : ' ') + type;
-  };
-});
-
-const deprecatedWarnings = {};
-
-/**
- * Transitional option validator
- *
- * @param {function|boolean?} validator - set to false if the transitional option has been removed
- * @param {string?} version - deprecated version / removed since version
- * @param {string?} message - some message with additional info
- *
- * @returns {function}
- */
-validators$1.transitional = function transitional(validator, version, message) {
-  function formatMessage(opt, desc) {
-    return '[Axios v' + VERSION$1 + '] Transitional option \'' + opt + '\'' + desc + (message ? '. ' + message : '');
-  }
-
-  // eslint-disable-next-line func-names
-  return (value, opt, opts) => {
-    if (validator === false) {
-      throw new AxiosError$1(
-        formatMessage(opt, ' has been removed' + (version ? ' in ' + version : '')),
-        AxiosError$1.ERR_DEPRECATED
-      );
-    }
-
-    if (version && !deprecatedWarnings[opt]) {
-      deprecatedWarnings[opt] = true;
-      // eslint-disable-next-line no-console
-      console.warn(
-        formatMessage(
-          opt,
-          ' has been deprecated since v' + version + ' and will be removed in the near future'
-        )
-      );
-    }
-
-    return validator ? validator(value, opt, opts) : true;
-  };
-};
-
-validators$1.spelling = function spelling(correctSpelling) {
-  return (value, opt) => {
-    // eslint-disable-next-line no-console
-    console.warn(`${opt} is likely a misspelling of ${correctSpelling}`);
-    return true;
-  }
-};
-
-/**
- * Assert object's properties type
- *
- * @param {object} options
- * @param {object} schema
- * @param {boolean?} allowUnknown
- *
- * @returns {object}
- */
-
-function assertOptions(options, schema, allowUnknown) {
-  if (typeof options !== 'object') {
-    throw new AxiosError$1('options must be an object', AxiosError$1.ERR_BAD_OPTION_VALUE);
-  }
-  const keys = Object.keys(options);
-  let i = keys.length;
-  while (i-- > 0) {
-    const opt = keys[i];
-    const validator = schema[opt];
-    if (validator) {
-      const value = options[opt];
-      const result = value === undefined || validator(value, opt, options);
-      if (result !== true) {
-        throw new AxiosError$1('option ' + opt + ' must be ' + result, AxiosError$1.ERR_BAD_OPTION_VALUE);
-      }
-      continue;
-    }
-    if (allowUnknown !== true) {
-      throw new AxiosError$1('Unknown option ' + opt, AxiosError$1.ERR_BAD_OPTION);
-    }
-  }
-}
-
-var validator = {
-  assertOptions,
-  validators: validators$1
-};
-
-const validators = validator.validators;
-
-/**
- * Create a new instance of Axios
- *
- * @param {Object} instanceConfig The default config for the instance
- *
- * @return {Axios} A new instance of Axios
- */
-let Axios$1 = class Axios {
-  constructor(instanceConfig) {
-    this.defaults = instanceConfig;
-    this.interceptors = {
-      request: new InterceptorManager(),
-      response: new InterceptorManager()
-    };
-  }
-
-  /**
-   * Dispatch a request
-   *
-   * @param {String|Object} configOrUrl The config specific for this request (merged with this.defaults)
-   * @param {?Object} config
-   *
-   * @returns {Promise} The Promise to be fulfilled
-   */
-  async request(configOrUrl, config) {
-    try {
-      return await this._request(configOrUrl, config);
-    } catch (err) {
-      if (err instanceof Error) {
-        let dummy = {};
-
-        Error.captureStackTrace ? Error.captureStackTrace(dummy) : (dummy = new Error());
-
-        // slice off the Error: ... line
-        const stack = dummy.stack ? dummy.stack.replace(/^.+\n/, '') : '';
-        try {
-          if (!err.stack) {
-            err.stack = stack;
-            // match without the 2 top stack lines
-          } else if (stack && !String(err.stack).endsWith(stack.replace(/^.+\n.+\n/, ''))) {
-            err.stack += '\n' + stack;
-          }
-        } catch (e) {
-          // ignore the case where "stack" is an un-writable property
-        }
-      }
-
-      throw err;
-    }
-  }
-
-  _request(configOrUrl, config) {
-    /*eslint no-param-reassign:0*/
-    // Allow for axios('example/url'[, config]) a la fetch API
-    if (typeof configOrUrl === 'string') {
-      config = config || {};
-      config.url = configOrUrl;
-    } else {
-      config = configOrUrl || {};
-    }
-
-    config = mergeConfig$1(this.defaults, config);
-
-    const {transitional, paramsSerializer, headers} = config;
-
-    if (transitional !== undefined) {
-      validator.assertOptions(transitional, {
-        silentJSONParsing: validators.transitional(validators.boolean),
-        forcedJSONParsing: validators.transitional(validators.boolean),
-        clarifyTimeoutError: validators.transitional(validators.boolean)
-      }, false);
-    }
-
-    if (paramsSerializer != null) {
-      if (utils$1.isFunction(paramsSerializer)) {
-        config.paramsSerializer = {
-          serialize: paramsSerializer
-        };
-      } else {
-        validator.assertOptions(paramsSerializer, {
-          encode: validators.function,
-          serialize: validators.function
-        }, true);
-      }
-    }
-
-    // Set config.allowAbsoluteUrls
-    if (config.allowAbsoluteUrls !== undefined) ; else if (this.defaults.allowAbsoluteUrls !== undefined) {
-      config.allowAbsoluteUrls = this.defaults.allowAbsoluteUrls;
-    } else {
-      config.allowAbsoluteUrls = true;
-    }
-
-    validator.assertOptions(config, {
-      baseUrl: validators.spelling('baseURL'),
-      withXsrfToken: validators.spelling('withXSRFToken')
-    }, true);
-
-    // Set config.method
-    config.method = (config.method || this.defaults.method || 'get').toLowerCase();
-
-    // Flatten headers
-    let contextHeaders = headers && utils$1.merge(
-      headers.common,
-      headers[config.method]
-    );
-
-    headers && utils$1.forEach(
-      ['delete', 'get', 'head', 'post', 'put', 'patch', 'common'],
-      (method) => {
-        delete headers[method];
-      }
-    );
-
-    config.headers = AxiosHeaders$1.concat(contextHeaders, headers);
-
-    // filter out skipped interceptors
-    const requestInterceptorChain = [];
-    let synchronousRequestInterceptors = true;
-    this.interceptors.request.forEach(function unshiftRequestInterceptors(interceptor) {
-      if (typeof interceptor.runWhen === 'function' && interceptor.runWhen(config) === false) {
-        return;
-      }
-
-      synchronousRequestInterceptors = synchronousRequestInterceptors && interceptor.synchronous;
-
-      requestInterceptorChain.unshift(interceptor.fulfilled, interceptor.rejected);
-    });
-
-    const responseInterceptorChain = [];
-    this.interceptors.response.forEach(function pushResponseInterceptors(interceptor) {
-      responseInterceptorChain.push(interceptor.fulfilled, interceptor.rejected);
-    });
-
-    let promise;
-    let i = 0;
-    let len;
-
-    if (!synchronousRequestInterceptors) {
-      const chain = [dispatchRequest.bind(this), undefined];
-      chain.unshift.apply(chain, requestInterceptorChain);
-      chain.push.apply(chain, responseInterceptorChain);
-      len = chain.length;
-
-      promise = Promise.resolve(config);
-
-      while (i < len) {
-        promise = promise.then(chain[i++], chain[i++]);
-      }
-
-      return promise;
-    }
-
-    len = requestInterceptorChain.length;
-
-    let newConfig = config;
-
-    i = 0;
-
-    while (i < len) {
-      const onFulfilled = requestInterceptorChain[i++];
-      const onRejected = requestInterceptorChain[i++];
-      try {
-        newConfig = onFulfilled(newConfig);
-      } catch (error) {
-        onRejected.call(this, error);
-        break;
-      }
-    }
-
-    try {
-      promise = dispatchRequest.call(this, newConfig);
-    } catch (error) {
-      return Promise.reject(error);
-    }
-
-    i = 0;
-    len = responseInterceptorChain.length;
-
-    while (i < len) {
-      promise = promise.then(responseInterceptorChain[i++], responseInterceptorChain[i++]);
-    }
-
-    return promise;
-  }
-
-  getUri(config) {
-    config = mergeConfig$1(this.defaults, config);
-    const fullPath = buildFullPath(config.baseURL, config.url, config.allowAbsoluteUrls);
-    return buildURL(fullPath, config.params, config.paramsSerializer);
-  }
-};
-
-// Provide aliases for supported request methods
-utils$1.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoData(method) {
-  /*eslint func-names:0*/
-  Axios$1.prototype[method] = function(url, config) {
-    return this.request(mergeConfig$1(config || {}, {
-      method,
-      url,
-      data: (config || {}).data
-    }));
-  };
-});
-
-utils$1.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
-  /*eslint func-names:0*/
-
-  function generateHTTPMethod(isForm) {
-    return function httpMethod(url, data, config) {
-      return this.request(mergeConfig$1(config || {}, {
-        method,
-        headers: isForm ? {
-          'Content-Type': 'multipart/form-data'
-        } : {},
-        url,
-        data
-      }));
-    };
-  }
-
-  Axios$1.prototype[method] = generateHTTPMethod();
-
-  Axios$1.prototype[method + 'Form'] = generateHTTPMethod(true);
-});
-
-/**
- * A `CancelToken` is an object that can be used to request cancellation of an operation.
- *
- * @param {Function} executor The executor function.
- *
- * @returns {CancelToken}
- */
-let CancelToken$1 = class CancelToken {
-  constructor(executor) {
-    if (typeof executor !== 'function') {
-      throw new TypeError('executor must be a function.');
-    }
-
-    let resolvePromise;
-
-    this.promise = new Promise(function promiseExecutor(resolve) {
-      resolvePromise = resolve;
-    });
-
-    const token = this;
-
-    // eslint-disable-next-line func-names
-    this.promise.then(cancel => {
-      if (!token._listeners) return;
-
-      let i = token._listeners.length;
-
-      while (i-- > 0) {
-        token._listeners[i](cancel);
-      }
-      token._listeners = null;
-    });
-
-    // eslint-disable-next-line func-names
-    this.promise.then = onfulfilled => {
-      let _resolve;
-      // eslint-disable-next-line func-names
-      const promise = new Promise(resolve => {
-        token.subscribe(resolve);
-        _resolve = resolve;
-      }).then(onfulfilled);
-
-      promise.cancel = function reject() {
-        token.unsubscribe(_resolve);
-      };
-
-      return promise;
-    };
-
-    executor(function cancel(message, config, request) {
-      if (token.reason) {
-        // Cancellation has already been requested
-        return;
-      }
-
-      token.reason = new CanceledError$1(message, config, request);
-      resolvePromise(token.reason);
-    });
-  }
-
-  /**
-   * Throws a `CanceledError` if cancellation has been requested.
-   */
-  throwIfRequested() {
-    if (this.reason) {
-      throw this.reason;
-    }
-  }
-
-  /**
-   * Subscribe to the cancel signal
-   */
-
-  subscribe(listener) {
-    if (this.reason) {
-      listener(this.reason);
-      return;
-    }
-
-    if (this._listeners) {
-      this._listeners.push(listener);
-    } else {
-      this._listeners = [listener];
-    }
-  }
-
-  /**
-   * Unsubscribe from the cancel signal
-   */
-
-  unsubscribe(listener) {
-    if (!this._listeners) {
-      return;
-    }
-    const index = this._listeners.indexOf(listener);
-    if (index !== -1) {
-      this._listeners.splice(index, 1);
-    }
-  }
-
-  toAbortSignal() {
-    const controller = new AbortController();
-
-    const abort = (err) => {
-      controller.abort(err);
-    };
-
-    this.subscribe(abort);
-
-    controller.signal.unsubscribe = () => this.unsubscribe(abort);
-
-    return controller.signal;
-  }
-
-  /**
-   * Returns an object that contains a new `CancelToken` and a function that, when called,
-   * cancels the `CancelToken`.
-   */
-  static source() {
-    let cancel;
-    const token = new CancelToken(function executor(c) {
-      cancel = c;
-    });
-    return {
-      token,
-      cancel
-    };
-  }
-};
-
-/**
- * Syntactic sugar for invoking a function and expanding an array for arguments.
- *
- * Common use case would be to use `Function.prototype.apply`.
- *
- *  ```js
- *  function f(x, y, z) {}
- *  var args = [1, 2, 3];
- *  f.apply(null, args);
- *  ```
- *
- * With `spread` this example can be re-written.
- *
- *  ```js
- *  spread(function(x, y, z) {})([1, 2, 3]);
- *  ```
- *
- * @param {Function} callback
- *
- * @returns {Function}
- */
-function spread$1(callback) {
-  return function wrap(arr) {
-    return callback.apply(null, arr);
-  };
-}
-
-/**
- * Determines whether the payload is an error thrown by Axios
- *
- * @param {*} payload The value to test
- *
- * @returns {boolean} True if the payload is an error thrown by Axios, otherwise false
- */
-function isAxiosError$1(payload) {
-  return utils$1.isObject(payload) && (payload.isAxiosError === true);
-}
-
-const HttpStatusCode$1 = {
-  Continue: 100,
-  SwitchingProtocols: 101,
-  Processing: 102,
-  EarlyHints: 103,
-  Ok: 200,
-  Created: 201,
-  Accepted: 202,
-  NonAuthoritativeInformation: 203,
-  NoContent: 204,
-  ResetContent: 205,
-  PartialContent: 206,
-  MultiStatus: 207,
-  AlreadyReported: 208,
-  ImUsed: 226,
-  MultipleChoices: 300,
-  MovedPermanently: 301,
-  Found: 302,
-  SeeOther: 303,
-  NotModified: 304,
-  UseProxy: 305,
-  Unused: 306,
-  TemporaryRedirect: 307,
-  PermanentRedirect: 308,
-  BadRequest: 400,
-  Unauthorized: 401,
-  PaymentRequired: 402,
-  Forbidden: 403,
-  NotFound: 404,
-  MethodNotAllowed: 405,
-  NotAcceptable: 406,
-  ProxyAuthenticationRequired: 407,
-  RequestTimeout: 408,
-  Conflict: 409,
-  Gone: 410,
-  LengthRequired: 411,
-  PreconditionFailed: 412,
-  PayloadTooLarge: 413,
-  UriTooLong: 414,
-  UnsupportedMediaType: 415,
-  RangeNotSatisfiable: 416,
-  ExpectationFailed: 417,
-  ImATeapot: 418,
-  MisdirectedRequest: 421,
-  UnprocessableEntity: 422,
-  Locked: 423,
-  FailedDependency: 424,
-  TooEarly: 425,
-  UpgradeRequired: 426,
-  PreconditionRequired: 428,
-  TooManyRequests: 429,
-  RequestHeaderFieldsTooLarge: 431,
-  UnavailableForLegalReasons: 451,
-  InternalServerError: 500,
-  NotImplemented: 501,
-  BadGateway: 502,
-  ServiceUnavailable: 503,
-  GatewayTimeout: 504,
-  HttpVersionNotSupported: 505,
-  VariantAlsoNegotiates: 506,
-  InsufficientStorage: 507,
-  LoopDetected: 508,
-  NotExtended: 510,
-  NetworkAuthenticationRequired: 511,
-};
-
-Object.entries(HttpStatusCode$1).forEach(([key, value]) => {
-  HttpStatusCode$1[value] = key;
-});
-
-/**
- * Create an instance of Axios
- *
- * @param {Object} defaultConfig The default config for the instance
- *
- * @returns {Axios} A new instance of Axios
- */
-function createInstance(defaultConfig) {
-  const context = new Axios$1(defaultConfig);
-  const instance = bind(Axios$1.prototype.request, context);
-
-  // Copy axios.prototype to instance
-  utils$1.extend(instance, Axios$1.prototype, context, {allOwnKeys: true});
-
-  // Copy context to instance
-  utils$1.extend(instance, context, null, {allOwnKeys: true});
-
-  // Factory for creating new instances
-  instance.create = function create(instanceConfig) {
-    return createInstance(mergeConfig$1(defaultConfig, instanceConfig));
-  };
-
-  return instance;
-}
-
-// Create the default instance to be exported
-const axios = createInstance(defaults);
-
-// Expose Axios class to allow class inheritance
-axios.Axios = Axios$1;
-
-// Expose Cancel & CancelToken
-axios.CanceledError = CanceledError$1;
-axios.CancelToken = CancelToken$1;
-axios.isCancel = isCancel$1;
-axios.VERSION = VERSION$1;
-axios.toFormData = toFormData$1;
-
-// Expose AxiosError class
-axios.AxiosError = AxiosError$1;
-
-// alias for CanceledError for backward compatibility
-axios.Cancel = axios.CanceledError;
-
-// Expose all/spread
-axios.all = function all(promises) {
-  return Promise.all(promises);
-};
-
-axios.spread = spread$1;
-
-// Expose isAxiosError
-axios.isAxiosError = isAxiosError$1;
-
-// Expose mergeConfig
-axios.mergeConfig = mergeConfig$1;
-
-axios.AxiosHeaders = AxiosHeaders$1;
-
-axios.formToJSON = thing => formDataToJSON(utils$1.isHTMLForm(thing) ? new FormData(thing) : thing);
-
-axios.getAdapter = adapters.getAdapter;
-
-axios.HttpStatusCode = HttpStatusCode$1;
-
-axios.default = axios;
-
-// This module is intended to unwrap Axios default export as named.
-// Keep top-level export same with static properties
-// so that it can keep same with es module or cjs
-const {
-  Axios,
-  AxiosError,
-  CanceledError,
-  isCancel,
-  CancelToken,
-  VERSION,
-  all,
-  Cancel,
-  isAxiosError,
-  spread,
-  toFormData,
-  AxiosHeaders,
-  HttpStatusCode,
-  formToJSON,
-  getAdapter,
-  mergeConfig
-} = axios;
+const SUBGRAPH_URL = 'https://api.goldsky.com/api/public/project_cm1s79wa2tlb701tbchmeaflf/subgraphs/sailfish-v3-occ-mainnet/1.0.3/gn';
 
 /**
  * Bridge class for bridging tokens between chains
@@ -24625,7 +25495,8 @@ class Bridge {
      * @param providerOrSigner An ethers Provider or Signer
      */
     constructor(providerOrSigner) {
-        if ('provider' in providerOrSigner && typeof providerOrSigner.provider !== 'undefined') {
+        if ("provider" in providerOrSigner &&
+            typeof providerOrSigner.provider !== "undefined") {
             // It's a signer
             this.signer = providerOrSigner;
             this.provider = providerOrSigner.provider;
@@ -24642,7 +25513,7 @@ class Bridge {
      */
     hasSigner() {
         if (!this.signer) {
-            throw new Error('This operation requires a signer');
+            throw new Error("This operation requires a signer");
         }
         return true;
     }
@@ -24652,12 +25523,12 @@ class Bridge {
      */
     async getBnbPrice() {
         try {
-            const response = await axios.get('https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BNB&tsyms=USD');
+            const response = await axios.get("https://min-api.cryptocompare.com/data/pricemultifull?fsyms=BNB&tsyms=USD");
             return response.data.RAW.BNB.USD.PRICE;
         }
         catch (error) {
-            console.error('Error fetching BNB price:', error);
-            throw new Error('Failed to fetch BNB price');
+            console.error("Error fetching BNB price:", error);
+            throw new Error("Failed to fetch BNB price");
         }
     }
     /**
@@ -24667,15 +25538,15 @@ class Bridge {
      * @param gasOnDestination Amount of ETH to receive on Arbitrum for gas (in ETH)
      * @returns The estimated fee in BNB
      */
-    async estimateBridgeFee(amount, address, gasOnDestination = '0.0005') {
+    async estimateBridgeFee(amount, address, gasOnDestination = "0.0005") {
         this.hasSigner();
         try {
             // BSC OFT contract address
-            const bscOft = '0x67fb304001aD03C282266B965b51E97Aa54A2FAB';
+            const bscOft = "0x67fb304001aD03C282266B965b51E97Aa54A2FAB";
             // EDU token on BSC
-            const eduTokenAddress = '0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639';
+            const eduTokenAddress = "0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639";
             // Get EDU token decimals
-            const eduContract = new Contract(eduTokenAddress, ['function decimals() view returns (uint8)'], this.provider);
+            const eduContract = new Contract(eduTokenAddress, ["function decimals() view returns (uint8)"], this.provider);
             const decimals = await eduContract.decimals();
             // Create contract instance
             const bscOftContract = new Contract(bscOft, BSC_ABI, this.provider);
@@ -24694,15 +25565,15 @@ class Bridge {
             // Amount of ETH to airdrop on the destination chain for gas
             const gasAirdrop = parseEther(gasOnDestination);
             // Encode the adapter params
-            const adapterParams = solidityPacked(['uint16', 'uint256', 'uint256', 'address'], [type, gasLimit, gasAirdrop, address]);
+            const adapterParams = solidityPacked(["uint16", "uint256", "uint256", "address"], [type, gasLimit, gasAirdrop, address]);
             // Estimate the fee
             const result = await bscOftContract.estimateSendFee(dstChainId, toAddress, amountBigInt, useZro, adapterParams);
             // Return the fee in BNB
             return formatEther(result[0]);
         }
         catch (error) {
-            console.error('Error estimating bridge fee:', error);
-            throw new Error('Failed to estimate bridge fee');
+            console.error("Error estimating bridge fee:", error);
+            throw new Error("Failed to estimate bridge fee");
         }
     }
     /**
@@ -24717,8 +25588,8 @@ class Bridge {
             return getBigInt(balance) >= parseEther(fee);
         }
         catch (error) {
-            console.error('Error checking BNB balance:', error);
-            throw new Error('Failed to check BNB balance');
+            console.error("Error checking BNB balance:", error);
+            throw new Error("Failed to check BNB balance");
         }
     }
     /**
@@ -24730,18 +25601,18 @@ class Bridge {
     async hasEnoughEdu(address, amount) {
         try {
             // EDU token on BSC
-            const eduTokenAddress = '0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639';
+            const eduTokenAddress = "0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639";
             // Get EDU token decimals and balance
             const eduContract = new Contract(eduTokenAddress, [
-                'function decimals() view returns (uint8)',
-                'function balanceOf(address) view returns (uint256)'
+                "function decimals() view returns (uint8)",
+                "function balanceOf(address) view returns (uint256)",
             ], this.provider);
             let decimals;
             try {
                 decimals = await eduContract.decimals();
             }
             catch (error) {
-                console.log('Error fetching EDU decimals. Using default value of 18');
+                // console.log("Error fetching EDU decimals. Using default value of 18");
                 decimals = 18;
             }
             let balance;
@@ -24749,14 +25620,14 @@ class Bridge {
                 balance = await eduContract.balanceOf(address);
             }
             catch (error) {
-                console.log('Error fetching EDU balance. Using 0 as default');
+                // console.log('Error fetching EDU balance. Using 0 as default');
                 balance = 0;
             }
             return getBigInt(balance) >= parseUnits$1(amount, decimals);
         }
         catch (error) {
-            console.log('Error checking EDU balance:', error);
-            console.log('Returning false for hasEnoughEdu check');
+            // console.log('Error checking EDU balance:', error);
+            // console.log('Returning false for hasEnoughEdu check');
             return false;
         }
     }
@@ -24769,21 +25640,21 @@ class Bridge {
         this.hasSigner();
         try {
             // EDU token on BSC
-            const eduTokenAddress = '0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639';
+            const eduTokenAddress = "0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639";
             // BSC OFT contract address
-            const bscOft = '0x67fb304001aD03C282266B965b51E97Aa54A2FAB';
+            const bscOft = "0x67fb304001aD03C282266B965b51E97Aa54A2FAB";
             // Get EDU token decimals
             const eduContract = new Contract(eduTokenAddress, [
-                'function decimals() view returns (uint8)',
-                'function approve(address, uint256) returns (bool)'
+                "function decimals() view returns (uint8)",
+                "function approve(address, uint256) returns (bool)",
             ], this.signer);
             const decimals = await eduContract.decimals();
             // Approve the maximum amount
             return eduContract.approve(bscOft, MaxUint256$3);
         }
         catch (error) {
-            console.error('Error approving EDU tokens:', error);
-            throw new Error('Failed to approve EDU tokens');
+            console.error("Error approving EDU tokens:", error);
+            throw new Error("Failed to approve EDU tokens");
         }
     }
     /**
@@ -24795,21 +25666,21 @@ class Bridge {
     async isEduApproved(address, amount) {
         try {
             // EDU token on BSC
-            const eduTokenAddress = '0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639';
+            const eduTokenAddress = "0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639";
             // BSC OFT contract address
-            const bscOft = '0x67fb304001aD03C282266B965b51E97Aa54A2FAB';
+            const bscOft = "0x67fb304001aD03C282266B965b51E97Aa54A2FAB";
             // Get EDU token decimals and allowance
             const eduContract = new Contract(eduTokenAddress, [
-                'function decimals() view returns (uint8)',
-                'function allowance(address, address) view returns (uint256)'
+                "function decimals() view returns (uint8)",
+                "function allowance(address, address) view returns (uint256)",
             ], this.provider);
             const decimals = await eduContract.decimals();
             const allowance = await eduContract.allowance(address, bscOft);
             return getBigInt(allowance) >= parseUnits$1(amount, decimals);
         }
         catch (error) {
-            console.error('Error checking EDU allowance:', error);
-            throw new Error('Failed to check EDU allowance');
+            console.error("Error checking EDU allowance:", error);
+            throw new Error("Failed to check EDU allowance");
         }
     }
     /**
@@ -24819,15 +25690,15 @@ class Bridge {
      * @param gasOnDestination Amount of ETH to receive on Arbitrum for gas (in ETH)
      * @returns Transaction response
      */
-    async bridgeEduFromBscToArb(amount, address, gasOnDestination = '0.0005') {
+    async bridgeEduFromBscToArb(amount, address, gasOnDestination = "0.0005") {
         this.hasSigner();
         try {
             // BSC OFT contract address
-            const bscOft = '0x67fb304001aD03C282266B965b51E97Aa54A2FAB';
+            const bscOft = "0x67fb304001aD03C282266B965b51E97Aa54A2FAB";
             // EDU token on BSC
-            const eduTokenAddress = '0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639';
+            const eduTokenAddress = "0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639";
             // Get EDU token decimals
-            const eduContract = new Contract(eduTokenAddress, ['function decimals() view returns (uint8)'], this.provider);
+            const eduContract = new Contract(eduTokenAddress, ["function decimals() view returns (uint8)"], this.provider);
             const decimals = await eduContract.decimals();
             // Create contract instance
             const bscOftContract = new Contract(bscOft, BSC_ABI, this.signer);
@@ -24844,7 +25715,7 @@ class Bridge {
             // Amount of ETH to airdrop on the destination chain for gas
             const gasAirdrop = parseEther(gasOnDestination);
             // Encode the adapter params
-            const adapterParams = solidityPacked(['uint16', 'uint256', 'uint256', 'address'], [type, gasLimit, gasAirdrop, address]);
+            const adapterParams = solidityPacked(["uint16", "uint256", "uint256", "address"], [type, gasLimit, gasAirdrop, address]);
             // Estimate the fee
             const result = await bscOftContract.estimateSendFee(dstChainId, toAddress, amountBigInt, 0, // useZro
             adapterParams);
@@ -24858,8 +25729,8 @@ class Bridge {
             });
         }
         catch (error) {
-            console.error('Error bridging EDU tokens:', error);
-            throw new Error('Failed to bridge EDU tokens');
+            console.error("Error bridging EDU tokens:", error);
+            throw new Error("Failed to bridge EDU tokens");
         }
     }
     /**
@@ -24871,21 +25742,21 @@ class Bridge {
     async isEduApprovedOnArb(address, amount) {
         try {
             // EDU token on Arbitrum
-            const eduTokenAddress = '0xf8173a39c56a554837C4C7f104153A005D284D11';
+            const eduTokenAddress = "0xf8173a39c56a554837C4C7f104153A005D284D11";
             // Contract address for bridging from Arbitrum to EDUCHAIN
-            const contractAddr = '0x590044e628ea1B9C10a86738Cf7a7eeF52D031B8';
+            const contractAddr = "0x590044e628ea1B9C10a86738Cf7a7eeF52D031B8";
             // Get EDU token decimals and allowance
             const eduContract = new Contract(eduTokenAddress, [
-                'function decimals() view returns (uint8)',
-                'function allowance(address, address) view returns (uint256)'
+                "function decimals() view returns (uint8)",
+                "function allowance(address, address) view returns (uint256)",
             ], this.provider);
             const decimals = await eduContract.decimals();
             const allowance = await eduContract.allowance(address, contractAddr);
             return getBigInt(allowance) >= parseUnits$1(amount, decimals);
         }
         catch (error) {
-            console.error('Error checking EDU allowance on Arbitrum:', error);
-            throw new Error('Failed to check EDU allowance on Arbitrum');
+            console.error("Error checking EDU allowance on Arbitrum:", error);
+            throw new Error("Failed to check EDU allowance on Arbitrum");
         }
     }
     /**
@@ -24897,20 +25768,20 @@ class Bridge {
         this.hasSigner();
         try {
             // EDU token on Arbitrum
-            const eduTokenAddress = '0xf8173a39c56a554837C4C7f104153A005D284D11';
+            const eduTokenAddress = "0xf8173a39c56a554837C4C7f104153A005D284D11";
             // Contract address for bridging from Arbitrum to EDUCHAIN
-            const contractAddr = '0x590044e628ea1B9C10a86738Cf7a7eeF52D031B8';
+            const contractAddr = "0x590044e628ea1B9C10a86738Cf7a7eeF52D031B8";
             // Get EDU token decimals
             const eduContract = new Contract(eduTokenAddress, [
-                'function decimals() view returns (uint8)',
-                'function approve(address, uint256) returns (bool)'
+                "function decimals() view returns (uint8)",
+                "function approve(address, uint256) returns (bool)",
             ], this.signer);
             // Approve the maximum amount
             return eduContract.approve(contractAddr, MaxUint256$3);
         }
         catch (error) {
-            console.error('Error approving EDU tokens on Arbitrum:', error);
-            throw new Error('Failed to approve EDU tokens on Arbitrum');
+            console.error("Error approving EDU tokens on Arbitrum:", error);
+            throw new Error("Failed to approve EDU tokens on Arbitrum");
         }
     }
     /**
@@ -24922,18 +25793,20 @@ class Bridge {
     async hasEnoughEduOnArb(address, amount) {
         try {
             // EDU token on Arbitrum
-            const eduTokenAddress = '0xf8173a39c56a554837C4C7f104153A005D284D11';
+            const eduTokenAddress = "0xf8173a39c56a554837C4C7f104153A005D284D11";
             // Get EDU token decimals and balance
             const eduContract = new Contract(eduTokenAddress, [
-                'function decimals() view returns (uint8)',
-                'function balanceOf(address) view returns (uint256)'
+                "function decimals() view returns (uint8)",
+                "function balanceOf(address) view returns (uint256)",
             ], this.provider);
             let decimals;
             try {
                 decimals = await eduContract.decimals();
             }
             catch (error) {
-                console.log('Error fetching EDU decimals on Arbitrum. Using default value of 18');
+                // console.log(
+                //   "Error fetching EDU decimals on Arbitrum. Using default value of 18"
+                // );
                 decimals = 18;
             }
             let balance;
@@ -24941,14 +25814,16 @@ class Bridge {
                 balance = await eduContract.balanceOf(address);
             }
             catch (error) {
-                console.log('Error fetching EDU balance on Arbitrum. Using 0 as default');
+                // console.log(
+                //   "Error fetching EDU balance on Arbitrum. Using 0 as default"
+                // );
                 balance = 0;
             }
             return getBigInt(balance) >= parseUnits$1(amount, decimals);
         }
         catch (error) {
-            console.log('Error checking EDU balance on Arbitrum:', error);
-            console.log('Returning false for hasEnoughEduOnArb check');
+            // console.log("Error checking EDU balance on Arbitrum:", error);
+            // console.log("Returning false for hasEnoughEduOnArb check");
             return false;
         }
     }
@@ -24961,22 +25836,22 @@ class Bridge {
         this.hasSigner();
         try {
             // Contract address for bridging from Arbitrum to EDUCHAIN
-            const contractAddr = '0x590044e628ea1B9C10a86738Cf7a7eeF52D031B8';
+            const contractAddr = "0x590044e628ea1B9C10a86738Cf7a7eeF52D031B8";
             // EDU token on Arbitrum
-            const eduTokenAddress = '0xf8173a39c56a554837C4C7f104153A005D284D11';
+            const eduTokenAddress = "0xf8173a39c56a554837C4C7f104153A005D284D11";
             // Get EDU token decimals
-            const eduContract = new Contract(eduTokenAddress, ['function decimals() view returns (uint8)'], this.provider);
+            const eduContract = new Contract(eduTokenAddress, ["function decimals() view returns (uint8)"], this.provider);
             const decimals = await eduContract.decimals();
             // Create contract instance
-            const contract = new Contract(contractAddr, ['function depositERC20(uint256 amount)'], this.signer);
+            const contract = new Contract(contractAddr, ["function depositERC20(uint256 amount)"], this.signer);
             // Parse amount with correct decimals
             const amountBigInt = parseUnits$1(amount, decimals);
             // Execute the bridge transaction
             return contract.depositERC20(amountBigInt);
         }
         catch (error) {
-            console.error('Error bridging EDU tokens from Arbitrum to EDUCHAIN:', error);
-            throw new Error('Failed to bridge EDU tokens from Arbitrum to EDUCHAIN');
+            console.error("Error bridging EDU tokens from Arbitrum to EDUCHAIN:", error);
+            throw new Error("Failed to bridge EDU tokens from Arbitrum to EDUCHAIN");
         }
     }
 }
@@ -30400,24 +31275,24 @@ const gql = (chunks, ...variables) => {
     return chunks.reduce((acc, chunk, index) => `${acc}${chunk}${index in variables ? String(variables[index]) : ``}`, ``);
 };
 
-var jsbiUmd$3 = {exports: {}};
+var jsbiUmd$1 = {exports: {}};
 
-var jsbiUmd$2 = jsbiUmd$3.exports;
+var jsbiUmd = jsbiUmd$1.exports;
 
-var hasRequiredJsbiUmd$1;
+var hasRequiredJsbiUmd;
 
-function requireJsbiUmd$1 () {
-	if (hasRequiredJsbiUmd$1) return jsbiUmd$3.exports;
-	hasRequiredJsbiUmd$1 = 1;
+function requireJsbiUmd () {
+	if (hasRequiredJsbiUmd) return jsbiUmd$1.exports;
+	hasRequiredJsbiUmd = 1;
 	(function (module, exports) {
-		(function(i,_){module.exports=_();})(jsbiUmd$2,function(){var i=Math.imul,_=Math.clz32,t=Math.abs,e=Math.max,g=Math.floor;class o extends Array{constructor(i,_){if(super(i),this.sign=_,i>o.__kMaxLength)throw new RangeError("Maximum BigInt size exceeded")}static BigInt(i){var _=Number.isFinite;if("number"==typeof i){if(0===i)return o.__zero();if(o.__isOneDigitInt(i))return 0>i?o.__oneDigit(-i,true):o.__oneDigit(i,false);if(!_(i)||g(i)!==i)throw new RangeError("The number "+i+" cannot be converted to BigInt because it is not an integer");return o.__fromDouble(i)}if("string"==typeof i){const _=o.__fromString(i);if(null===_)throw new SyntaxError("Cannot convert "+i+" to a BigInt");return _}if("boolean"==typeof i)return  true===i?o.__oneDigit(1,false):o.__zero();if("object"==typeof i){if(i.constructor===o)return i;const _=o.__toPrimitive(i);return o.BigInt(_)}throw new TypeError("Cannot convert "+i+" to a BigInt")}toDebugString(){const i=["BigInt["];for(const _ of this)i.push((_?(_>>>0).toString(16):_)+", ");return i.push("]"),i.join("")}toString(i=10){if(2>i||36<i)throw new RangeError("toString() radix argument must be between 2 and 36");return 0===this.length?"0":0==(i&i-1)?o.__toStringBasePowerOfTwo(this,i):o.__toStringGeneric(this,i,false)}static toNumber(i){const _=i.length;if(0===_)return 0;if(1===_){const _=i.__unsignedDigit(0);return i.sign?-_:_}const t=i.__digit(_-1),e=o.__clz30(t),n=30*_-e;if(1024<n)return i.sign?-Infinity:1/0;let g=n-1,s=t,l=_-1;const r=e+3;let a=32===r?0:s<<r;a>>>=12;const u=r-12;let d=12<=r?0:s<<20+r,h=20+r;for(0<u&&0<l&&(l--,s=i.__digit(l),a|=s>>>30-u,d=s<<u+2,h=u+2);0<h&&0<l;)l--,s=i.__digit(l),d|=30<=h?s<<h-30:s>>>30-h,h-=30;const m=o.__decideRounding(i,h,l,s);if((1===m||0===m&&1==(1&d))&&(d=d+1>>>0,0===d&&(a++,0!=a>>>20&&(a=0,g++,1023<g))))return i.sign?-Infinity:1/0;const b=i.sign?-2147483648:0;return g=g+1023<<20,o.__kBitConversionInts[1]=b|g|a,o.__kBitConversionInts[0]=d,o.__kBitConversionDouble[0]}static unaryMinus(i){if(0===i.length)return i;const _=i.__copy();return _.sign=!i.sign,_}static bitwiseNot(i){return i.sign?o.__absoluteSubOne(i).__trim():o.__absoluteAddOne(i,true)}static exponentiate(i,_){if(_.sign)throw new RangeError("Exponent must be positive");if(0===_.length)return o.__oneDigit(1,false);if(0===i.length)return i;if(1===i.length&&1===i.__digit(0))return i.sign&&0==(1&_.__digit(0))?o.unaryMinus(i):i;if(1<_.length)throw new RangeError("BigInt too big");let t=_.__unsignedDigit(0);if(1===t)return i;if(t>=o.__kMaxLengthBits)throw new RangeError("BigInt too big");if(1===i.length&&2===i.__digit(0)){const _=1+(0|t/30),e=i.sign&&0!=(1&t),n=new o(_,e);n.__initializeDigits();const g=1<<t%30;return n.__setDigit(_-1,g),n}let e=null,n=i;for(0!=(1&t)&&(e=i),t>>=1;0!==t;t>>=1)n=o.multiply(n,n),0!=(1&t)&&(null===e?e=n:e=o.multiply(e,n));return e}static multiply(_,t){if(0===_.length)return _;if(0===t.length)return t;let i=_.length+t.length;30<=_.__clzmsd()+t.__clzmsd()&&i--;const e=new o(i,_.sign!==t.sign);e.__initializeDigits();for(let n=0;n<_.length;n++)o.__multiplyAccumulate(t,_.__digit(n),e,n);return e.__trim()}static divide(i,_){if(0===_.length)throw new RangeError("Division by zero");if(0>o.__absoluteCompare(i,_))return o.__zero();const t=i.sign!==_.sign,e=_.__unsignedDigit(0);let n;if(1===_.length&&32767>=e){if(1===e)return t===i.sign?i:o.unaryMinus(i);n=o.__absoluteDivSmall(i,e,null);}else n=o.__absoluteDivLarge(i,_,true,false);return n.sign=t,n.__trim()}static remainder(i,_){if(0===_.length)throw new RangeError("Division by zero");if(0>o.__absoluteCompare(i,_))return i;const t=_.__unsignedDigit(0);if(1===_.length&&32767>=t){if(1===t)return o.__zero();const _=o.__absoluteModSmall(i,t);return 0===_?o.__zero():o.__oneDigit(_,i.sign)}const e=o.__absoluteDivLarge(i,_,false,true);return e.sign=i.sign,e.__trim()}static add(i,_){const t=i.sign;return t===_.sign?o.__absoluteAdd(i,_,t):0<=o.__absoluteCompare(i,_)?o.__absoluteSub(i,_,t):o.__absoluteSub(_,i,!t)}static subtract(i,_){const t=i.sign;return t===_.sign?0<=o.__absoluteCompare(i,_)?o.__absoluteSub(i,_,t):o.__absoluteSub(_,i,!t):o.__absoluteAdd(i,_,t)}static leftShift(i,_){return 0===_.length||0===i.length?i:_.sign?o.__rightShiftByAbsolute(i,_):o.__leftShiftByAbsolute(i,_)}static signedRightShift(i,_){return 0===_.length||0===i.length?i:_.sign?o.__leftShiftByAbsolute(i,_):o.__rightShiftByAbsolute(i,_)}static unsignedRightShift(){throw new TypeError("BigInts have no unsigned right shift; use >> instead")}static lessThan(i,_){return 0>o.__compareToBigInt(i,_)}static lessThanOrEqual(i,_){return 0>=o.__compareToBigInt(i,_)}static greaterThan(i,_){return 0<o.__compareToBigInt(i,_)}static greaterThanOrEqual(i,_){return 0<=o.__compareToBigInt(i,_)}static equal(_,t){if(_.sign!==t.sign)return  false;if(_.length!==t.length)return  false;for(let e=0;e<_.length;e++)if(_.__digit(e)!==t.__digit(e))return  false;return  true}static notEqual(i,_){return !o.equal(i,_)}static bitwiseAnd(i,_){if(!i.sign&&!_.sign)return o.__absoluteAnd(i,_).__trim();if(i.sign&&_.sign){const t=e(i.length,_.length)+1;let n=o.__absoluteSubOne(i,t);const g=o.__absoluteSubOne(_);return n=o.__absoluteOr(n,g,n),o.__absoluteAddOne(n,true,n).__trim()}return i.sign&&([i,_]=[_,i]),o.__absoluteAndNot(i,o.__absoluteSubOne(_)).__trim()}static bitwiseXor(i,_){if(!i.sign&&!_.sign)return o.__absoluteXor(i,_).__trim();if(i.sign&&_.sign){const t=e(i.length,_.length),n=o.__absoluteSubOne(i,t),g=o.__absoluteSubOne(_);return o.__absoluteXor(n,g,n).__trim()}const t=e(i.length,_.length)+1;i.sign&&([i,_]=[_,i]);let n=o.__absoluteSubOne(_,t);return n=o.__absoluteXor(n,i,n),o.__absoluteAddOne(n,true,n).__trim()}static bitwiseOr(i,_){const t=e(i.length,_.length);if(!i.sign&&!_.sign)return o.__absoluteOr(i,_).__trim();if(i.sign&&_.sign){let e=o.__absoluteSubOne(i,t);const n=o.__absoluteSubOne(_);return e=o.__absoluteAnd(e,n,e),o.__absoluteAddOne(e,true,e).__trim()}i.sign&&([i,_]=[_,i]);let n=o.__absoluteSubOne(_,t);return n=o.__absoluteAndNot(n,i,n),o.__absoluteAddOne(n,true,n).__trim()}static asIntN(_,t){if(0===t.length)return t;if(_=g(_),0>_)throw new RangeError("Invalid value: not (convertible to) a safe integer");if(0===_)return o.__zero();if(_>=o.__kMaxLengthBits)return t;const e=0|(_+29)/30;if(t.length<e)return t;const s=t.__unsignedDigit(e-1),l=1<<(_-1)%30;if(t.length===e&&s<l)return t;if(!((s&l)===l))return o.__truncateToNBits(_,t);if(!t.sign)return o.__truncateAndSubFromPowerOfTwo(_,t,true);if(0==(s&l-1)){for(let n=e-2;0<=n;n--)if(0!==t.__digit(n))return o.__truncateAndSubFromPowerOfTwo(_,t,false);return t.length===e&&s===l?t:o.__truncateToNBits(_,t)}return o.__truncateAndSubFromPowerOfTwo(_,t,false)}static asUintN(i,_){if(0===_.length)return _;if(i=g(i),0>i)throw new RangeError("Invalid value: not (convertible to) a safe integer");if(0===i)return o.__zero();if(_.sign){if(i>o.__kMaxLengthBits)throw new RangeError("BigInt too big");return o.__truncateAndSubFromPowerOfTwo(i,_,false)}if(i>=o.__kMaxLengthBits)return _;const t=0|(i+29)/30;if(_.length<t)return _;const e=i%30;if(_.length==t){if(0===e)return _;const i=_.__digit(t-1);if(0==i>>>e)return _}return o.__truncateToNBits(i,_)}static ADD(i,_){if(i=o.__toPrimitive(i),_=o.__toPrimitive(_),"string"==typeof i)return "string"!=typeof _&&(_=_.toString()),i+_;if("string"==typeof _)return i.toString()+_;if(i=o.__toNumeric(i),_=o.__toNumeric(_),o.__isBigInt(i)&&o.__isBigInt(_))return o.add(i,_);if("number"==typeof i&&"number"==typeof _)return i+_;throw new TypeError("Cannot mix BigInt and other types, use explicit conversions")}static LT(i,_){return o.__compare(i,_,0)}static LE(i,_){return o.__compare(i,_,1)}static GT(i,_){return o.__compare(i,_,2)}static GE(i,_){return o.__compare(i,_,3)}static EQ(i,_){for(;;){if(o.__isBigInt(i))return o.__isBigInt(_)?o.equal(i,_):o.EQ(_,i);if("number"==typeof i){if(o.__isBigInt(_))return o.__equalToNumber(_,i);if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("string"==typeof i){if(o.__isBigInt(_))return i=o.__fromString(i),null!==i&&o.equal(i,_);if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("boolean"==typeof i){if(o.__isBigInt(_))return o.__equalToNumber(_,+i);if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("symbol"==typeof i){if(o.__isBigInt(_))return  false;if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("object"==typeof i){if("object"==typeof _&&_.constructor!==o)return i==_;i=o.__toPrimitive(i);}else return i==_}}static NE(i,_){return !o.EQ(i,_)}static __zero(){return new o(0,false)}static __oneDigit(i,_){const t=new o(1,_);return t.__setDigit(0,i),t}__copy(){const _=new o(this.length,this.sign);for(let t=0;t<this.length;t++)_[t]=this[t];return _}__trim(){let i=this.length,_=this[i-1];for(;0===_;)i--,_=this[i-1],this.pop();return 0===i&&(this.sign=false),this}__initializeDigits(){for(let _=0;_<this.length;_++)this[_]=0;}static __decideRounding(i,_,t,e){if(0<_)return  -1;let n;if(0>_)n=-_-1;else {if(0===t)return  -1;t--,e=i.__digit(t),n=29;}let g=1<<n;if(0==(e&g))return  -1;if(g-=1,0!=(e&g))return 1;for(;0<t;)if(t--,0!==i.__digit(t))return 1;return 0}static __fromDouble(i){o.__kBitConversionDouble[0]=i;const _=2047&o.__kBitConversionInts[1]>>>20,t=_-1023,e=(0|t/30)+1,n=new o(e,0>i);let g=1048575&o.__kBitConversionInts[1]|1048576,s=o.__kBitConversionInts[0];const l=20,r=t%30;let a,u=0;if(20>r){const i=l-r;u=i+32,a=g>>>i,g=g<<32-i|s>>>i,s<<=32-i;}else if(20===r)u=32,a=g,g=s,s=0;else {const i=r-l;u=32-i,a=g<<i|s>>>32-i,g=s<<i,s=0;}n.__setDigit(e-1,a);for(let _=e-2;0<=_;_--)0<u?(u-=30,a=g>>>2,g=g<<30|s>>>2,s<<=30):a=0,n.__setDigit(_,a);return n.__trim()}static __isWhitespace(i){return !!(13>=i&&9<=i)||(159>=i?32==i:131071>=i?160==i||5760==i:196607>=i?(i&=131071,10>=i||40==i||41==i||47==i||95==i||4096==i):65279==i)}static __fromString(i,_=0){let t=0;const e=i.length;let n=0;if(n===e)return o.__zero();let g=i.charCodeAt(n);for(;o.__isWhitespace(g);){if(++n===e)return o.__zero();g=i.charCodeAt(n);}if(43===g){if(++n===e)return null;g=i.charCodeAt(n),t=1;}else if(45===g){if(++n===e)return null;g=i.charCodeAt(n),t=-1;}if(0===_){if(_=10,48===g){if(++n===e)return o.__zero();if(g=i.charCodeAt(n),88===g||120===g){if(_=16,++n===e)return null;g=i.charCodeAt(n);}else if(79===g||111===g){if(_=8,++n===e)return null;g=i.charCodeAt(n);}else if(66===g||98===g){if(_=2,++n===e)return null;g=i.charCodeAt(n);}}}else if(16===_&&48===g){if(++n===e)return o.__zero();if(g=i.charCodeAt(n),88===g||120===g){if(++n===e)return null;g=i.charCodeAt(n);}}if(0!=t&&10!==_)return null;for(;48===g;){if(++n===e)return o.__zero();g=i.charCodeAt(n);}const s=e-n;let l=o.__kMaxBitsPerChar[_],r=o.__kBitsPerCharTableMultiplier-1;if(s>1073741824/l)return null;const a=l*s+r>>>o.__kBitsPerCharTableShift,u=new o(0|(a+29)/30,false),h=10>_?_:10,b=10<_?_-10:0;if(0==(_&_-1)){l>>=o.__kBitsPerCharTableShift;const _=[],t=[];let s=false;do{let o=0,r=0;for(;;){let _;if(g-48>>>0<h)_=g-48;else if((32|g)-97>>>0<b)_=(32|g)-87;else {s=true;break}if(r+=l,o=o<<l|_,++n===e){s=true;break}if(g=i.charCodeAt(n),30<r+l)break}_.push(o),t.push(r);}while(!s);o.__fillFromParts(u,_,t);}else {u.__initializeDigits();let t=false,s=0;do{let a=0,D=1;for(;;){let o;if(g-48>>>0<h)o=g-48;else if((32|g)-97>>>0<b)o=(32|g)-87;else {t=true;break}const l=D*_;if(1073741823<l)break;if(D=l,a=a*_+o,s++,++n===e){t=true;break}g=i.charCodeAt(n);}r=30*o.__kBitsPerCharTableMultiplier-1;const c=0|(l*s+r>>>o.__kBitsPerCharTableShift)/30;u.__inplaceMultiplyAdd(D,a,c);}while(!t)}if(n!==e){if(!o.__isWhitespace(g))return null;for(n++;n<e;n++)if(g=i.charCodeAt(n),!o.__isWhitespace(g))return null}return u.sign=-1==t,u.__trim()}static __fillFromParts(_,t,e){let n=0,g=0,o=0;for(let s=t.length-1;0<=s;s--){const i=t[s],l=e[s];g|=i<<o,o+=l,30===o?(_.__setDigit(n++,g),o=0,g=0):30<o&&(_.__setDigit(n++,1073741823&g),o-=30,g=i>>>l-o);}if(0!==g){if(n>=_.length)throw new Error("implementation bug");_.__setDigit(n++,g);}for(;n<_.length;n++)_.__setDigit(n,0);}static __toStringBasePowerOfTwo(_,i){const t=_.length;let e=i-1;e=(85&e>>>1)+(85&e),e=(51&e>>>2)+(51&e),e=(15&e>>>4)+(15&e);const n=e,g=i-1,s=_.__digit(t-1),l=o.__clz30(s);let r=0|(30*t-l+n-1)/n;if(_.sign&&r++,268435456<r)throw new Error("string too long");const a=Array(r);let u=r-1,d=0,h=0;for(let e=0;e<t-1;e++){const i=_.__digit(e),t=(d|i<<h)&g;a[u--]=o.__kConversionChars[t];const s=n-h;for(d=i>>>s,h=30-s;h>=n;)a[u--]=o.__kConversionChars[d&g],d>>>=n,h-=n;}const m=(d|s<<h)&g;for(a[u--]=o.__kConversionChars[m],d=s>>>n-h;0!==d;)a[u--]=o.__kConversionChars[d&g],d>>>=n;if(_.sign&&(a[u--]="-"),-1!=u)throw new Error("implementation bug");return a.join("")}static __toStringGeneric(_,i,t){const e=_.length;if(0===e)return "";if(1===e){let e=_.__unsignedDigit(0).toString(i);return  false===t&&_.sign&&(e="-"+e),e}const n=30*e-o.__clz30(_.__digit(e-1)),g=o.__kMaxBitsPerChar[i],s=g-1;let l=n*o.__kBitsPerCharTableMultiplier;l+=s-1,l=0|l/s;const r=l+1>>1,a=o.exponentiate(o.__oneDigit(i,false),o.__oneDigit(r,false));let u,d;const h=a.__unsignedDigit(0);if(1===a.length&&32767>=h){u=new o(_.length,false),u.__initializeDigits();let t=0;for(let e=2*_.length-1;0<=e;e--){const i=t<<15|_.__halfDigit(e);u.__setHalfDigit(e,0|i/h),t=0|i%h;}d=t.toString(i);}else {const t=o.__absoluteDivLarge(_,a,true,true);u=t.quotient;const e=t.remainder.__trim();d=o.__toStringGeneric(e,i,true);}u.__trim();let m=o.__toStringGeneric(u,i,true);for(;d.length<r;)d="0"+d;return  false===t&&_.sign&&(m="-"+m),m+d}static __unequalSign(i){return i?-1:1}static __absoluteGreater(i){return i?-1:1}static __absoluteLess(i){return i?1:-1}static __compareToBigInt(i,_){const t=i.sign;if(t!==_.sign)return o.__unequalSign(t);const e=o.__absoluteCompare(i,_);return 0<e?o.__absoluteGreater(t):0>e?o.__absoluteLess(t):0}static __compareToNumber(i,_){if(o.__isOneDigitInt(_)){const e=i.sign,n=0>_;if(e!==n)return o.__unequalSign(e);if(0===i.length){if(n)throw new Error("implementation bug");return 0===_?0:-1}if(1<i.length)return o.__absoluteGreater(e);const g=t(_),s=i.__unsignedDigit(0);return s>g?o.__absoluteGreater(e):s<g?o.__absoluteLess(e):0}return o.__compareToDouble(i,_)}static __compareToDouble(i,_){if(_!==_)return _;if(_===1/0)return  -1;if(_===-Infinity)return 1;const t=i.sign;if(t!==0>_)return o.__unequalSign(t);if(0===_)throw new Error("implementation bug: should be handled elsewhere");if(0===i.length)return  -1;o.__kBitConversionDouble[0]=_;const e=2047&o.__kBitConversionInts[1]>>>20;if(2047==e)throw new Error("implementation bug: handled elsewhere");const n=e-1023;if(0>n)return o.__absoluteGreater(t);const g=i.length;let s=i.__digit(g-1);const l=o.__clz30(s),r=30*g-l,a=n+1;if(r<a)return o.__absoluteLess(t);if(r>a)return o.__absoluteGreater(t);let u=1048576|1048575&o.__kBitConversionInts[1],d=o.__kBitConversionInts[0];const h=20,m=29-l;if(m!==(0|(r-1)%30))throw new Error("implementation bug");let b,D=0;if(20>m){const i=h-m;D=i+32,b=u>>>i,u=u<<32-i|d>>>i,d<<=32-i;}else if(20===m)D=32,b=u,u=d,d=0;else {const i=m-h;D=32-i,b=u<<i|d>>>32-i,u=d<<i,d=0;}if(s>>>=0,b>>>=0,s>b)return o.__absoluteGreater(t);if(s<b)return o.__absoluteLess(t);for(let e=g-2;0<=e;e--){0<D?(D-=30,b=u>>>2,u=u<<30|d>>>2,d<<=30):b=0;const _=i.__unsignedDigit(e);if(_>b)return o.__absoluteGreater(t);if(_<b)return o.__absoluteLess(t)}if(0!==u||0!==d){if(0===D)throw new Error("implementation bug");return o.__absoluteLess(t)}return 0}static __equalToNumber(i,_){return o.__isOneDigitInt(_)?0===_?0===i.length:1===i.length&&i.sign===0>_&&i.__unsignedDigit(0)===t(_):0===o.__compareToDouble(i,_)}static __comparisonResultToBool(i,_){return 0===_?0>i:1===_?0>=i:2===_?0<i:3===_?0<=i:void 0}static __compare(i,_,t){if(i=o.__toPrimitive(i),_=o.__toPrimitive(_),"string"==typeof i&&"string"==typeof _)switch(t){case 0:return i<_;case 1:return i<=_;case 2:return i>_;case 3:return i>=_;}if(o.__isBigInt(i)&&"string"==typeof _)return _=o.__fromString(_),null!==_&&o.__comparisonResultToBool(o.__compareToBigInt(i,_),t);if("string"==typeof i&&o.__isBigInt(_))return i=o.__fromString(i),null!==i&&o.__comparisonResultToBool(o.__compareToBigInt(i,_),t);if(i=o.__toNumeric(i),_=o.__toNumeric(_),o.__isBigInt(i)){if(o.__isBigInt(_))return o.__comparisonResultToBool(o.__compareToBigInt(i,_),t);if("number"!=typeof _)throw new Error("implementation bug");return o.__comparisonResultToBool(o.__compareToNumber(i,_),t)}if("number"!=typeof i)throw new Error("implementation bug");if(o.__isBigInt(_))return o.__comparisonResultToBool(o.__compareToNumber(_,i),2^t);if("number"!=typeof _)throw new Error("implementation bug");return 0===t?i<_:1===t?i<=_:2===t?i>_:3===t?i>=_:void 0}__clzmsd(){return o.__clz30(this.__digit(this.length-1))}static __absoluteAdd(_,t,e){if(_.length<t.length)return o.__absoluteAdd(t,_,e);if(0===_.length)return _;if(0===t.length)return _.sign===e?_:o.unaryMinus(_);let n=_.length;(0===_.__clzmsd()||t.length===_.length&&0===t.__clzmsd())&&n++;const g=new o(n,e);let s=0,l=0;for(;l<t.length;l++){const i=_.__digit(l)+t.__digit(l)+s;s=i>>>30,g.__setDigit(l,1073741823&i);}for(;l<_.length;l++){const i=_.__digit(l)+s;s=i>>>30,g.__setDigit(l,1073741823&i);}return l<g.length&&g.__setDigit(l,s),g.__trim()}static __absoluteSub(_,t,e){if(0===_.length)return _;if(0===t.length)return _.sign===e?_:o.unaryMinus(_);const n=new o(_.length,e);let g=0,s=0;for(;s<t.length;s++){const i=_.__digit(s)-t.__digit(s)-g;g=1&i>>>30,n.__setDigit(s,1073741823&i);}for(;s<_.length;s++){const i=_.__digit(s)-g;g=1&i>>>30,n.__setDigit(s,1073741823&i);}return n.__trim()}static __absoluteAddOne(_,i,t=null){const e=_.length;null===t?t=new o(e,i):t.sign=i;let n=1;for(let g=0;g<e;g++){const i=_.__digit(g)+n;n=i>>>30,t.__setDigit(g,1073741823&i);}return 0!=n&&t.__setDigitGrow(e,1),t}static __absoluteSubOne(_,t){const e=_.length;t=t||e;const n=new o(t,false);let g=1;for(let o=0;o<e;o++){const i=_.__digit(o)-g;g=1&i>>>30,n.__setDigit(o,1073741823&i);}if(0!=g)throw new Error("implementation bug");for(let g=e;g<t;g++)n.__setDigit(g,0);return n}static __absoluteAnd(_,t,e=null){let n=_.length,g=t.length,s=g;if(n<g){s=n;const i=_,e=n;_=t,n=g,t=i,g=e;}let l=s;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)&t.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteAndNot(_,t,e=null){const n=_.length,g=t.length;let s=g;n<g&&(s=n);let l=n;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)&~t.__digit(r));for(;r<n;r++)e.__setDigit(r,_.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteOr(_,t,e=null){let n=_.length,g=t.length,s=g;if(n<g){s=n;const i=_,e=n;_=t,n=g,t=i,g=e;}let l=n;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)|t.__digit(r));for(;r<n;r++)e.__setDigit(r,_.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteXor(_,t,e=null){let n=_.length,g=t.length,s=g;if(n<g){s=n;const i=_,e=n;_=t,n=g,t=i,g=e;}let l=n;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)^t.__digit(r));for(;r<n;r++)e.__setDigit(r,_.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteCompare(_,t){const e=_.length-t.length;if(0!=e)return e;let n=_.length-1;for(;0<=n&&_.__digit(n)===t.__digit(n);)n--;return 0>n?0:_.__unsignedDigit(n)>t.__unsignedDigit(n)?1:-1}static __multiplyAccumulate(_,t,e,n){if(0===t)return;const g=32767&t,s=t>>>15;let l=0,r=0;for(let a,u=0;u<_.length;u++,n++){a=e.__digit(n);const i=_.__digit(u),t=32767&i,d=i>>>15,h=o.__imul(t,g),m=o.__imul(t,s),b=o.__imul(d,g),D=o.__imul(d,s);a+=r+h+l,l=a>>>30,a&=1073741823,a+=((32767&m)<<15)+((32767&b)<<15),l+=a>>>30,r=D+(m>>>15)+(b>>>15),e.__setDigit(n,1073741823&a);}for(;0!=l||0!==r;n++){let i=e.__digit(n);i+=l+r,r=0,l=i>>>30,e.__setDigit(n,1073741823&i);}}static __internalMultiplyAdd(_,t,e,g,s){let l=e,a=0;for(let n=0;n<g;n++){const i=_.__digit(n),e=o.__imul(32767&i,t),g=o.__imul(i>>>15,t),u=e+((32767&g)<<15)+a+l;l=u>>>30,a=g>>>15,s.__setDigit(n,1073741823&u);}if(s.length>g)for(s.__setDigit(g++,l+a);g<s.length;)s.__setDigit(g++,0);else if(0!==l+a)throw new Error("implementation bug")}__inplaceMultiplyAdd(i,_,t){t>this.length&&(t=this.length);const e=32767&i,n=i>>>15;let g=0,s=_;for(let l=0;l<t;l++){const i=this.__digit(l),_=32767&i,t=i>>>15,r=o.__imul(_,e),a=o.__imul(_,n),u=o.__imul(t,e),d=o.__imul(t,n);let h=s+r+g;g=h>>>30,h&=1073741823,h+=((32767&a)<<15)+((32767&u)<<15),g+=h>>>30,s=d+(a>>>15)+(u>>>15),this.__setDigit(l,1073741823&h);}if(0!=g||0!==s)throw new Error("implementation bug")}static __absoluteDivSmall(_,t,e=null){null===e&&(e=new o(_.length,false));let n=0;for(let g,o=2*_.length-1;0<=o;o-=2){g=(n<<15|_.__halfDigit(o))>>>0;const i=0|g/t;n=0|g%t,g=(n<<15|_.__halfDigit(o-1))>>>0;const s=0|g/t;n=0|g%t,e.__setDigit(o>>>1,i<<15|s);}return e}static __absoluteModSmall(_,t){let e=0;for(let n=2*_.length-1;0<=n;n--){const i=(e<<15|_.__halfDigit(n))>>>0;e=0|i%t;}return e}static __absoluteDivLarge(i,_,t,e){const g=_.__halfDigitLength(),n=_.length,s=i.__halfDigitLength()-g;let l=null;t&&(l=new o(s+2>>>1,false),l.__initializeDigits());const r=new o(g+2>>>1,false);r.__initializeDigits();const a=o.__clz15(_.__halfDigit(g-1));0<a&&(_=o.__specialLeftShift(_,a,0));const d=o.__specialLeftShift(i,a,1),u=_.__halfDigit(g-1);let h=0;for(let a,m=s;0<=m;m--){a=32767;const i=d.__halfDigit(m+g);if(i!==u){const t=(i<<15|d.__halfDigit(m+g-1))>>>0;a=0|t/u;let e=0|t%u;const n=_.__halfDigit(g-2),s=d.__halfDigit(m+g-2);for(;o.__imul(a,n)>>>0>(e<<16|s)>>>0&&(a--,e+=u,!(32767<e)););}o.__internalMultiplyAdd(_,a,0,n,r);let e=d.__inplaceSub(r,m,g+1);0!==e&&(e=d.__inplaceAdd(_,m,g),d.__setHalfDigit(m+g,32767&d.__halfDigit(m+g)+e),a--),t&&(1&m?h=a<<15:l.__setDigit(m>>>1,h|a));}if(e)return d.__inplaceRightShift(a),t?{quotient:l,remainder:d}:d;if(t)return l;throw new Error("unreachable")}static __clz15(i){return o.__clz30(i)-15}__inplaceAdd(_,t,e){let n=0;for(let g=0;g<e;g++){const i=this.__halfDigit(t+g)+_.__halfDigit(g)+n;n=i>>>15,this.__setHalfDigit(t+g,32767&i);}return n}__inplaceSub(_,t,e){let n=0;if(1&t){t>>=1;let g=this.__digit(t),o=32767&g,s=0;for(;s<e-1>>>1;s++){const i=_.__digit(s),e=(g>>>15)-(32767&i)-n;n=1&e>>>15,this.__setDigit(t+s,(32767&e)<<15|32767&o),g=this.__digit(t+s+1),o=(32767&g)-(i>>>15)-n,n=1&o>>>15;}const i=_.__digit(s),l=(g>>>15)-(32767&i)-n;n=1&l>>>15,this.__setDigit(t+s,(32767&l)<<15|32767&o);if(t+s+1>=this.length)throw new RangeError("out of bounds");0==(1&e)&&(g=this.__digit(t+s+1),o=(32767&g)-(i>>>15)-n,n=1&o>>>15,this.__setDigit(t+_.length,1073709056&g|32767&o));}else {t>>=1;let g=0;for(;g<_.length-1;g++){const i=this.__digit(t+g),e=_.__digit(g),o=(32767&i)-(32767&e)-n;n=1&o>>>15;const s=(i>>>15)-(e>>>15)-n;n=1&s>>>15,this.__setDigit(t+g,(32767&s)<<15|32767&o);}const i=this.__digit(t+g),o=_.__digit(g),s=(32767&i)-(32767&o)-n;n=1&s>>>15;let l=0;0==(1&e)&&(l=(i>>>15)-(o>>>15)-n,n=1&l>>>15),this.__setDigit(t+g,(32767&l)<<15|32767&s);}return n}__inplaceRightShift(_){if(0===_)return;let t=this.__digit(0)>>>_;const e=this.length-1;for(let n=0;n<e;n++){const i=this.__digit(n+1);this.__setDigit(n,1073741823&i<<30-_|t),t=i>>>_;}this.__setDigit(e,t);}static __specialLeftShift(_,t,e){const g=_.length,n=new o(g+e,false);if(0===t){for(let t=0;t<g;t++)n.__setDigit(t,_.__digit(t));return 0<e&&n.__setDigit(g,0),n}let s=0;for(let o=0;o<g;o++){const i=_.__digit(o);n.__setDigit(o,1073741823&i<<t|s),s=i>>>30-t;}return 0<e&&n.__setDigit(g,s),n}static __leftShiftByAbsolute(_,i){const t=o.__toShiftAmount(i);if(0>t)throw new RangeError("BigInt too big");const e=0|t/30,n=t%30,g=_.length,s=0!==n&&0!=_.__digit(g-1)>>>30-n,l=g+e+(s?1:0),r=new o(l,_.sign);if(0===n){let t=0;for(;t<e;t++)r.__setDigit(t,0);for(;t<l;t++)r.__setDigit(t,_.__digit(t-e));}else {let t=0;for(let _=0;_<e;_++)r.__setDigit(_,0);for(let o=0;o<g;o++){const i=_.__digit(o);r.__setDigit(o+e,1073741823&i<<n|t),t=i>>>30-n;}if(s)r.__setDigit(g+e,t);else if(0!==t)throw new Error("implementation bug")}return r.__trim()}static __rightShiftByAbsolute(_,i){const t=_.length,e=_.sign,n=o.__toShiftAmount(i);if(0>n)return o.__rightShiftByMaximum(e);const g=0|n/30,s=n%30;let l=t-g;if(0>=l)return o.__rightShiftByMaximum(e);let r=false;if(e){if(0!=(_.__digit(g)&(1<<s)-1))r=true;else for(let t=0;t<g;t++)if(0!==_.__digit(t)){r=true;break}}if(r&&0===s){const i=_.__digit(t-1);0==~i&&l++;}let a=new o(l,e);if(0===s){a.__setDigit(l-1,0);for(let e=g;e<t;e++)a.__setDigit(e-g,_.__digit(e));}else {let e=_.__digit(g)>>>s;const n=t-g-1;for(let t=0;t<n;t++){const i=_.__digit(t+g+1);a.__setDigit(t,1073741823&i<<30-s|e),e=i>>>s;}a.__setDigit(n,e);}return r&&(a=o.__absoluteAddOne(a,true,a)),a.__trim()}static __rightShiftByMaximum(i){return i?o.__oneDigit(1,true):o.__zero()}static __toShiftAmount(i){if(1<i.length)return  -1;const _=i.__unsignedDigit(0);return _>o.__kMaxLengthBits?-1:_}static __toPrimitive(i,_="default"){if("object"!=typeof i)return i;if(i.constructor===o)return i;if("undefined"!=typeof Symbol&&"symbol"==typeof Symbol.toPrimitive){const t=i[Symbol.toPrimitive];if(t){const i=t(_);if("object"!=typeof i)return i;throw new TypeError("Cannot convert object to primitive value")}}const t=i.valueOf;if(t){const _=t.call(i);if("object"!=typeof _)return _}const e=i.toString;if(e){const _=e.call(i);if("object"!=typeof _)return _}throw new TypeError("Cannot convert object to primitive value")}static __toNumeric(i){return o.__isBigInt(i)?i:+i}static __isBigInt(i){return "object"==typeof i&&null!==i&&i.constructor===o}static __truncateToNBits(i,_){const t=0|(i+29)/30,e=new o(t,_.sign),n=t-1;for(let t=0;t<n;t++)e.__setDigit(t,_.__digit(t));let g=_.__digit(n);if(0!=i%30){const _=32-i%30;g=g<<_>>>_;}return e.__setDigit(n,g),e.__trim()}static __truncateAndSubFromPowerOfTwo(_,t,e){var n=Math.min;const g=0|(_+29)/30,s=new o(g,e);let l=0;const r=g-1;let a=0;for(const i=n(r,t.length);l<i;l++){const i=0-t.__digit(l)-a;a=1&i>>>30,s.__setDigit(l,1073741823&i);}for(;l<r;l++)s.__setDigit(l,0|1073741823&-a);let u=r<t.length?t.__digit(r):0;const d=_%30;let h;if(0==d)h=0-u-a,h&=1073741823;else {const i=32-d;u=u<<i>>>i;const _=1<<32-i;h=_-u-a,h&=_-1;}return s.__setDigit(r,h),s.__trim()}__digit(_){return this[_]}__unsignedDigit(_){return this[_]>>>0}__setDigit(_,i){this[_]=0|i;}__setDigitGrow(_,i){this[_]=0|i;}__halfDigitLength(){const i=this.length;return 32767>=this.__unsignedDigit(i-1)?2*i-1:2*i}__halfDigit(_){return 32767&this[_>>>1]>>>15*(1&_)}__setHalfDigit(_,i){const t=_>>>1,e=this.__digit(t),n=1&_?32767&e|i<<15:1073709056&e|32767&i;this.__setDigit(t,n);}static __digitPow(i,_){let t=1;for(;0<_;)1&_&&(t*=i),_>>>=1,i*=i;return t}static __isOneDigitInt(i){return (1073741823&i)===i}}return o.__kMaxLength=33554432,o.__kMaxLengthBits=o.__kMaxLength<<5,o.__kMaxBitsPerChar=[0,0,32,51,64,75,83,90,96,102,107,111,115,119,122,126,128,131,134,136,139,141,143,145,147,149,151,153,154,156,158,159,160,162,163,165,166],o.__kBitsPerCharTableShift=5,o.__kBitsPerCharTableMultiplier=1<<o.__kBitsPerCharTableShift,o.__kConversionChars=["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"],o.__kBitConversionBuffer=new ArrayBuffer(8),o.__kBitConversionDouble=new Float64Array(o.__kBitConversionBuffer),o.__kBitConversionInts=new Int32Array(o.__kBitConversionBuffer),o.__clz30=_?function(i){return _(i)-2}:function(i){var _=Math.LN2,t=Math.log;return 0===i?30:0|29-(0|t(i>>>0)/_)},o.__imul=i||function(i,_){return 0|i*_},o});
+		(function(i,_){module.exports=_();})(jsbiUmd,function(){var i=Math.imul,_=Math.clz32,t=Math.abs,e=Math.max,g=Math.floor;class o extends Array{constructor(i,_){if(super(i),this.sign=_,i>o.__kMaxLength)throw new RangeError("Maximum BigInt size exceeded")}static BigInt(i){var _=Number.isFinite;if("number"==typeof i){if(0===i)return o.__zero();if(o.__isOneDigitInt(i))return 0>i?o.__oneDigit(-i,true):o.__oneDigit(i,false);if(!_(i)||g(i)!==i)throw new RangeError("The number "+i+" cannot be converted to BigInt because it is not an integer");return o.__fromDouble(i)}if("string"==typeof i){const _=o.__fromString(i);if(null===_)throw new SyntaxError("Cannot convert "+i+" to a BigInt");return _}if("boolean"==typeof i)return  true===i?o.__oneDigit(1,false):o.__zero();if("object"==typeof i){if(i.constructor===o)return i;const _=o.__toPrimitive(i);return o.BigInt(_)}throw new TypeError("Cannot convert "+i+" to a BigInt")}toDebugString(){const i=["BigInt["];for(const _ of this)i.push((_?(_>>>0).toString(16):_)+", ");return i.push("]"),i.join("")}toString(i=10){if(2>i||36<i)throw new RangeError("toString() radix argument must be between 2 and 36");return 0===this.length?"0":0==(i&i-1)?o.__toStringBasePowerOfTwo(this,i):o.__toStringGeneric(this,i,false)}static toNumber(i){const _=i.length;if(0===_)return 0;if(1===_){const _=i.__unsignedDigit(0);return i.sign?-_:_}const t=i.__digit(_-1),e=o.__clz30(t),n=30*_-e;if(1024<n)return i.sign?-Infinity:1/0;let g=n-1,s=t,l=_-1;const r=e+3;let a=32===r?0:s<<r;a>>>=12;const u=r-12;let d=12<=r?0:s<<20+r,h=20+r;for(0<u&&0<l&&(l--,s=i.__digit(l),a|=s>>>30-u,d=s<<u+2,h=u+2);0<h&&0<l;)l--,s=i.__digit(l),d|=30<=h?s<<h-30:s>>>30-h,h-=30;const m=o.__decideRounding(i,h,l,s);if((1===m||0===m&&1==(1&d))&&(d=d+1>>>0,0===d&&(a++,0!=a>>>20&&(a=0,g++,1023<g))))return i.sign?-Infinity:1/0;const b=i.sign?-2147483648:0;return g=g+1023<<20,o.__kBitConversionInts[1]=b|g|a,o.__kBitConversionInts[0]=d,o.__kBitConversionDouble[0]}static unaryMinus(i){if(0===i.length)return i;const _=i.__copy();return _.sign=!i.sign,_}static bitwiseNot(i){return i.sign?o.__absoluteSubOne(i).__trim():o.__absoluteAddOne(i,true)}static exponentiate(i,_){if(_.sign)throw new RangeError("Exponent must be positive");if(0===_.length)return o.__oneDigit(1,false);if(0===i.length)return i;if(1===i.length&&1===i.__digit(0))return i.sign&&0==(1&_.__digit(0))?o.unaryMinus(i):i;if(1<_.length)throw new RangeError("BigInt too big");let t=_.__unsignedDigit(0);if(1===t)return i;if(t>=o.__kMaxLengthBits)throw new RangeError("BigInt too big");if(1===i.length&&2===i.__digit(0)){const _=1+(0|t/30),e=i.sign&&0!=(1&t),n=new o(_,e);n.__initializeDigits();const g=1<<t%30;return n.__setDigit(_-1,g),n}let e=null,n=i;for(0!=(1&t)&&(e=i),t>>=1;0!==t;t>>=1)n=o.multiply(n,n),0!=(1&t)&&(null===e?e=n:e=o.multiply(e,n));return e}static multiply(_,t){if(0===_.length)return _;if(0===t.length)return t;let i=_.length+t.length;30<=_.__clzmsd()+t.__clzmsd()&&i--;const e=new o(i,_.sign!==t.sign);e.__initializeDigits();for(let n=0;n<_.length;n++)o.__multiplyAccumulate(t,_.__digit(n),e,n);return e.__trim()}static divide(i,_){if(0===_.length)throw new RangeError("Division by zero");if(0>o.__absoluteCompare(i,_))return o.__zero();const t=i.sign!==_.sign,e=_.__unsignedDigit(0);let n;if(1===_.length&&32767>=e){if(1===e)return t===i.sign?i:o.unaryMinus(i);n=o.__absoluteDivSmall(i,e,null);}else n=o.__absoluteDivLarge(i,_,true,false);return n.sign=t,n.__trim()}static remainder(i,_){if(0===_.length)throw new RangeError("Division by zero");if(0>o.__absoluteCompare(i,_))return i;const t=_.__unsignedDigit(0);if(1===_.length&&32767>=t){if(1===t)return o.__zero();const _=o.__absoluteModSmall(i,t);return 0===_?o.__zero():o.__oneDigit(_,i.sign)}const e=o.__absoluteDivLarge(i,_,false,true);return e.sign=i.sign,e.__trim()}static add(i,_){const t=i.sign;return t===_.sign?o.__absoluteAdd(i,_,t):0<=o.__absoluteCompare(i,_)?o.__absoluteSub(i,_,t):o.__absoluteSub(_,i,!t)}static subtract(i,_){const t=i.sign;return t===_.sign?0<=o.__absoluteCompare(i,_)?o.__absoluteSub(i,_,t):o.__absoluteSub(_,i,!t):o.__absoluteAdd(i,_,t)}static leftShift(i,_){return 0===_.length||0===i.length?i:_.sign?o.__rightShiftByAbsolute(i,_):o.__leftShiftByAbsolute(i,_)}static signedRightShift(i,_){return 0===_.length||0===i.length?i:_.sign?o.__leftShiftByAbsolute(i,_):o.__rightShiftByAbsolute(i,_)}static unsignedRightShift(){throw new TypeError("BigInts have no unsigned right shift; use >> instead")}static lessThan(i,_){return 0>o.__compareToBigInt(i,_)}static lessThanOrEqual(i,_){return 0>=o.__compareToBigInt(i,_)}static greaterThan(i,_){return 0<o.__compareToBigInt(i,_)}static greaterThanOrEqual(i,_){return 0<=o.__compareToBigInt(i,_)}static equal(_,t){if(_.sign!==t.sign)return  false;if(_.length!==t.length)return  false;for(let e=0;e<_.length;e++)if(_.__digit(e)!==t.__digit(e))return  false;return  true}static notEqual(i,_){return !o.equal(i,_)}static bitwiseAnd(i,_){if(!i.sign&&!_.sign)return o.__absoluteAnd(i,_).__trim();if(i.sign&&_.sign){const t=e(i.length,_.length)+1;let n=o.__absoluteSubOne(i,t);const g=o.__absoluteSubOne(_);return n=o.__absoluteOr(n,g,n),o.__absoluteAddOne(n,true,n).__trim()}return i.sign&&([i,_]=[_,i]),o.__absoluteAndNot(i,o.__absoluteSubOne(_)).__trim()}static bitwiseXor(i,_){if(!i.sign&&!_.sign)return o.__absoluteXor(i,_).__trim();if(i.sign&&_.sign){const t=e(i.length,_.length),n=o.__absoluteSubOne(i,t),g=o.__absoluteSubOne(_);return o.__absoluteXor(n,g,n).__trim()}const t=e(i.length,_.length)+1;i.sign&&([i,_]=[_,i]);let n=o.__absoluteSubOne(_,t);return n=o.__absoluteXor(n,i,n),o.__absoluteAddOne(n,true,n).__trim()}static bitwiseOr(i,_){const t=e(i.length,_.length);if(!i.sign&&!_.sign)return o.__absoluteOr(i,_).__trim();if(i.sign&&_.sign){let e=o.__absoluteSubOne(i,t);const n=o.__absoluteSubOne(_);return e=o.__absoluteAnd(e,n,e),o.__absoluteAddOne(e,true,e).__trim()}i.sign&&([i,_]=[_,i]);let n=o.__absoluteSubOne(_,t);return n=o.__absoluteAndNot(n,i,n),o.__absoluteAddOne(n,true,n).__trim()}static asIntN(_,t){if(0===t.length)return t;if(_=g(_),0>_)throw new RangeError("Invalid value: not (convertible to) a safe integer");if(0===_)return o.__zero();if(_>=o.__kMaxLengthBits)return t;const e=0|(_+29)/30;if(t.length<e)return t;const s=t.__unsignedDigit(e-1),l=1<<(_-1)%30;if(t.length===e&&s<l)return t;if(!((s&l)===l))return o.__truncateToNBits(_,t);if(!t.sign)return o.__truncateAndSubFromPowerOfTwo(_,t,true);if(0==(s&l-1)){for(let n=e-2;0<=n;n--)if(0!==t.__digit(n))return o.__truncateAndSubFromPowerOfTwo(_,t,false);return t.length===e&&s===l?t:o.__truncateToNBits(_,t)}return o.__truncateAndSubFromPowerOfTwo(_,t,false)}static asUintN(i,_){if(0===_.length)return _;if(i=g(i),0>i)throw new RangeError("Invalid value: not (convertible to) a safe integer");if(0===i)return o.__zero();if(_.sign){if(i>o.__kMaxLengthBits)throw new RangeError("BigInt too big");return o.__truncateAndSubFromPowerOfTwo(i,_,false)}if(i>=o.__kMaxLengthBits)return _;const t=0|(i+29)/30;if(_.length<t)return _;const e=i%30;if(_.length==t){if(0===e)return _;const i=_.__digit(t-1);if(0==i>>>e)return _}return o.__truncateToNBits(i,_)}static ADD(i,_){if(i=o.__toPrimitive(i),_=o.__toPrimitive(_),"string"==typeof i)return "string"!=typeof _&&(_=_.toString()),i+_;if("string"==typeof _)return i.toString()+_;if(i=o.__toNumeric(i),_=o.__toNumeric(_),o.__isBigInt(i)&&o.__isBigInt(_))return o.add(i,_);if("number"==typeof i&&"number"==typeof _)return i+_;throw new TypeError("Cannot mix BigInt and other types, use explicit conversions")}static LT(i,_){return o.__compare(i,_,0)}static LE(i,_){return o.__compare(i,_,1)}static GT(i,_){return o.__compare(i,_,2)}static GE(i,_){return o.__compare(i,_,3)}static EQ(i,_){for(;;){if(o.__isBigInt(i))return o.__isBigInt(_)?o.equal(i,_):o.EQ(_,i);if("number"==typeof i){if(o.__isBigInt(_))return o.__equalToNumber(_,i);if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("string"==typeof i){if(o.__isBigInt(_))return i=o.__fromString(i),null!==i&&o.equal(i,_);if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("boolean"==typeof i){if(o.__isBigInt(_))return o.__equalToNumber(_,+i);if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("symbol"==typeof i){if(o.__isBigInt(_))return  false;if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("object"==typeof i){if("object"==typeof _&&_.constructor!==o)return i==_;i=o.__toPrimitive(i);}else return i==_}}static NE(i,_){return !o.EQ(i,_)}static __zero(){return new o(0,false)}static __oneDigit(i,_){const t=new o(1,_);return t.__setDigit(0,i),t}__copy(){const _=new o(this.length,this.sign);for(let t=0;t<this.length;t++)_[t]=this[t];return _}__trim(){let i=this.length,_=this[i-1];for(;0===_;)i--,_=this[i-1],this.pop();return 0===i&&(this.sign=false),this}__initializeDigits(){for(let _=0;_<this.length;_++)this[_]=0;}static __decideRounding(i,_,t,e){if(0<_)return  -1;let n;if(0>_)n=-_-1;else {if(0===t)return  -1;t--,e=i.__digit(t),n=29;}let g=1<<n;if(0==(e&g))return  -1;if(g-=1,0!=(e&g))return 1;for(;0<t;)if(t--,0!==i.__digit(t))return 1;return 0}static __fromDouble(i){o.__kBitConversionDouble[0]=i;const _=2047&o.__kBitConversionInts[1]>>>20,t=_-1023,e=(0|t/30)+1,n=new o(e,0>i);let g=1048575&o.__kBitConversionInts[1]|1048576,s=o.__kBitConversionInts[0];const l=20,r=t%30;let a,u=0;if(20>r){const i=l-r;u=i+32,a=g>>>i,g=g<<32-i|s>>>i,s<<=32-i;}else if(20===r)u=32,a=g,g=s,s=0;else {const i=r-l;u=32-i,a=g<<i|s>>>32-i,g=s<<i,s=0;}n.__setDigit(e-1,a);for(let _=e-2;0<=_;_--)0<u?(u-=30,a=g>>>2,g=g<<30|s>>>2,s<<=30):a=0,n.__setDigit(_,a);return n.__trim()}static __isWhitespace(i){return !!(13>=i&&9<=i)||(159>=i?32==i:131071>=i?160==i||5760==i:196607>=i?(i&=131071,10>=i||40==i||41==i||47==i||95==i||4096==i):65279==i)}static __fromString(i,_=0){let t=0;const e=i.length;let n=0;if(n===e)return o.__zero();let g=i.charCodeAt(n);for(;o.__isWhitespace(g);){if(++n===e)return o.__zero();g=i.charCodeAt(n);}if(43===g){if(++n===e)return null;g=i.charCodeAt(n),t=1;}else if(45===g){if(++n===e)return null;g=i.charCodeAt(n),t=-1;}if(0===_){if(_=10,48===g){if(++n===e)return o.__zero();if(g=i.charCodeAt(n),88===g||120===g){if(_=16,++n===e)return null;g=i.charCodeAt(n);}else if(79===g||111===g){if(_=8,++n===e)return null;g=i.charCodeAt(n);}else if(66===g||98===g){if(_=2,++n===e)return null;g=i.charCodeAt(n);}}}else if(16===_&&48===g){if(++n===e)return o.__zero();if(g=i.charCodeAt(n),88===g||120===g){if(++n===e)return null;g=i.charCodeAt(n);}}if(0!=t&&10!==_)return null;for(;48===g;){if(++n===e)return o.__zero();g=i.charCodeAt(n);}const s=e-n;let l=o.__kMaxBitsPerChar[_],r=o.__kBitsPerCharTableMultiplier-1;if(s>1073741824/l)return null;const a=l*s+r>>>o.__kBitsPerCharTableShift,u=new o(0|(a+29)/30,false),h=10>_?_:10,b=10<_?_-10:0;if(0==(_&_-1)){l>>=o.__kBitsPerCharTableShift;const _=[],t=[];let s=false;do{let o=0,r=0;for(;;){let _;if(g-48>>>0<h)_=g-48;else if((32|g)-97>>>0<b)_=(32|g)-87;else {s=true;break}if(r+=l,o=o<<l|_,++n===e){s=true;break}if(g=i.charCodeAt(n),30<r+l)break}_.push(o),t.push(r);}while(!s);o.__fillFromParts(u,_,t);}else {u.__initializeDigits();let t=false,s=0;do{let a=0,D=1;for(;;){let o;if(g-48>>>0<h)o=g-48;else if((32|g)-97>>>0<b)o=(32|g)-87;else {t=true;break}const l=D*_;if(1073741823<l)break;if(D=l,a=a*_+o,s++,++n===e){t=true;break}g=i.charCodeAt(n);}r=30*o.__kBitsPerCharTableMultiplier-1;const c=0|(l*s+r>>>o.__kBitsPerCharTableShift)/30;u.__inplaceMultiplyAdd(D,a,c);}while(!t)}if(n!==e){if(!o.__isWhitespace(g))return null;for(n++;n<e;n++)if(g=i.charCodeAt(n),!o.__isWhitespace(g))return null}return u.sign=-1==t,u.__trim()}static __fillFromParts(_,t,e){let n=0,g=0,o=0;for(let s=t.length-1;0<=s;s--){const i=t[s],l=e[s];g|=i<<o,o+=l,30===o?(_.__setDigit(n++,g),o=0,g=0):30<o&&(_.__setDigit(n++,1073741823&g),o-=30,g=i>>>l-o);}if(0!==g){if(n>=_.length)throw new Error("implementation bug");_.__setDigit(n++,g);}for(;n<_.length;n++)_.__setDigit(n,0);}static __toStringBasePowerOfTwo(_,i){const t=_.length;let e=i-1;e=(85&e>>>1)+(85&e),e=(51&e>>>2)+(51&e),e=(15&e>>>4)+(15&e);const n=e,g=i-1,s=_.__digit(t-1),l=o.__clz30(s);let r=0|(30*t-l+n-1)/n;if(_.sign&&r++,268435456<r)throw new Error("string too long");const a=Array(r);let u=r-1,d=0,h=0;for(let e=0;e<t-1;e++){const i=_.__digit(e),t=(d|i<<h)&g;a[u--]=o.__kConversionChars[t];const s=n-h;for(d=i>>>s,h=30-s;h>=n;)a[u--]=o.__kConversionChars[d&g],d>>>=n,h-=n;}const m=(d|s<<h)&g;for(a[u--]=o.__kConversionChars[m],d=s>>>n-h;0!==d;)a[u--]=o.__kConversionChars[d&g],d>>>=n;if(_.sign&&(a[u--]="-"),-1!=u)throw new Error("implementation bug");return a.join("")}static __toStringGeneric(_,i,t){const e=_.length;if(0===e)return "";if(1===e){let e=_.__unsignedDigit(0).toString(i);return  false===t&&_.sign&&(e="-"+e),e}const n=30*e-o.__clz30(_.__digit(e-1)),g=o.__kMaxBitsPerChar[i],s=g-1;let l=n*o.__kBitsPerCharTableMultiplier;l+=s-1,l=0|l/s;const r=l+1>>1,a=o.exponentiate(o.__oneDigit(i,false),o.__oneDigit(r,false));let u,d;const h=a.__unsignedDigit(0);if(1===a.length&&32767>=h){u=new o(_.length,false),u.__initializeDigits();let t=0;for(let e=2*_.length-1;0<=e;e--){const i=t<<15|_.__halfDigit(e);u.__setHalfDigit(e,0|i/h),t=0|i%h;}d=t.toString(i);}else {const t=o.__absoluteDivLarge(_,a,true,true);u=t.quotient;const e=t.remainder.__trim();d=o.__toStringGeneric(e,i,true);}u.__trim();let m=o.__toStringGeneric(u,i,true);for(;d.length<r;)d="0"+d;return  false===t&&_.sign&&(m="-"+m),m+d}static __unequalSign(i){return i?-1:1}static __absoluteGreater(i){return i?-1:1}static __absoluteLess(i){return i?1:-1}static __compareToBigInt(i,_){const t=i.sign;if(t!==_.sign)return o.__unequalSign(t);const e=o.__absoluteCompare(i,_);return 0<e?o.__absoluteGreater(t):0>e?o.__absoluteLess(t):0}static __compareToNumber(i,_){if(o.__isOneDigitInt(_)){const e=i.sign,n=0>_;if(e!==n)return o.__unequalSign(e);if(0===i.length){if(n)throw new Error("implementation bug");return 0===_?0:-1}if(1<i.length)return o.__absoluteGreater(e);const g=t(_),s=i.__unsignedDigit(0);return s>g?o.__absoluteGreater(e):s<g?o.__absoluteLess(e):0}return o.__compareToDouble(i,_)}static __compareToDouble(i,_){if(_!==_)return _;if(_===1/0)return  -1;if(_===-Infinity)return 1;const t=i.sign;if(t!==0>_)return o.__unequalSign(t);if(0===_)throw new Error("implementation bug: should be handled elsewhere");if(0===i.length)return  -1;o.__kBitConversionDouble[0]=_;const e=2047&o.__kBitConversionInts[1]>>>20;if(2047==e)throw new Error("implementation bug: handled elsewhere");const n=e-1023;if(0>n)return o.__absoluteGreater(t);const g=i.length;let s=i.__digit(g-1);const l=o.__clz30(s),r=30*g-l,a=n+1;if(r<a)return o.__absoluteLess(t);if(r>a)return o.__absoluteGreater(t);let u=1048576|1048575&o.__kBitConversionInts[1],d=o.__kBitConversionInts[0];const h=20,m=29-l;if(m!==(0|(r-1)%30))throw new Error("implementation bug");let b,D=0;if(20>m){const i=h-m;D=i+32,b=u>>>i,u=u<<32-i|d>>>i,d<<=32-i;}else if(20===m)D=32,b=u,u=d,d=0;else {const i=m-h;D=32-i,b=u<<i|d>>>32-i,u=d<<i,d=0;}if(s>>>=0,b>>>=0,s>b)return o.__absoluteGreater(t);if(s<b)return o.__absoluteLess(t);for(let e=g-2;0<=e;e--){0<D?(D-=30,b=u>>>2,u=u<<30|d>>>2,d<<=30):b=0;const _=i.__unsignedDigit(e);if(_>b)return o.__absoluteGreater(t);if(_<b)return o.__absoluteLess(t)}if(0!==u||0!==d){if(0===D)throw new Error("implementation bug");return o.__absoluteLess(t)}return 0}static __equalToNumber(i,_){return o.__isOneDigitInt(_)?0===_?0===i.length:1===i.length&&i.sign===0>_&&i.__unsignedDigit(0)===t(_):0===o.__compareToDouble(i,_)}static __comparisonResultToBool(i,_){return 0===_?0>i:1===_?0>=i:2===_?0<i:3===_?0<=i:void 0}static __compare(i,_,t){if(i=o.__toPrimitive(i),_=o.__toPrimitive(_),"string"==typeof i&&"string"==typeof _)switch(t){case 0:return i<_;case 1:return i<=_;case 2:return i>_;case 3:return i>=_;}if(o.__isBigInt(i)&&"string"==typeof _)return _=o.__fromString(_),null!==_&&o.__comparisonResultToBool(o.__compareToBigInt(i,_),t);if("string"==typeof i&&o.__isBigInt(_))return i=o.__fromString(i),null!==i&&o.__comparisonResultToBool(o.__compareToBigInt(i,_),t);if(i=o.__toNumeric(i),_=o.__toNumeric(_),o.__isBigInt(i)){if(o.__isBigInt(_))return o.__comparisonResultToBool(o.__compareToBigInt(i,_),t);if("number"!=typeof _)throw new Error("implementation bug");return o.__comparisonResultToBool(o.__compareToNumber(i,_),t)}if("number"!=typeof i)throw new Error("implementation bug");if(o.__isBigInt(_))return o.__comparisonResultToBool(o.__compareToNumber(_,i),2^t);if("number"!=typeof _)throw new Error("implementation bug");return 0===t?i<_:1===t?i<=_:2===t?i>_:3===t?i>=_:void 0}__clzmsd(){return o.__clz30(this.__digit(this.length-1))}static __absoluteAdd(_,t,e){if(_.length<t.length)return o.__absoluteAdd(t,_,e);if(0===_.length)return _;if(0===t.length)return _.sign===e?_:o.unaryMinus(_);let n=_.length;(0===_.__clzmsd()||t.length===_.length&&0===t.__clzmsd())&&n++;const g=new o(n,e);let s=0,l=0;for(;l<t.length;l++){const i=_.__digit(l)+t.__digit(l)+s;s=i>>>30,g.__setDigit(l,1073741823&i);}for(;l<_.length;l++){const i=_.__digit(l)+s;s=i>>>30,g.__setDigit(l,1073741823&i);}return l<g.length&&g.__setDigit(l,s),g.__trim()}static __absoluteSub(_,t,e){if(0===_.length)return _;if(0===t.length)return _.sign===e?_:o.unaryMinus(_);const n=new o(_.length,e);let g=0,s=0;for(;s<t.length;s++){const i=_.__digit(s)-t.__digit(s)-g;g=1&i>>>30,n.__setDigit(s,1073741823&i);}for(;s<_.length;s++){const i=_.__digit(s)-g;g=1&i>>>30,n.__setDigit(s,1073741823&i);}return n.__trim()}static __absoluteAddOne(_,i,t=null){const e=_.length;null===t?t=new o(e,i):t.sign=i;let n=1;for(let g=0;g<e;g++){const i=_.__digit(g)+n;n=i>>>30,t.__setDigit(g,1073741823&i);}return 0!=n&&t.__setDigitGrow(e,1),t}static __absoluteSubOne(_,t){const e=_.length;t=t||e;const n=new o(t,false);let g=1;for(let o=0;o<e;o++){const i=_.__digit(o)-g;g=1&i>>>30,n.__setDigit(o,1073741823&i);}if(0!=g)throw new Error("implementation bug");for(let g=e;g<t;g++)n.__setDigit(g,0);return n}static __absoluteAnd(_,t,e=null){let n=_.length,g=t.length,s=g;if(n<g){s=n;const i=_,e=n;_=t,n=g,t=i,g=e;}let l=s;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)&t.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteAndNot(_,t,e=null){const n=_.length,g=t.length;let s=g;n<g&&(s=n);let l=n;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)&~t.__digit(r));for(;r<n;r++)e.__setDigit(r,_.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteOr(_,t,e=null){let n=_.length,g=t.length,s=g;if(n<g){s=n;const i=_,e=n;_=t,n=g,t=i,g=e;}let l=n;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)|t.__digit(r));for(;r<n;r++)e.__setDigit(r,_.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteXor(_,t,e=null){let n=_.length,g=t.length,s=g;if(n<g){s=n;const i=_,e=n;_=t,n=g,t=i,g=e;}let l=n;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)^t.__digit(r));for(;r<n;r++)e.__setDigit(r,_.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteCompare(_,t){const e=_.length-t.length;if(0!=e)return e;let n=_.length-1;for(;0<=n&&_.__digit(n)===t.__digit(n);)n--;return 0>n?0:_.__unsignedDigit(n)>t.__unsignedDigit(n)?1:-1}static __multiplyAccumulate(_,t,e,n){if(0===t)return;const g=32767&t,s=t>>>15;let l=0,r=0;for(let a,u=0;u<_.length;u++,n++){a=e.__digit(n);const i=_.__digit(u),t=32767&i,d=i>>>15,h=o.__imul(t,g),m=o.__imul(t,s),b=o.__imul(d,g),D=o.__imul(d,s);a+=r+h+l,l=a>>>30,a&=1073741823,a+=((32767&m)<<15)+((32767&b)<<15),l+=a>>>30,r=D+(m>>>15)+(b>>>15),e.__setDigit(n,1073741823&a);}for(;0!=l||0!==r;n++){let i=e.__digit(n);i+=l+r,r=0,l=i>>>30,e.__setDigit(n,1073741823&i);}}static __internalMultiplyAdd(_,t,e,g,s){let l=e,a=0;for(let n=0;n<g;n++){const i=_.__digit(n),e=o.__imul(32767&i,t),g=o.__imul(i>>>15,t),u=e+((32767&g)<<15)+a+l;l=u>>>30,a=g>>>15,s.__setDigit(n,1073741823&u);}if(s.length>g)for(s.__setDigit(g++,l+a);g<s.length;)s.__setDigit(g++,0);else if(0!==l+a)throw new Error("implementation bug")}__inplaceMultiplyAdd(i,_,t){t>this.length&&(t=this.length);const e=32767&i,n=i>>>15;let g=0,s=_;for(let l=0;l<t;l++){const i=this.__digit(l),_=32767&i,t=i>>>15,r=o.__imul(_,e),a=o.__imul(_,n),u=o.__imul(t,e),d=o.__imul(t,n);let h=s+r+g;g=h>>>30,h&=1073741823,h+=((32767&a)<<15)+((32767&u)<<15),g+=h>>>30,s=d+(a>>>15)+(u>>>15),this.__setDigit(l,1073741823&h);}if(0!=g||0!==s)throw new Error("implementation bug")}static __absoluteDivSmall(_,t,e=null){null===e&&(e=new o(_.length,false));let n=0;for(let g,o=2*_.length-1;0<=o;o-=2){g=(n<<15|_.__halfDigit(o))>>>0;const i=0|g/t;n=0|g%t,g=(n<<15|_.__halfDigit(o-1))>>>0;const s=0|g/t;n=0|g%t,e.__setDigit(o>>>1,i<<15|s);}return e}static __absoluteModSmall(_,t){let e=0;for(let n=2*_.length-1;0<=n;n--){const i=(e<<15|_.__halfDigit(n))>>>0;e=0|i%t;}return e}static __absoluteDivLarge(i,_,t,e){const g=_.__halfDigitLength(),n=_.length,s=i.__halfDigitLength()-g;let l=null;t&&(l=new o(s+2>>>1,false),l.__initializeDigits());const r=new o(g+2>>>1,false);r.__initializeDigits();const a=o.__clz15(_.__halfDigit(g-1));0<a&&(_=o.__specialLeftShift(_,a,0));const d=o.__specialLeftShift(i,a,1),u=_.__halfDigit(g-1);let h=0;for(let a,m=s;0<=m;m--){a=32767;const i=d.__halfDigit(m+g);if(i!==u){const t=(i<<15|d.__halfDigit(m+g-1))>>>0;a=0|t/u;let e=0|t%u;const n=_.__halfDigit(g-2),s=d.__halfDigit(m+g-2);for(;o.__imul(a,n)>>>0>(e<<16|s)>>>0&&(a--,e+=u,!(32767<e)););}o.__internalMultiplyAdd(_,a,0,n,r);let e=d.__inplaceSub(r,m,g+1);0!==e&&(e=d.__inplaceAdd(_,m,g),d.__setHalfDigit(m+g,32767&d.__halfDigit(m+g)+e),a--),t&&(1&m?h=a<<15:l.__setDigit(m>>>1,h|a));}if(e)return d.__inplaceRightShift(a),t?{quotient:l,remainder:d}:d;if(t)return l;throw new Error("unreachable")}static __clz15(i){return o.__clz30(i)-15}__inplaceAdd(_,t,e){let n=0;for(let g=0;g<e;g++){const i=this.__halfDigit(t+g)+_.__halfDigit(g)+n;n=i>>>15,this.__setHalfDigit(t+g,32767&i);}return n}__inplaceSub(_,t,e){let n=0;if(1&t){t>>=1;let g=this.__digit(t),o=32767&g,s=0;for(;s<e-1>>>1;s++){const i=_.__digit(s),e=(g>>>15)-(32767&i)-n;n=1&e>>>15,this.__setDigit(t+s,(32767&e)<<15|32767&o),g=this.__digit(t+s+1),o=(32767&g)-(i>>>15)-n,n=1&o>>>15;}const i=_.__digit(s),l=(g>>>15)-(32767&i)-n;n=1&l>>>15,this.__setDigit(t+s,(32767&l)<<15|32767&o);if(t+s+1>=this.length)throw new RangeError("out of bounds");0==(1&e)&&(g=this.__digit(t+s+1),o=(32767&g)-(i>>>15)-n,n=1&o>>>15,this.__setDigit(t+_.length,1073709056&g|32767&o));}else {t>>=1;let g=0;for(;g<_.length-1;g++){const i=this.__digit(t+g),e=_.__digit(g),o=(32767&i)-(32767&e)-n;n=1&o>>>15;const s=(i>>>15)-(e>>>15)-n;n=1&s>>>15,this.__setDigit(t+g,(32767&s)<<15|32767&o);}const i=this.__digit(t+g),o=_.__digit(g),s=(32767&i)-(32767&o)-n;n=1&s>>>15;let l=0;0==(1&e)&&(l=(i>>>15)-(o>>>15)-n,n=1&l>>>15),this.__setDigit(t+g,(32767&l)<<15|32767&s);}return n}__inplaceRightShift(_){if(0===_)return;let t=this.__digit(0)>>>_;const e=this.length-1;for(let n=0;n<e;n++){const i=this.__digit(n+1);this.__setDigit(n,1073741823&i<<30-_|t),t=i>>>_;}this.__setDigit(e,t);}static __specialLeftShift(_,t,e){const g=_.length,n=new o(g+e,false);if(0===t){for(let t=0;t<g;t++)n.__setDigit(t,_.__digit(t));return 0<e&&n.__setDigit(g,0),n}let s=0;for(let o=0;o<g;o++){const i=_.__digit(o);n.__setDigit(o,1073741823&i<<t|s),s=i>>>30-t;}return 0<e&&n.__setDigit(g,s),n}static __leftShiftByAbsolute(_,i){const t=o.__toShiftAmount(i);if(0>t)throw new RangeError("BigInt too big");const e=0|t/30,n=t%30,g=_.length,s=0!==n&&0!=_.__digit(g-1)>>>30-n,l=g+e+(s?1:0),r=new o(l,_.sign);if(0===n){let t=0;for(;t<e;t++)r.__setDigit(t,0);for(;t<l;t++)r.__setDigit(t,_.__digit(t-e));}else {let t=0;for(let _=0;_<e;_++)r.__setDigit(_,0);for(let o=0;o<g;o++){const i=_.__digit(o);r.__setDigit(o+e,1073741823&i<<n|t),t=i>>>30-n;}if(s)r.__setDigit(g+e,t);else if(0!==t)throw new Error("implementation bug")}return r.__trim()}static __rightShiftByAbsolute(_,i){const t=_.length,e=_.sign,n=o.__toShiftAmount(i);if(0>n)return o.__rightShiftByMaximum(e);const g=0|n/30,s=n%30;let l=t-g;if(0>=l)return o.__rightShiftByMaximum(e);let r=false;if(e){if(0!=(_.__digit(g)&(1<<s)-1))r=true;else for(let t=0;t<g;t++)if(0!==_.__digit(t)){r=true;break}}if(r&&0===s){const i=_.__digit(t-1);0==~i&&l++;}let a=new o(l,e);if(0===s){a.__setDigit(l-1,0);for(let e=g;e<t;e++)a.__setDigit(e-g,_.__digit(e));}else {let e=_.__digit(g)>>>s;const n=t-g-1;for(let t=0;t<n;t++){const i=_.__digit(t+g+1);a.__setDigit(t,1073741823&i<<30-s|e),e=i>>>s;}a.__setDigit(n,e);}return r&&(a=o.__absoluteAddOne(a,true,a)),a.__trim()}static __rightShiftByMaximum(i){return i?o.__oneDigit(1,true):o.__zero()}static __toShiftAmount(i){if(1<i.length)return  -1;const _=i.__unsignedDigit(0);return _>o.__kMaxLengthBits?-1:_}static __toPrimitive(i,_="default"){if("object"!=typeof i)return i;if(i.constructor===o)return i;if("undefined"!=typeof Symbol&&"symbol"==typeof Symbol.toPrimitive){const t=i[Symbol.toPrimitive];if(t){const i=t(_);if("object"!=typeof i)return i;throw new TypeError("Cannot convert object to primitive value")}}const t=i.valueOf;if(t){const _=t.call(i);if("object"!=typeof _)return _}const e=i.toString;if(e){const _=e.call(i);if("object"!=typeof _)return _}throw new TypeError("Cannot convert object to primitive value")}static __toNumeric(i){return o.__isBigInt(i)?i:+i}static __isBigInt(i){return "object"==typeof i&&null!==i&&i.constructor===o}static __truncateToNBits(i,_){const t=0|(i+29)/30,e=new o(t,_.sign),n=t-1;for(let t=0;t<n;t++)e.__setDigit(t,_.__digit(t));let g=_.__digit(n);if(0!=i%30){const _=32-i%30;g=g<<_>>>_;}return e.__setDigit(n,g),e.__trim()}static __truncateAndSubFromPowerOfTwo(_,t,e){var n=Math.min;const g=0|(_+29)/30,s=new o(g,e);let l=0;const r=g-1;let a=0;for(const i=n(r,t.length);l<i;l++){const i=0-t.__digit(l)-a;a=1&i>>>30,s.__setDigit(l,1073741823&i);}for(;l<r;l++)s.__setDigit(l,0|1073741823&-a);let u=r<t.length?t.__digit(r):0;const d=_%30;let h;if(0==d)h=0-u-a,h&=1073741823;else {const i=32-d;u=u<<i>>>i;const _=1<<32-i;h=_-u-a,h&=_-1;}return s.__setDigit(r,h),s.__trim()}__digit(_){return this[_]}__unsignedDigit(_){return this[_]>>>0}__setDigit(_,i){this[_]=0|i;}__setDigitGrow(_,i){this[_]=0|i;}__halfDigitLength(){const i=this.length;return 32767>=this.__unsignedDigit(i-1)?2*i-1:2*i}__halfDigit(_){return 32767&this[_>>>1]>>>15*(1&_)}__setHalfDigit(_,i){const t=_>>>1,e=this.__digit(t),n=1&_?32767&e|i<<15:1073709056&e|32767&i;this.__setDigit(t,n);}static __digitPow(i,_){let t=1;for(;0<_;)1&_&&(t*=i),_>>>=1,i*=i;return t}static __isOneDigitInt(i){return (1073741823&i)===i}}return o.__kMaxLength=33554432,o.__kMaxLengthBits=o.__kMaxLength<<5,o.__kMaxBitsPerChar=[0,0,32,51,64,75,83,90,96,102,107,111,115,119,122,126,128,131,134,136,139,141,143,145,147,149,151,153,154,156,158,159,160,162,163,165,166],o.__kBitsPerCharTableShift=5,o.__kBitsPerCharTableMultiplier=1<<o.__kBitsPerCharTableShift,o.__kConversionChars=["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"],o.__kBitConversionBuffer=new ArrayBuffer(8),o.__kBitConversionDouble=new Float64Array(o.__kBitConversionBuffer),o.__kBitConversionInts=new Int32Array(o.__kBitConversionBuffer),o.__clz30=_?function(i){return _(i)-2}:function(i){var _=Math.LN2,t=Math.log;return 0===i?30:0|29-(0|t(i>>>0)/_)},o.__imul=i||function(i,_){return 0|i*_},o});
 		
-	} (jsbiUmd$3));
-	return jsbiUmd$3.exports;
+	} (jsbiUmd$1));
+	return jsbiUmd$1.exports;
 }
 
-var jsbiUmdExports$1 = requireJsbiUmd$1();
-var JSBI$1 = /*@__PURE__*/getDefaultExportFromCjs(jsbiUmdExports$1);
+var jsbiUmdExports = requireJsbiUmd();
+var JSBI = /*@__PURE__*/getDefaultExportFromCjs(jsbiUmdExports);
 
 var isProduction = process.env.NODE_ENV === 'production';
 var prefix = 'Invariant failed';
@@ -38547,7 +39422,7 @@ function getChecksumAddress(address) {
     return "0x" + chars.join("");
 }
 // Shims for environments that are missing some required constants and functions
-const MAX_SAFE_INTEGER$1 = 0x1fffffffffffff;
+const MAX_SAFE_INTEGER$2 = 0x1fffffffffffff;
 function log10(x) {
     if (Math.log10) {
         return Math.log10(x);
@@ -38564,7 +39439,7 @@ for (let i = 0; i < 26; i++) {
     ibanLookup[String.fromCharCode(65 + i)] = String(10 + i);
 }
 // How many decimal digits can we process? (for 64-bit float, this is 15)
-const safeDigits = Math.floor(log10(MAX_SAFE_INTEGER$1));
+const safeDigits = Math.floor(log10(MAX_SAFE_INTEGER$2));
 function ibanChecksum(address) {
     address = address.toUpperCase();
     address = address.substring(4) + address.substring(0, 2) + "00";
@@ -38655,7 +39530,7 @@ var Rounding$1;
   Rounding[Rounding["ROUND_UP"] = 2] = "ROUND_UP";
 })(Rounding$1 || (Rounding$1 = {}));
 
-var MaxUint256$2 = /*#__PURE__*/JSBI$1.BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
+var MaxUint256$2 = /*#__PURE__*/JSBI.BigInt('0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff');
 
 function _defineProperties$2(target, props) {
   for (var i = 0; i < props.length; i++) {
@@ -38686,15 +39561,15 @@ var toFixedRounding$1 = (_toFixedRounding$1 = {}, _toFixedRounding$1[Rounding$1.
 var Fraction$1 = /*#__PURE__*/function () {
   function Fraction(numerator, denominator) {
     if (denominator === void 0) {
-      denominator = JSBI$1.BigInt(1);
+      denominator = JSBI.BigInt(1);
     }
 
-    this.numerator = JSBI$1.BigInt(numerator);
-    this.denominator = JSBI$1.BigInt(denominator);
+    this.numerator = JSBI.BigInt(numerator);
+    this.denominator = JSBI.BigInt(denominator);
   }
 
   Fraction.tryParseFraction = function tryParseFraction(fractionish) {
-    if (fractionish instanceof JSBI$1 || typeof fractionish === 'number' || typeof fractionish === 'string') return new Fraction(fractionish);
+    if (fractionish instanceof JSBI || typeof fractionish === 'number' || typeof fractionish === 'string') return new Fraction(fractionish);
     if ('numerator' in fractionish && 'denominator' in fractionish) return fractionish;
     throw new Error('Could not parse fraction');
   } // performs floor division
@@ -38709,46 +39584,46 @@ var Fraction$1 = /*#__PURE__*/function () {
   _proto.add = function add(other) {
     var otherParsed = Fraction.tryParseFraction(other);
 
-    if (JSBI$1.equal(this.denominator, otherParsed.denominator)) {
-      return new Fraction(JSBI$1.add(this.numerator, otherParsed.numerator), this.denominator);
+    if (JSBI.equal(this.denominator, otherParsed.denominator)) {
+      return new Fraction(JSBI.add(this.numerator, otherParsed.numerator), this.denominator);
     }
 
-    return new Fraction(JSBI$1.add(JSBI$1.multiply(this.numerator, otherParsed.denominator), JSBI$1.multiply(otherParsed.numerator, this.denominator)), JSBI$1.multiply(this.denominator, otherParsed.denominator));
+    return new Fraction(JSBI.add(JSBI.multiply(this.numerator, otherParsed.denominator), JSBI.multiply(otherParsed.numerator, this.denominator)), JSBI.multiply(this.denominator, otherParsed.denominator));
   };
 
   _proto.subtract = function subtract(other) {
     var otherParsed = Fraction.tryParseFraction(other);
 
-    if (JSBI$1.equal(this.denominator, otherParsed.denominator)) {
-      return new Fraction(JSBI$1.subtract(this.numerator, otherParsed.numerator), this.denominator);
+    if (JSBI.equal(this.denominator, otherParsed.denominator)) {
+      return new Fraction(JSBI.subtract(this.numerator, otherParsed.numerator), this.denominator);
     }
 
-    return new Fraction(JSBI$1.subtract(JSBI$1.multiply(this.numerator, otherParsed.denominator), JSBI$1.multiply(otherParsed.numerator, this.denominator)), JSBI$1.multiply(this.denominator, otherParsed.denominator));
+    return new Fraction(JSBI.subtract(JSBI.multiply(this.numerator, otherParsed.denominator), JSBI.multiply(otherParsed.numerator, this.denominator)), JSBI.multiply(this.denominator, otherParsed.denominator));
   };
 
   _proto.lessThan = function lessThan(other) {
     var otherParsed = Fraction.tryParseFraction(other);
-    return JSBI$1.lessThan(JSBI$1.multiply(this.numerator, otherParsed.denominator), JSBI$1.multiply(otherParsed.numerator, this.denominator));
+    return JSBI.lessThan(JSBI.multiply(this.numerator, otherParsed.denominator), JSBI.multiply(otherParsed.numerator, this.denominator));
   };
 
   _proto.equalTo = function equalTo(other) {
     var otherParsed = Fraction.tryParseFraction(other);
-    return JSBI$1.equal(JSBI$1.multiply(this.numerator, otherParsed.denominator), JSBI$1.multiply(otherParsed.numerator, this.denominator));
+    return JSBI.equal(JSBI.multiply(this.numerator, otherParsed.denominator), JSBI.multiply(otherParsed.numerator, this.denominator));
   };
 
   _proto.greaterThan = function greaterThan(other) {
     var otherParsed = Fraction.tryParseFraction(other);
-    return JSBI$1.greaterThan(JSBI$1.multiply(this.numerator, otherParsed.denominator), JSBI$1.multiply(otherParsed.numerator, this.denominator));
+    return JSBI.greaterThan(JSBI.multiply(this.numerator, otherParsed.denominator), JSBI.multiply(otherParsed.numerator, this.denominator));
   };
 
   _proto.multiply = function multiply(other) {
     var otherParsed = Fraction.tryParseFraction(other);
-    return new Fraction(JSBI$1.multiply(this.numerator, otherParsed.numerator), JSBI$1.multiply(this.denominator, otherParsed.denominator));
+    return new Fraction(JSBI.multiply(this.numerator, otherParsed.numerator), JSBI.multiply(this.denominator, otherParsed.denominator));
   };
 
   _proto.divide = function divide(other) {
     var otherParsed = Fraction.tryParseFraction(other);
-    return new Fraction(JSBI$1.multiply(this.numerator, otherParsed.denominator), JSBI$1.multiply(this.denominator, otherParsed.numerator));
+    return new Fraction(JSBI.multiply(this.numerator, otherParsed.denominator), JSBI.multiply(this.denominator, otherParsed.numerator));
   };
 
   _proto.toSignificant = function toSignificant(significantDigits, format, rounding) {
@@ -38797,13 +39672,13 @@ var Fraction$1 = /*#__PURE__*/function () {
   _createClass$2(Fraction, [{
     key: "quotient",
     get: function get() {
-      return JSBI$1.divide(this.numerator, this.denominator);
+      return JSBI.divide(this.numerator, this.denominator);
     } // remainder after floor division
 
   }, {
     key: "remainder",
     get: function get() {
-      return new Fraction(JSBI$1.remainder(this.numerator, this.denominator), this.denominator);
+      return new Fraction(JSBI.remainder(this.numerator, this.denominator), this.denominator);
     }
   }, {
     key: "asFraction",
@@ -38823,9 +39698,9 @@ var CurrencyAmount$1 = /*#__PURE__*/function (_Fraction) {
     var _this;
 
     _this = _Fraction.call(this, numerator, denominator) || this;
-    !JSBI$1.lessThanOrEqual(_this.quotient, MaxUint256$2) ? process.env.NODE_ENV !== "production" ? invariant(false, 'AMOUNT') : invariant() : void 0;
+    !JSBI.lessThanOrEqual(_this.quotient, MaxUint256$2) ? process.env.NODE_ENV !== "production" ? invariant(false, 'AMOUNT') : invariant() : void 0;
     _this.currency = currency;
-    _this.decimalScale = JSBI$1.exponentiate(JSBI$1.BigInt(10), JSBI$1.BigInt(currency.decimals));
+    _this.decimalScale = JSBI.exponentiate(JSBI.BigInt(10), JSBI.BigInt(currency.decimals));
     return _this;
   }
   /**
@@ -38927,7 +39802,7 @@ var CurrencyAmount$1 = /*#__PURE__*/function (_Fraction) {
   return CurrencyAmount;
 }(Fraction$1);
 
-var ONE_HUNDRED$1 = /*#__PURE__*/new Fraction$1( /*#__PURE__*/JSBI$1.BigInt(100));
+var ONE_HUNDRED$1 = /*#__PURE__*/new Fraction$1( /*#__PURE__*/JSBI.BigInt(100));
 /**
  * Converts a fraction to a percent
  * @param fraction the fraction to convert
@@ -39113,25 +39988,6 @@ var _WETH;
  */
 
 (_WETH = {}, _WETH[1] = /*#__PURE__*/new Token$1(1, '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2', 18, 'WETH', 'Wrapped Ether'), _WETH[3] = /*#__PURE__*/new Token$1(3, '0xc778417E063141139Fce010982780140Aa0cD5Ab', 18, 'WETH', 'Wrapped Ether'), _WETH[4] = /*#__PURE__*/new Token$1(4, '0xc778417E063141139Fce010982780140Aa0cD5Ab', 18, 'WETH', 'Wrapped Ether'), _WETH[5] = /*#__PURE__*/new Token$1(5, '0xB4FBF271143F4FBf7B91A5ded31805e42b2208d6', 18, 'WETH', 'Wrapped Ether'), _WETH[42] = /*#__PURE__*/new Token$1(42, '0xd0A1E359811322d97991E03f863a0C30C2cF029C', 18, 'WETH', 'Wrapped Ether'), _WETH[10] = /*#__PURE__*/new Token$1(10, '0x4200000000000000000000000000000000000006', 18, 'WETH', 'Wrapped Ether'), _WETH[69] = /*#__PURE__*/new Token$1(69, '0x4200000000000000000000000000000000000006', 18, 'WETH', 'Wrapped Ether'), _WETH[42161] = /*#__PURE__*/new Token$1(42161, '0x82aF49447D8a07e3bd95BD0d56f35241523fBab1', 18, 'WETH', 'Wrapped Ether'), _WETH[421611] = /*#__PURE__*/new Token$1(421611, '0xB47e6A5f8b33b3F17603C83a0535A9dcD7E32681', 18, 'WETH', 'Wrapped Ether'), _WETH);
-
-var jsbiUmd$1 = {exports: {}};
-
-var jsbiUmd = jsbiUmd$1.exports;
-
-var hasRequiredJsbiUmd;
-
-function requireJsbiUmd () {
-	if (hasRequiredJsbiUmd) return jsbiUmd$1.exports;
-	hasRequiredJsbiUmd = 1;
-	(function (module, exports) {
-		(function(i,_){module.exports=_();})(jsbiUmd,function(){var i=Math.imul,_=Math.clz32,t=Math.abs,e=Math.max,g=Math.floor;class o extends Array{constructor(i,_){if(super(i),this.sign=_,i>o.__kMaxLength)throw new RangeError("Maximum BigInt size exceeded")}static BigInt(i){var _=Number.isFinite;if("number"==typeof i){if(0===i)return o.__zero();if(o.__isOneDigitInt(i))return 0>i?o.__oneDigit(-i,true):o.__oneDigit(i,false);if(!_(i)||g(i)!==i)throw new RangeError("The number "+i+" cannot be converted to BigInt because it is not an integer");return o.__fromDouble(i)}if("string"==typeof i){const _=o.__fromString(i);if(null===_)throw new SyntaxError("Cannot convert "+i+" to a BigInt");return _}if("boolean"==typeof i)return  true===i?o.__oneDigit(1,false):o.__zero();if("object"==typeof i){if(i.constructor===o)return i;const _=o.__toPrimitive(i);return o.BigInt(_)}throw new TypeError("Cannot convert "+i+" to a BigInt")}toDebugString(){const i=["BigInt["];for(const _ of this)i.push((_?(_>>>0).toString(16):_)+", ");return i.push("]"),i.join("")}toString(i=10){if(2>i||36<i)throw new RangeError("toString() radix argument must be between 2 and 36");return 0===this.length?"0":0==(i&i-1)?o.__toStringBasePowerOfTwo(this,i):o.__toStringGeneric(this,i,false)}static toNumber(i){const _=i.length;if(0===_)return 0;if(1===_){const _=i.__unsignedDigit(0);return i.sign?-_:_}const t=i.__digit(_-1),e=o.__clz30(t),n=30*_-e;if(1024<n)return i.sign?-Infinity:1/0;let g=n-1,s=t,l=_-1;const r=e+3;let a=32===r?0:s<<r;a>>>=12;const u=r-12;let d=12<=r?0:s<<20+r,h=20+r;for(0<u&&0<l&&(l--,s=i.__digit(l),a|=s>>>30-u,d=s<<u+2,h=u+2);0<h&&0<l;)l--,s=i.__digit(l),d|=30<=h?s<<h-30:s>>>30-h,h-=30;const m=o.__decideRounding(i,h,l,s);if((1===m||0===m&&1==(1&d))&&(d=d+1>>>0,0===d&&(a++,0!=a>>>20&&(a=0,g++,1023<g))))return i.sign?-Infinity:1/0;const b=i.sign?-2147483648:0;return g=g+1023<<20,o.__kBitConversionInts[1]=b|g|a,o.__kBitConversionInts[0]=d,o.__kBitConversionDouble[0]}static unaryMinus(i){if(0===i.length)return i;const _=i.__copy();return _.sign=!i.sign,_}static bitwiseNot(i){return i.sign?o.__absoluteSubOne(i).__trim():o.__absoluteAddOne(i,true)}static exponentiate(i,_){if(_.sign)throw new RangeError("Exponent must be positive");if(0===_.length)return o.__oneDigit(1,false);if(0===i.length)return i;if(1===i.length&&1===i.__digit(0))return i.sign&&0==(1&_.__digit(0))?o.unaryMinus(i):i;if(1<_.length)throw new RangeError("BigInt too big");let t=_.__unsignedDigit(0);if(1===t)return i;if(t>=o.__kMaxLengthBits)throw new RangeError("BigInt too big");if(1===i.length&&2===i.__digit(0)){const _=1+(0|t/30),e=i.sign&&0!=(1&t),n=new o(_,e);n.__initializeDigits();const g=1<<t%30;return n.__setDigit(_-1,g),n}let e=null,n=i;for(0!=(1&t)&&(e=i),t>>=1;0!==t;t>>=1)n=o.multiply(n,n),0!=(1&t)&&(null===e?e=n:e=o.multiply(e,n));return e}static multiply(_,t){if(0===_.length)return _;if(0===t.length)return t;let i=_.length+t.length;30<=_.__clzmsd()+t.__clzmsd()&&i--;const e=new o(i,_.sign!==t.sign);e.__initializeDigits();for(let n=0;n<_.length;n++)o.__multiplyAccumulate(t,_.__digit(n),e,n);return e.__trim()}static divide(i,_){if(0===_.length)throw new RangeError("Division by zero");if(0>o.__absoluteCompare(i,_))return o.__zero();const t=i.sign!==_.sign,e=_.__unsignedDigit(0);let n;if(1===_.length&&32767>=e){if(1===e)return t===i.sign?i:o.unaryMinus(i);n=o.__absoluteDivSmall(i,e,null);}else n=o.__absoluteDivLarge(i,_,true,false);return n.sign=t,n.__trim()}static remainder(i,_){if(0===_.length)throw new RangeError("Division by zero");if(0>o.__absoluteCompare(i,_))return i;const t=_.__unsignedDigit(0);if(1===_.length&&32767>=t){if(1===t)return o.__zero();const _=o.__absoluteModSmall(i,t);return 0===_?o.__zero():o.__oneDigit(_,i.sign)}const e=o.__absoluteDivLarge(i,_,false,true);return e.sign=i.sign,e.__trim()}static add(i,_){const t=i.sign;return t===_.sign?o.__absoluteAdd(i,_,t):0<=o.__absoluteCompare(i,_)?o.__absoluteSub(i,_,t):o.__absoluteSub(_,i,!t)}static subtract(i,_){const t=i.sign;return t===_.sign?0<=o.__absoluteCompare(i,_)?o.__absoluteSub(i,_,t):o.__absoluteSub(_,i,!t):o.__absoluteAdd(i,_,t)}static leftShift(i,_){return 0===_.length||0===i.length?i:_.sign?o.__rightShiftByAbsolute(i,_):o.__leftShiftByAbsolute(i,_)}static signedRightShift(i,_){return 0===_.length||0===i.length?i:_.sign?o.__leftShiftByAbsolute(i,_):o.__rightShiftByAbsolute(i,_)}static unsignedRightShift(){throw new TypeError("BigInts have no unsigned right shift; use >> instead")}static lessThan(i,_){return 0>o.__compareToBigInt(i,_)}static lessThanOrEqual(i,_){return 0>=o.__compareToBigInt(i,_)}static greaterThan(i,_){return 0<o.__compareToBigInt(i,_)}static greaterThanOrEqual(i,_){return 0<=o.__compareToBigInt(i,_)}static equal(_,t){if(_.sign!==t.sign)return  false;if(_.length!==t.length)return  false;for(let e=0;e<_.length;e++)if(_.__digit(e)!==t.__digit(e))return  false;return  true}static notEqual(i,_){return !o.equal(i,_)}static bitwiseAnd(i,_){if(!i.sign&&!_.sign)return o.__absoluteAnd(i,_).__trim();if(i.sign&&_.sign){const t=e(i.length,_.length)+1;let n=o.__absoluteSubOne(i,t);const g=o.__absoluteSubOne(_);return n=o.__absoluteOr(n,g,n),o.__absoluteAddOne(n,true,n).__trim()}return i.sign&&([i,_]=[_,i]),o.__absoluteAndNot(i,o.__absoluteSubOne(_)).__trim()}static bitwiseXor(i,_){if(!i.sign&&!_.sign)return o.__absoluteXor(i,_).__trim();if(i.sign&&_.sign){const t=e(i.length,_.length),n=o.__absoluteSubOne(i,t),g=o.__absoluteSubOne(_);return o.__absoluteXor(n,g,n).__trim()}const t=e(i.length,_.length)+1;i.sign&&([i,_]=[_,i]);let n=o.__absoluteSubOne(_,t);return n=o.__absoluteXor(n,i,n),o.__absoluteAddOne(n,true,n).__trim()}static bitwiseOr(i,_){const t=e(i.length,_.length);if(!i.sign&&!_.sign)return o.__absoluteOr(i,_).__trim();if(i.sign&&_.sign){let e=o.__absoluteSubOne(i,t);const n=o.__absoluteSubOne(_);return e=o.__absoluteAnd(e,n,e),o.__absoluteAddOne(e,true,e).__trim()}i.sign&&([i,_]=[_,i]);let n=o.__absoluteSubOne(_,t);return n=o.__absoluteAndNot(n,i,n),o.__absoluteAddOne(n,true,n).__trim()}static asIntN(_,t){if(0===t.length)return t;if(_=g(_),0>_)throw new RangeError("Invalid value: not (convertible to) a safe integer");if(0===_)return o.__zero();if(_>=o.__kMaxLengthBits)return t;const e=0|(_+29)/30;if(t.length<e)return t;const s=t.__unsignedDigit(e-1),l=1<<(_-1)%30;if(t.length===e&&s<l)return t;if(!((s&l)===l))return o.__truncateToNBits(_,t);if(!t.sign)return o.__truncateAndSubFromPowerOfTwo(_,t,true);if(0==(s&l-1)){for(let n=e-2;0<=n;n--)if(0!==t.__digit(n))return o.__truncateAndSubFromPowerOfTwo(_,t,false);return t.length===e&&s===l?t:o.__truncateToNBits(_,t)}return o.__truncateAndSubFromPowerOfTwo(_,t,false)}static asUintN(i,_){if(0===_.length)return _;if(i=g(i),0>i)throw new RangeError("Invalid value: not (convertible to) a safe integer");if(0===i)return o.__zero();if(_.sign){if(i>o.__kMaxLengthBits)throw new RangeError("BigInt too big");return o.__truncateAndSubFromPowerOfTwo(i,_,false)}if(i>=o.__kMaxLengthBits)return _;const t=0|(i+29)/30;if(_.length<t)return _;const e=i%30;if(_.length==t){if(0===e)return _;const i=_.__digit(t-1);if(0==i>>>e)return _}return o.__truncateToNBits(i,_)}static ADD(i,_){if(i=o.__toPrimitive(i),_=o.__toPrimitive(_),"string"==typeof i)return "string"!=typeof _&&(_=_.toString()),i+_;if("string"==typeof _)return i.toString()+_;if(i=o.__toNumeric(i),_=o.__toNumeric(_),o.__isBigInt(i)&&o.__isBigInt(_))return o.add(i,_);if("number"==typeof i&&"number"==typeof _)return i+_;throw new TypeError("Cannot mix BigInt and other types, use explicit conversions")}static LT(i,_){return o.__compare(i,_,0)}static LE(i,_){return o.__compare(i,_,1)}static GT(i,_){return o.__compare(i,_,2)}static GE(i,_){return o.__compare(i,_,3)}static EQ(i,_){for(;;){if(o.__isBigInt(i))return o.__isBigInt(_)?o.equal(i,_):o.EQ(_,i);if("number"==typeof i){if(o.__isBigInt(_))return o.__equalToNumber(_,i);if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("string"==typeof i){if(o.__isBigInt(_))return i=o.__fromString(i),null!==i&&o.equal(i,_);if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("boolean"==typeof i){if(o.__isBigInt(_))return o.__equalToNumber(_,+i);if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("symbol"==typeof i){if(o.__isBigInt(_))return  false;if("object"!=typeof _)return i==_;_=o.__toPrimitive(_);}else if("object"==typeof i){if("object"==typeof _&&_.constructor!==o)return i==_;i=o.__toPrimitive(i);}else return i==_}}static NE(i,_){return !o.EQ(i,_)}static __zero(){return new o(0,false)}static __oneDigit(i,_){const t=new o(1,_);return t.__setDigit(0,i),t}__copy(){const _=new o(this.length,this.sign);for(let t=0;t<this.length;t++)_[t]=this[t];return _}__trim(){let i=this.length,_=this[i-1];for(;0===_;)i--,_=this[i-1],this.pop();return 0===i&&(this.sign=false),this}__initializeDigits(){for(let _=0;_<this.length;_++)this[_]=0;}static __decideRounding(i,_,t,e){if(0<_)return  -1;let n;if(0>_)n=-_-1;else {if(0===t)return  -1;t--,e=i.__digit(t),n=29;}let g=1<<n;if(0==(e&g))return  -1;if(g-=1,0!=(e&g))return 1;for(;0<t;)if(t--,0!==i.__digit(t))return 1;return 0}static __fromDouble(i){o.__kBitConversionDouble[0]=i;const _=2047&o.__kBitConversionInts[1]>>>20,t=_-1023,e=(0|t/30)+1,n=new o(e,0>i);let g=1048575&o.__kBitConversionInts[1]|1048576,s=o.__kBitConversionInts[0];const l=20,r=t%30;let a,u=0;if(20>r){const i=l-r;u=i+32,a=g>>>i,g=g<<32-i|s>>>i,s<<=32-i;}else if(20===r)u=32,a=g,g=s,s=0;else {const i=r-l;u=32-i,a=g<<i|s>>>32-i,g=s<<i,s=0;}n.__setDigit(e-1,a);for(let _=e-2;0<=_;_--)0<u?(u-=30,a=g>>>2,g=g<<30|s>>>2,s<<=30):a=0,n.__setDigit(_,a);return n.__trim()}static __isWhitespace(i){return !!(13>=i&&9<=i)||(159>=i?32==i:131071>=i?160==i||5760==i:196607>=i?(i&=131071,10>=i||40==i||41==i||47==i||95==i||4096==i):65279==i)}static __fromString(i,_=0){let t=0;const e=i.length;let n=0;if(n===e)return o.__zero();let g=i.charCodeAt(n);for(;o.__isWhitespace(g);){if(++n===e)return o.__zero();g=i.charCodeAt(n);}if(43===g){if(++n===e)return null;g=i.charCodeAt(n),t=1;}else if(45===g){if(++n===e)return null;g=i.charCodeAt(n),t=-1;}if(0===_){if(_=10,48===g){if(++n===e)return o.__zero();if(g=i.charCodeAt(n),88===g||120===g){if(_=16,++n===e)return null;g=i.charCodeAt(n);}else if(79===g||111===g){if(_=8,++n===e)return null;g=i.charCodeAt(n);}else if(66===g||98===g){if(_=2,++n===e)return null;g=i.charCodeAt(n);}}}else if(16===_&&48===g){if(++n===e)return o.__zero();if(g=i.charCodeAt(n),88===g||120===g){if(++n===e)return null;g=i.charCodeAt(n);}}if(0!=t&&10!==_)return null;for(;48===g;){if(++n===e)return o.__zero();g=i.charCodeAt(n);}const s=e-n;let l=o.__kMaxBitsPerChar[_],r=o.__kBitsPerCharTableMultiplier-1;if(s>1073741824/l)return null;const a=l*s+r>>>o.__kBitsPerCharTableShift,u=new o(0|(a+29)/30,false),h=10>_?_:10,b=10<_?_-10:0;if(0==(_&_-1)){l>>=o.__kBitsPerCharTableShift;const _=[],t=[];let s=false;do{let o=0,r=0;for(;;){let _;if(g-48>>>0<h)_=g-48;else if((32|g)-97>>>0<b)_=(32|g)-87;else {s=true;break}if(r+=l,o=o<<l|_,++n===e){s=true;break}if(g=i.charCodeAt(n),30<r+l)break}_.push(o),t.push(r);}while(!s);o.__fillFromParts(u,_,t);}else {u.__initializeDigits();let t=false,s=0;do{let a=0,D=1;for(;;){let o;if(g-48>>>0<h)o=g-48;else if((32|g)-97>>>0<b)o=(32|g)-87;else {t=true;break}const l=D*_;if(1073741823<l)break;if(D=l,a=a*_+o,s++,++n===e){t=true;break}g=i.charCodeAt(n);}r=30*o.__kBitsPerCharTableMultiplier-1;const c=0|(l*s+r>>>o.__kBitsPerCharTableShift)/30;u.__inplaceMultiplyAdd(D,a,c);}while(!t)}if(n!==e){if(!o.__isWhitespace(g))return null;for(n++;n<e;n++)if(g=i.charCodeAt(n),!o.__isWhitespace(g))return null}return u.sign=-1==t,u.__trim()}static __fillFromParts(_,t,e){let n=0,g=0,o=0;for(let s=t.length-1;0<=s;s--){const i=t[s],l=e[s];g|=i<<o,o+=l,30===o?(_.__setDigit(n++,g),o=0,g=0):30<o&&(_.__setDigit(n++,1073741823&g),o-=30,g=i>>>l-o);}if(0!==g){if(n>=_.length)throw new Error("implementation bug");_.__setDigit(n++,g);}for(;n<_.length;n++)_.__setDigit(n,0);}static __toStringBasePowerOfTwo(_,i){const t=_.length;let e=i-1;e=(85&e>>>1)+(85&e),e=(51&e>>>2)+(51&e),e=(15&e>>>4)+(15&e);const n=e,g=i-1,s=_.__digit(t-1),l=o.__clz30(s);let r=0|(30*t-l+n-1)/n;if(_.sign&&r++,268435456<r)throw new Error("string too long");const a=Array(r);let u=r-1,d=0,h=0;for(let e=0;e<t-1;e++){const i=_.__digit(e),t=(d|i<<h)&g;a[u--]=o.__kConversionChars[t];const s=n-h;for(d=i>>>s,h=30-s;h>=n;)a[u--]=o.__kConversionChars[d&g],d>>>=n,h-=n;}const m=(d|s<<h)&g;for(a[u--]=o.__kConversionChars[m],d=s>>>n-h;0!==d;)a[u--]=o.__kConversionChars[d&g],d>>>=n;if(_.sign&&(a[u--]="-"),-1!=u)throw new Error("implementation bug");return a.join("")}static __toStringGeneric(_,i,t){const e=_.length;if(0===e)return "";if(1===e){let e=_.__unsignedDigit(0).toString(i);return  false===t&&_.sign&&(e="-"+e),e}const n=30*e-o.__clz30(_.__digit(e-1)),g=o.__kMaxBitsPerChar[i],s=g-1;let l=n*o.__kBitsPerCharTableMultiplier;l+=s-1,l=0|l/s;const r=l+1>>1,a=o.exponentiate(o.__oneDigit(i,false),o.__oneDigit(r,false));let u,d;const h=a.__unsignedDigit(0);if(1===a.length&&32767>=h){u=new o(_.length,false),u.__initializeDigits();let t=0;for(let e=2*_.length-1;0<=e;e--){const i=t<<15|_.__halfDigit(e);u.__setHalfDigit(e,0|i/h),t=0|i%h;}d=t.toString(i);}else {const t=o.__absoluteDivLarge(_,a,true,true);u=t.quotient;const e=t.remainder.__trim();d=o.__toStringGeneric(e,i,true);}u.__trim();let m=o.__toStringGeneric(u,i,true);for(;d.length<r;)d="0"+d;return  false===t&&_.sign&&(m="-"+m),m+d}static __unequalSign(i){return i?-1:1}static __absoluteGreater(i){return i?-1:1}static __absoluteLess(i){return i?1:-1}static __compareToBigInt(i,_){const t=i.sign;if(t!==_.sign)return o.__unequalSign(t);const e=o.__absoluteCompare(i,_);return 0<e?o.__absoluteGreater(t):0>e?o.__absoluteLess(t):0}static __compareToNumber(i,_){if(o.__isOneDigitInt(_)){const e=i.sign,n=0>_;if(e!==n)return o.__unequalSign(e);if(0===i.length){if(n)throw new Error("implementation bug");return 0===_?0:-1}if(1<i.length)return o.__absoluteGreater(e);const g=t(_),s=i.__unsignedDigit(0);return s>g?o.__absoluteGreater(e):s<g?o.__absoluteLess(e):0}return o.__compareToDouble(i,_)}static __compareToDouble(i,_){if(_!==_)return _;if(_===1/0)return  -1;if(_===-Infinity)return 1;const t=i.sign;if(t!==0>_)return o.__unequalSign(t);if(0===_)throw new Error("implementation bug: should be handled elsewhere");if(0===i.length)return  -1;o.__kBitConversionDouble[0]=_;const e=2047&o.__kBitConversionInts[1]>>>20;if(2047==e)throw new Error("implementation bug: handled elsewhere");const n=e-1023;if(0>n)return o.__absoluteGreater(t);const g=i.length;let s=i.__digit(g-1);const l=o.__clz30(s),r=30*g-l,a=n+1;if(r<a)return o.__absoluteLess(t);if(r>a)return o.__absoluteGreater(t);let u=1048576|1048575&o.__kBitConversionInts[1],d=o.__kBitConversionInts[0];const h=20,m=29-l;if(m!==(0|(r-1)%30))throw new Error("implementation bug");let b,D=0;if(20>m){const i=h-m;D=i+32,b=u>>>i,u=u<<32-i|d>>>i,d<<=32-i;}else if(20===m)D=32,b=u,u=d,d=0;else {const i=m-h;D=32-i,b=u<<i|d>>>32-i,u=d<<i,d=0;}if(s>>>=0,b>>>=0,s>b)return o.__absoluteGreater(t);if(s<b)return o.__absoluteLess(t);for(let e=g-2;0<=e;e--){0<D?(D-=30,b=u>>>2,u=u<<30|d>>>2,d<<=30):b=0;const _=i.__unsignedDigit(e);if(_>b)return o.__absoluteGreater(t);if(_<b)return o.__absoluteLess(t)}if(0!==u||0!==d){if(0===D)throw new Error("implementation bug");return o.__absoluteLess(t)}return 0}static __equalToNumber(i,_){return o.__isOneDigitInt(_)?0===_?0===i.length:1===i.length&&i.sign===0>_&&i.__unsignedDigit(0)===t(_):0===o.__compareToDouble(i,_)}static __comparisonResultToBool(i,_){return 0===_?0>i:1===_?0>=i:2===_?0<i:3===_?0<=i:void 0}static __compare(i,_,t){if(i=o.__toPrimitive(i),_=o.__toPrimitive(_),"string"==typeof i&&"string"==typeof _)switch(t){case 0:return i<_;case 1:return i<=_;case 2:return i>_;case 3:return i>=_;}if(o.__isBigInt(i)&&"string"==typeof _)return _=o.__fromString(_),null!==_&&o.__comparisonResultToBool(o.__compareToBigInt(i,_),t);if("string"==typeof i&&o.__isBigInt(_))return i=o.__fromString(i),null!==i&&o.__comparisonResultToBool(o.__compareToBigInt(i,_),t);if(i=o.__toNumeric(i),_=o.__toNumeric(_),o.__isBigInt(i)){if(o.__isBigInt(_))return o.__comparisonResultToBool(o.__compareToBigInt(i,_),t);if("number"!=typeof _)throw new Error("implementation bug");return o.__comparisonResultToBool(o.__compareToNumber(i,_),t)}if("number"!=typeof i)throw new Error("implementation bug");if(o.__isBigInt(_))return o.__comparisonResultToBool(o.__compareToNumber(_,i),2^t);if("number"!=typeof _)throw new Error("implementation bug");return 0===t?i<_:1===t?i<=_:2===t?i>_:3===t?i>=_:void 0}__clzmsd(){return o.__clz30(this.__digit(this.length-1))}static __absoluteAdd(_,t,e){if(_.length<t.length)return o.__absoluteAdd(t,_,e);if(0===_.length)return _;if(0===t.length)return _.sign===e?_:o.unaryMinus(_);let n=_.length;(0===_.__clzmsd()||t.length===_.length&&0===t.__clzmsd())&&n++;const g=new o(n,e);let s=0,l=0;for(;l<t.length;l++){const i=_.__digit(l)+t.__digit(l)+s;s=i>>>30,g.__setDigit(l,1073741823&i);}for(;l<_.length;l++){const i=_.__digit(l)+s;s=i>>>30,g.__setDigit(l,1073741823&i);}return l<g.length&&g.__setDigit(l,s),g.__trim()}static __absoluteSub(_,t,e){if(0===_.length)return _;if(0===t.length)return _.sign===e?_:o.unaryMinus(_);const n=new o(_.length,e);let g=0,s=0;for(;s<t.length;s++){const i=_.__digit(s)-t.__digit(s)-g;g=1&i>>>30,n.__setDigit(s,1073741823&i);}for(;s<_.length;s++){const i=_.__digit(s)-g;g=1&i>>>30,n.__setDigit(s,1073741823&i);}return n.__trim()}static __absoluteAddOne(_,i,t=null){const e=_.length;null===t?t=new o(e,i):t.sign=i;let n=1;for(let g=0;g<e;g++){const i=_.__digit(g)+n;n=i>>>30,t.__setDigit(g,1073741823&i);}return 0!=n&&t.__setDigitGrow(e,1),t}static __absoluteSubOne(_,t){const e=_.length;t=t||e;const n=new o(t,false);let g=1;for(let o=0;o<e;o++){const i=_.__digit(o)-g;g=1&i>>>30,n.__setDigit(o,1073741823&i);}if(0!=g)throw new Error("implementation bug");for(let g=e;g<t;g++)n.__setDigit(g,0);return n}static __absoluteAnd(_,t,e=null){let n=_.length,g=t.length,s=g;if(n<g){s=n;const i=_,e=n;_=t,n=g,t=i,g=e;}let l=s;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)&t.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteAndNot(_,t,e=null){const n=_.length,g=t.length;let s=g;n<g&&(s=n);let l=n;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)&~t.__digit(r));for(;r<n;r++)e.__setDigit(r,_.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteOr(_,t,e=null){let n=_.length,g=t.length,s=g;if(n<g){s=n;const i=_,e=n;_=t,n=g,t=i,g=e;}let l=n;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)|t.__digit(r));for(;r<n;r++)e.__setDigit(r,_.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteXor(_,t,e=null){let n=_.length,g=t.length,s=g;if(n<g){s=n;const i=_,e=n;_=t,n=g,t=i,g=e;}let l=n;null===e?e=new o(l,false):l=e.length;let r=0;for(;r<s;r++)e.__setDigit(r,_.__digit(r)^t.__digit(r));for(;r<n;r++)e.__setDigit(r,_.__digit(r));for(;r<l;r++)e.__setDigit(r,0);return e}static __absoluteCompare(_,t){const e=_.length-t.length;if(0!=e)return e;let n=_.length-1;for(;0<=n&&_.__digit(n)===t.__digit(n);)n--;return 0>n?0:_.__unsignedDigit(n)>t.__unsignedDigit(n)?1:-1}static __multiplyAccumulate(_,t,e,n){if(0===t)return;const g=32767&t,s=t>>>15;let l=0,r=0;for(let a,u=0;u<_.length;u++,n++){a=e.__digit(n);const i=_.__digit(u),t=32767&i,d=i>>>15,h=o.__imul(t,g),m=o.__imul(t,s),b=o.__imul(d,g),D=o.__imul(d,s);a+=r+h+l,l=a>>>30,a&=1073741823,a+=((32767&m)<<15)+((32767&b)<<15),l+=a>>>30,r=D+(m>>>15)+(b>>>15),e.__setDigit(n,1073741823&a);}for(;0!=l||0!==r;n++){let i=e.__digit(n);i+=l+r,r=0,l=i>>>30,e.__setDigit(n,1073741823&i);}}static __internalMultiplyAdd(_,t,e,g,s){let l=e,a=0;for(let n=0;n<g;n++){const i=_.__digit(n),e=o.__imul(32767&i,t),g=o.__imul(i>>>15,t),u=e+((32767&g)<<15)+a+l;l=u>>>30,a=g>>>15,s.__setDigit(n,1073741823&u);}if(s.length>g)for(s.__setDigit(g++,l+a);g<s.length;)s.__setDigit(g++,0);else if(0!==l+a)throw new Error("implementation bug")}__inplaceMultiplyAdd(i,_,t){t>this.length&&(t=this.length);const e=32767&i,n=i>>>15;let g=0,s=_;for(let l=0;l<t;l++){const i=this.__digit(l),_=32767&i,t=i>>>15,r=o.__imul(_,e),a=o.__imul(_,n),u=o.__imul(t,e),d=o.__imul(t,n);let h=s+r+g;g=h>>>30,h&=1073741823,h+=((32767&a)<<15)+((32767&u)<<15),g+=h>>>30,s=d+(a>>>15)+(u>>>15),this.__setDigit(l,1073741823&h);}if(0!=g||0!==s)throw new Error("implementation bug")}static __absoluteDivSmall(_,t,e=null){null===e&&(e=new o(_.length,false));let n=0;for(let g,o=2*_.length-1;0<=o;o-=2){g=(n<<15|_.__halfDigit(o))>>>0;const i=0|g/t;n=0|g%t,g=(n<<15|_.__halfDigit(o-1))>>>0;const s=0|g/t;n=0|g%t,e.__setDigit(o>>>1,i<<15|s);}return e}static __absoluteModSmall(_,t){let e=0;for(let n=2*_.length-1;0<=n;n--){const i=(e<<15|_.__halfDigit(n))>>>0;e=0|i%t;}return e}static __absoluteDivLarge(i,_,t,e){const g=_.__halfDigitLength(),n=_.length,s=i.__halfDigitLength()-g;let l=null;t&&(l=new o(s+2>>>1,false),l.__initializeDigits());const r=new o(g+2>>>1,false);r.__initializeDigits();const a=o.__clz15(_.__halfDigit(g-1));0<a&&(_=o.__specialLeftShift(_,a,0));const d=o.__specialLeftShift(i,a,1),u=_.__halfDigit(g-1);let h=0;for(let a,m=s;0<=m;m--){a=32767;const i=d.__halfDigit(m+g);if(i!==u){const t=(i<<15|d.__halfDigit(m+g-1))>>>0;a=0|t/u;let e=0|t%u;const n=_.__halfDigit(g-2),s=d.__halfDigit(m+g-2);for(;o.__imul(a,n)>>>0>(e<<16|s)>>>0&&(a--,e+=u,!(32767<e)););}o.__internalMultiplyAdd(_,a,0,n,r);let e=d.__inplaceSub(r,m,g+1);0!==e&&(e=d.__inplaceAdd(_,m,g),d.__setHalfDigit(m+g,32767&d.__halfDigit(m+g)+e),a--),t&&(1&m?h=a<<15:l.__setDigit(m>>>1,h|a));}if(e)return d.__inplaceRightShift(a),t?{quotient:l,remainder:d}:d;if(t)return l;throw new Error("unreachable")}static __clz15(i){return o.__clz30(i)-15}__inplaceAdd(_,t,e){let n=0;for(let g=0;g<e;g++){const i=this.__halfDigit(t+g)+_.__halfDigit(g)+n;n=i>>>15,this.__setHalfDigit(t+g,32767&i);}return n}__inplaceSub(_,t,e){let n=0;if(1&t){t>>=1;let g=this.__digit(t),o=32767&g,s=0;for(;s<e-1>>>1;s++){const i=_.__digit(s),e=(g>>>15)-(32767&i)-n;n=1&e>>>15,this.__setDigit(t+s,(32767&e)<<15|32767&o),g=this.__digit(t+s+1),o=(32767&g)-(i>>>15)-n,n=1&o>>>15;}const i=_.__digit(s),l=(g>>>15)-(32767&i)-n;n=1&l>>>15,this.__setDigit(t+s,(32767&l)<<15|32767&o);if(t+s+1>=this.length)throw new RangeError("out of bounds");0==(1&e)&&(g=this.__digit(t+s+1),o=(32767&g)-(i>>>15)-n,n=1&o>>>15,this.__setDigit(t+_.length,1073709056&g|32767&o));}else {t>>=1;let g=0;for(;g<_.length-1;g++){const i=this.__digit(t+g),e=_.__digit(g),o=(32767&i)-(32767&e)-n;n=1&o>>>15;const s=(i>>>15)-(e>>>15)-n;n=1&s>>>15,this.__setDigit(t+g,(32767&s)<<15|32767&o);}const i=this.__digit(t+g),o=_.__digit(g),s=(32767&i)-(32767&o)-n;n=1&s>>>15;let l=0;0==(1&e)&&(l=(i>>>15)-(o>>>15)-n,n=1&l>>>15),this.__setDigit(t+g,(32767&l)<<15|32767&s);}return n}__inplaceRightShift(_){if(0===_)return;let t=this.__digit(0)>>>_;const e=this.length-1;for(let n=0;n<e;n++){const i=this.__digit(n+1);this.__setDigit(n,1073741823&i<<30-_|t),t=i>>>_;}this.__setDigit(e,t);}static __specialLeftShift(_,t,e){const g=_.length,n=new o(g+e,false);if(0===t){for(let t=0;t<g;t++)n.__setDigit(t,_.__digit(t));return 0<e&&n.__setDigit(g,0),n}let s=0;for(let o=0;o<g;o++){const i=_.__digit(o);n.__setDigit(o,1073741823&i<<t|s),s=i>>>30-t;}return 0<e&&n.__setDigit(g,s),n}static __leftShiftByAbsolute(_,i){const t=o.__toShiftAmount(i);if(0>t)throw new RangeError("BigInt too big");const e=0|t/30,n=t%30,g=_.length,s=0!==n&&0!=_.__digit(g-1)>>>30-n,l=g+e+(s?1:0),r=new o(l,_.sign);if(0===n){let t=0;for(;t<e;t++)r.__setDigit(t,0);for(;t<l;t++)r.__setDigit(t,_.__digit(t-e));}else {let t=0;for(let _=0;_<e;_++)r.__setDigit(_,0);for(let o=0;o<g;o++){const i=_.__digit(o);r.__setDigit(o+e,1073741823&i<<n|t),t=i>>>30-n;}if(s)r.__setDigit(g+e,t);else if(0!==t)throw new Error("implementation bug")}return r.__trim()}static __rightShiftByAbsolute(_,i){const t=_.length,e=_.sign,n=o.__toShiftAmount(i);if(0>n)return o.__rightShiftByMaximum(e);const g=0|n/30,s=n%30;let l=t-g;if(0>=l)return o.__rightShiftByMaximum(e);let r=false;if(e){if(0!=(_.__digit(g)&(1<<s)-1))r=true;else for(let t=0;t<g;t++)if(0!==_.__digit(t)){r=true;break}}if(r&&0===s){const i=_.__digit(t-1);0==~i&&l++;}let a=new o(l,e);if(0===s){a.__setDigit(l-1,0);for(let e=g;e<t;e++)a.__setDigit(e-g,_.__digit(e));}else {let e=_.__digit(g)>>>s;const n=t-g-1;for(let t=0;t<n;t++){const i=_.__digit(t+g+1);a.__setDigit(t,1073741823&i<<30-s|e),e=i>>>s;}a.__setDigit(n,e);}return r&&(a=o.__absoluteAddOne(a,true,a)),a.__trim()}static __rightShiftByMaximum(i){return i?o.__oneDigit(1,true):o.__zero()}static __toShiftAmount(i){if(1<i.length)return  -1;const _=i.__unsignedDigit(0);return _>o.__kMaxLengthBits?-1:_}static __toPrimitive(i,_="default"){if("object"!=typeof i)return i;if(i.constructor===o)return i;if("undefined"!=typeof Symbol&&"symbol"==typeof Symbol.toPrimitive){const t=i[Symbol.toPrimitive];if(t){const i=t(_);if("object"!=typeof i)return i;throw new TypeError("Cannot convert object to primitive value")}}const t=i.valueOf;if(t){const _=t.call(i);if("object"!=typeof _)return _}const e=i.toString;if(e){const _=e.call(i);if("object"!=typeof _)return _}throw new TypeError("Cannot convert object to primitive value")}static __toNumeric(i){return o.__isBigInt(i)?i:+i}static __isBigInt(i){return "object"==typeof i&&null!==i&&i.constructor===o}static __truncateToNBits(i,_){const t=0|(i+29)/30,e=new o(t,_.sign),n=t-1;for(let t=0;t<n;t++)e.__setDigit(t,_.__digit(t));let g=_.__digit(n);if(0!=i%30){const _=32-i%30;g=g<<_>>>_;}return e.__setDigit(n,g),e.__trim()}static __truncateAndSubFromPowerOfTwo(_,t,e){var n=Math.min;const g=0|(_+29)/30,s=new o(g,e);let l=0;const r=g-1;let a=0;for(const i=n(r,t.length);l<i;l++){const i=0-t.__digit(l)-a;a=1&i>>>30,s.__setDigit(l,1073741823&i);}for(;l<r;l++)s.__setDigit(l,0|1073741823&-a);let u=r<t.length?t.__digit(r):0;const d=_%30;let h;if(0==d)h=0-u-a,h&=1073741823;else {const i=32-d;u=u<<i>>>i;const _=1<<32-i;h=_-u-a,h&=_-1;}return s.__setDigit(r,h),s.__trim()}__digit(_){return this[_]}__unsignedDigit(_){return this[_]>>>0}__setDigit(_,i){this[_]=0|i;}__setDigitGrow(_,i){this[_]=0|i;}__halfDigitLength(){const i=this.length;return 32767>=this.__unsignedDigit(i-1)?2*i-1:2*i}__halfDigit(_){return 32767&this[_>>>1]>>>15*(1&_)}__setHalfDigit(_,i){const t=_>>>1,e=this.__digit(t),n=1&_?32767&e|i<<15:1073709056&e|32767&i;this.__setDigit(t,n);}static __digitPow(i,_){let t=1;for(;0<_;)1&_&&(t*=i),_>>>=1,i*=i;return t}static __isOneDigitInt(i){return (1073741823&i)===i}}return o.__kMaxLength=33554432,o.__kMaxLengthBits=o.__kMaxLength<<5,o.__kMaxBitsPerChar=[0,0,32,51,64,75,83,90,96,102,107,111,115,119,122,126,128,131,134,136,139,141,143,145,147,149,151,153,154,156,158,159,160,162,163,165,166],o.__kBitsPerCharTableShift=5,o.__kBitsPerCharTableMultiplier=1<<o.__kBitsPerCharTableShift,o.__kConversionChars=["0","1","2","3","4","5","6","7","8","9","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z"],o.__kBitConversionBuffer=new ArrayBuffer(8),o.__kBitConversionDouble=new Float64Array(o.__kBitConversionBuffer),o.__kBitConversionInts=new Int32Array(o.__kBitConversionBuffer),o.__clz30=_?function(i){return _(i)-2}:function(i){var _=Math.LN2,t=Math.log;return 0===i?30:0|29-(0|t(i>>>0)/_)},o.__imul=i||function(i,_){return 0|i*_},o});
-		
-	} (jsbiUmd$1));
-	return jsbiUmd$1.exports;
-}
-
-var jsbiUmdExports = requireJsbiUmd();
-var JSBI = /*@__PURE__*/getDefaultExportFromCjs(jsbiUmdExports);
 
 function keccak256$1(data) {
     return '0x' + sha3.keccak_256(arrayify(data));
@@ -40181,6 +41037,31 @@ function sortedInsert(items, add, maxSize, comparator) {
     items.splice(lo, 0, add);
     return isFull ? items.pop() : null;
   }
+}
+
+var MAX_SAFE_INTEGER$1 = /*#__PURE__*/JSBI.BigInt(Number.MAX_SAFE_INTEGER);
+var ZERO$1 = /*#__PURE__*/JSBI.BigInt(0);
+var ONE$1 = /*#__PURE__*/JSBI.BigInt(1);
+var TWO$1 = /*#__PURE__*/JSBI.BigInt(2);
+/**
+ * Computes floor(sqrt(value))
+ * @param value the value for which to compute the square root, rounded down
+ */
+function sqrt(value) {
+  !JSBI.greaterThanOrEqual(value, ZERO$1) ? process.env.NODE_ENV !== "production" ? invariant(false, 'NEGATIVE') : invariant() : void 0;
+  // rely on built in sqrt if possible
+  if (JSBI.lessThan(value, MAX_SAFE_INTEGER$1)) {
+    return JSBI.BigInt(Math.floor(Math.sqrt(JSBI.toNumber(value))));
+  }
+  var z;
+  var x;
+  z = value;
+  x = JSBI.add(JSBI.divide(value, TWO$1), ONE$1);
+  while (JSBI.lessThan(x, z)) {
+    z = x;
+    x = JSBI.divide(JSBI.add(JSBI.divide(value, x), x), TWO$1);
+  }
+  return z;
 }
 
 const version$3 = "properties/5.8.0";
@@ -42654,9 +43535,9 @@ function keccak256(types, values) {
     return keccak256$2(pack(types, values));
 }
 
-var abi$1=[{inputs:[{internalType:"address",name:"_factory",type:"address"},{internalType:"address",name:"_WETH9",type:"address"}],stateMutability:"nonpayable",type:"constructor"},{inputs:[],name:"WETH9",outputs:[{internalType:"address",name:"",type:"address"}],stateMutability:"view",type:"function"},{inputs:[],name:"factory",outputs:[{internalType:"address",name:"",type:"address"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"bytes",name:"path",type:"bytes"},{internalType:"uint256",name:"amountIn",type:"uint256"}],name:"quoteExactInput",outputs:[{internalType:"uint256",name:"amountOut",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"address",name:"tokenIn",type:"address"},{internalType:"address",name:"tokenOut",type:"address"},{internalType:"uint24",name:"fee",type:"uint24"},{internalType:"uint256",name:"amountIn",type:"uint256"},{internalType:"uint160",name:"sqrtPriceLimitX96",type:"uint160"}],name:"quoteExactInputSingle",outputs:[{internalType:"uint256",name:"amountOut",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"bytes",name:"path",type:"bytes"},{internalType:"uint256",name:"amountOut",type:"uint256"}],name:"quoteExactOutput",outputs:[{internalType:"uint256",name:"amountIn",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"address",name:"tokenIn",type:"address"},{internalType:"address",name:"tokenOut",type:"address"},{internalType:"uint24",name:"fee",type:"uint24"},{internalType:"uint256",name:"amountOut",type:"uint256"},{internalType:"uint160",name:"sqrtPriceLimitX96",type:"uint160"}],name:"quoteExactOutputSingle",outputs:[{internalType:"uint256",name:"amountIn",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"int256",name:"amount0Delta",type:"int256"},{internalType:"int256",name:"amount1Delta",type:"int256"},{internalType:"bytes",name:"path",type:"bytes"}],name:"uniswapV3SwapCallback",outputs:[],stateMutability:"view",type:"function"}];var IQuoter = {abi:abi$1};
+var abi$2=[{inputs:[{internalType:"address",name:"_factory",type:"address"},{internalType:"address",name:"_WETH9",type:"address"}],stateMutability:"nonpayable",type:"constructor"},{inputs:[],name:"WETH9",outputs:[{internalType:"address",name:"",type:"address"}],stateMutability:"view",type:"function"},{inputs:[],name:"factory",outputs:[{internalType:"address",name:"",type:"address"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"bytes",name:"path",type:"bytes"},{internalType:"uint256",name:"amountIn",type:"uint256"}],name:"quoteExactInput",outputs:[{internalType:"uint256",name:"amountOut",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"address",name:"tokenIn",type:"address"},{internalType:"address",name:"tokenOut",type:"address"},{internalType:"uint24",name:"fee",type:"uint24"},{internalType:"uint256",name:"amountIn",type:"uint256"},{internalType:"uint160",name:"sqrtPriceLimitX96",type:"uint160"}],name:"quoteExactInputSingle",outputs:[{internalType:"uint256",name:"amountOut",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"bytes",name:"path",type:"bytes"},{internalType:"uint256",name:"amountOut",type:"uint256"}],name:"quoteExactOutput",outputs:[{internalType:"uint256",name:"amountIn",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"address",name:"tokenIn",type:"address"},{internalType:"address",name:"tokenOut",type:"address"},{internalType:"uint24",name:"fee",type:"uint24"},{internalType:"uint256",name:"amountOut",type:"uint256"},{internalType:"uint160",name:"sqrtPriceLimitX96",type:"uint160"}],name:"quoteExactOutputSingle",outputs:[{internalType:"uint256",name:"amountIn",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"int256",name:"amount0Delta",type:"int256"},{internalType:"int256",name:"amount1Delta",type:"int256"},{internalType:"bytes",name:"path",type:"bytes"}],name:"uniswapV3SwapCallback",outputs:[],stateMutability:"view",type:"function"}];var IQuoter = {abi:abi$2};
 
-var abi=[{inputs:[{internalType:"address",name:"_factory",type:"address"},{internalType:"address",name:"_WETH9",type:"address"}],stateMutability:"nonpayable",type:"constructor"},{inputs:[],name:"WETH9",outputs:[{internalType:"address",name:"",type:"address"}],stateMutability:"view",type:"function"},{inputs:[],name:"factory",outputs:[{internalType:"address",name:"",type:"address"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"bytes",name:"path",type:"bytes"},{internalType:"uint256",name:"amountIn",type:"uint256"}],name:"quoteExactInput",outputs:[{internalType:"uint256",name:"amountOut",type:"uint256"},{internalType:"uint160[]",name:"sqrtPriceX96AfterList",type:"uint160[]"},{internalType:"uint32[]",name:"initializedTicksCrossedList",type:"uint32[]"},{internalType:"uint256",name:"gasEstimate",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{components:[{internalType:"address",name:"tokenIn",type:"address"},{internalType:"address",name:"tokenOut",type:"address"},{internalType:"uint256",name:"amountIn",type:"uint256"},{internalType:"uint24",name:"fee",type:"uint24"},{internalType:"uint160",name:"sqrtPriceLimitX96",type:"uint160"}],internalType:"struct IQuoterV2.QuoteExactInputSingleParams",name:"params",type:"tuple"}],name:"quoteExactInputSingle",outputs:[{internalType:"uint256",name:"amountOut",type:"uint256"},{internalType:"uint160",name:"sqrtPriceX96After",type:"uint160"},{internalType:"uint32",name:"initializedTicksCrossed",type:"uint32"},{internalType:"uint256",name:"gasEstimate",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"bytes",name:"path",type:"bytes"},{internalType:"uint256",name:"amountOut",type:"uint256"}],name:"quoteExactOutput",outputs:[{internalType:"uint256",name:"amountIn",type:"uint256"},{internalType:"uint160[]",name:"sqrtPriceX96AfterList",type:"uint160[]"},{internalType:"uint32[]",name:"initializedTicksCrossedList",type:"uint32[]"},{internalType:"uint256",name:"gasEstimate",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{components:[{internalType:"address",name:"tokenIn",type:"address"},{internalType:"address",name:"tokenOut",type:"address"},{internalType:"uint256",name:"amount",type:"uint256"},{internalType:"uint24",name:"fee",type:"uint24"},{internalType:"uint160",name:"sqrtPriceLimitX96",type:"uint160"}],internalType:"struct IQuoterV2.QuoteExactOutputSingleParams",name:"params",type:"tuple"}],name:"quoteExactOutputSingle",outputs:[{internalType:"uint256",name:"amountIn",type:"uint256"},{internalType:"uint160",name:"sqrtPriceX96After",type:"uint160"},{internalType:"uint32",name:"initializedTicksCrossed",type:"uint32"},{internalType:"uint256",name:"gasEstimate",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"int256",name:"amount0Delta",type:"int256"},{internalType:"int256",name:"amount1Delta",type:"int256"},{internalType:"bytes",name:"path",type:"bytes"}],name:"uniswapV3SwapCallback",outputs:[],stateMutability:"view",type:"function"}];var IQuoterV2 = {abi:abi};
+var abi$1=[{inputs:[{internalType:"address",name:"_factory",type:"address"},{internalType:"address",name:"_WETH9",type:"address"}],stateMutability:"nonpayable",type:"constructor"},{inputs:[],name:"WETH9",outputs:[{internalType:"address",name:"",type:"address"}],stateMutability:"view",type:"function"},{inputs:[],name:"factory",outputs:[{internalType:"address",name:"",type:"address"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"bytes",name:"path",type:"bytes"},{internalType:"uint256",name:"amountIn",type:"uint256"}],name:"quoteExactInput",outputs:[{internalType:"uint256",name:"amountOut",type:"uint256"},{internalType:"uint160[]",name:"sqrtPriceX96AfterList",type:"uint160[]"},{internalType:"uint32[]",name:"initializedTicksCrossedList",type:"uint32[]"},{internalType:"uint256",name:"gasEstimate",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{components:[{internalType:"address",name:"tokenIn",type:"address"},{internalType:"address",name:"tokenOut",type:"address"},{internalType:"uint256",name:"amountIn",type:"uint256"},{internalType:"uint24",name:"fee",type:"uint24"},{internalType:"uint160",name:"sqrtPriceLimitX96",type:"uint160"}],internalType:"struct IQuoterV2.QuoteExactInputSingleParams",name:"params",type:"tuple"}],name:"quoteExactInputSingle",outputs:[{internalType:"uint256",name:"amountOut",type:"uint256"},{internalType:"uint160",name:"sqrtPriceX96After",type:"uint160"},{internalType:"uint32",name:"initializedTicksCrossed",type:"uint32"},{internalType:"uint256",name:"gasEstimate",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"bytes",name:"path",type:"bytes"},{internalType:"uint256",name:"amountOut",type:"uint256"}],name:"quoteExactOutput",outputs:[{internalType:"uint256",name:"amountIn",type:"uint256"},{internalType:"uint160[]",name:"sqrtPriceX96AfterList",type:"uint160[]"},{internalType:"uint32[]",name:"initializedTicksCrossedList",type:"uint32[]"},{internalType:"uint256",name:"gasEstimate",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{components:[{internalType:"address",name:"tokenIn",type:"address"},{internalType:"address",name:"tokenOut",type:"address"},{internalType:"uint256",name:"amount",type:"uint256"},{internalType:"uint24",name:"fee",type:"uint24"},{internalType:"uint160",name:"sqrtPriceLimitX96",type:"uint160"}],internalType:"struct IQuoterV2.QuoteExactOutputSingleParams",name:"params",type:"tuple"}],name:"quoteExactOutputSingle",outputs:[{internalType:"uint256",name:"amountIn",type:"uint256"},{internalType:"uint160",name:"sqrtPriceX96After",type:"uint160"},{internalType:"uint32",name:"initializedTicksCrossed",type:"uint32"},{internalType:"uint256",name:"gasEstimate",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"int256",name:"amount0Delta",type:"int256"},{internalType:"int256",name:"amount1Delta",type:"int256"},{internalType:"bytes",name:"path",type:"bytes"}],name:"uniswapV3SwapCallback",outputs:[],stateMutability:"view",type:"function"}];var IQuoterV2 = {abi:abi$1};
 
 function _arrayLikeToArray(r, a) {
   (null == a || a > r.length) && (a = r.length);
@@ -43693,6 +44574,114 @@ function encodeRouteToPath(route, exactOutput) {
   return exactOutput ? pack(types.reverse(), path.reverse()) : pack(types, path);
 }
 
+/**
+ * Returns the sqrt ratio as a Q64.96 corresponding to a given ratio of amount1 and amount0
+ * @param amount1 The numerator amount i.e., the amount of token1
+ * @param amount0 The denominator amount i.e., the amount of token0
+ * @returns The sqrt ratio
+ */
+function encodeSqrtRatioX96(amount1, amount0) {
+  var numerator = JSBI.leftShift(JSBI.BigInt(amount1), JSBI.BigInt(192));
+  var denominator = JSBI.BigInt(amount0);
+  var ratioX192 = JSBI.divide(numerator, denominator);
+  return sqrt(ratioX192);
+}
+
+/**
+ * Returns an imprecise maximum amount of liquidity received for a given amount of token 0.
+ * This function is available to accommodate LiquidityAmounts#getLiquidityForAmount0 in the v3 periphery,
+ * which could be more precise by at least 32 bits by dividing by Q64 instead of Q96 in the intermediate step,
+ * and shifting the subtracted ratio left by 32 bits. This imprecise calculation will likely be replaced in a future
+ * v3 router contract.
+ * @param sqrtRatioAX96 The price at the lower boundary
+ * @param sqrtRatioBX96 The price at the upper boundary
+ * @param amount0 The token0 amount
+ * @returns liquidity for amount0, imprecise
+ */
+function maxLiquidityForAmount0Imprecise(sqrtRatioAX96, sqrtRatioBX96, amount0) {
+  if (JSBI.greaterThan(sqrtRatioAX96, sqrtRatioBX96)) {
+    var _ref = [sqrtRatioBX96, sqrtRatioAX96];
+    sqrtRatioAX96 = _ref[0];
+    sqrtRatioBX96 = _ref[1];
+  }
+  var intermediate = JSBI.divide(JSBI.multiply(sqrtRatioAX96, sqrtRatioBX96), Q96);
+  return JSBI.divide(JSBI.multiply(JSBI.BigInt(amount0), intermediate), JSBI.subtract(sqrtRatioBX96, sqrtRatioAX96));
+}
+/**
+ * Returns a precise maximum amount of liquidity received for a given amount of token 0 by dividing by Q64 instead of Q96 in the intermediate step,
+ * and shifting the subtracted ratio left by 32 bits.
+ * @param sqrtRatioAX96 The price at the lower boundary
+ * @param sqrtRatioBX96 The price at the upper boundary
+ * @param amount0 The token0 amount
+ * @returns liquidity for amount0, precise
+ */
+function maxLiquidityForAmount0Precise(sqrtRatioAX96, sqrtRatioBX96, amount0) {
+  if (JSBI.greaterThan(sqrtRatioAX96, sqrtRatioBX96)) {
+    var _ref2 = [sqrtRatioBX96, sqrtRatioAX96];
+    sqrtRatioAX96 = _ref2[0];
+    sqrtRatioBX96 = _ref2[1];
+  }
+  var numerator = JSBI.multiply(JSBI.multiply(JSBI.BigInt(amount0), sqrtRatioAX96), sqrtRatioBX96);
+  var denominator = JSBI.multiply(Q96, JSBI.subtract(sqrtRatioBX96, sqrtRatioAX96));
+  return JSBI.divide(numerator, denominator);
+}
+/**
+ * Computes the maximum amount of liquidity received for a given amount of token1
+ * @param sqrtRatioAX96 The price at the lower tick boundary
+ * @param sqrtRatioBX96 The price at the upper tick boundary
+ * @param amount1 The token1 amount
+ * @returns liquidity for amount1
+ */
+function maxLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1) {
+  if (JSBI.greaterThan(sqrtRatioAX96, sqrtRatioBX96)) {
+    var _ref3 = [sqrtRatioBX96, sqrtRatioAX96];
+    sqrtRatioAX96 = _ref3[0];
+    sqrtRatioBX96 = _ref3[1];
+  }
+  return JSBI.divide(JSBI.multiply(JSBI.BigInt(amount1), Q96), JSBI.subtract(sqrtRatioBX96, sqrtRatioAX96));
+}
+/**
+ * Computes the maximum amount of liquidity received for a given amount of token0, token1,
+ * and the prices at the tick boundaries.
+ * @param sqrtRatioCurrentX96 the current price
+ * @param sqrtRatioAX96 price at lower boundary
+ * @param sqrtRatioBX96 price at upper boundary
+ * @param amount0 token0 amount
+ * @param amount1 token1 amount
+ * @param useFullPrecision if false, liquidity will be maximized according to what the router can calculate,
+ * not what core can theoretically support
+ */
+function maxLiquidityForAmounts(sqrtRatioCurrentX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1, useFullPrecision) {
+  if (JSBI.greaterThan(sqrtRatioAX96, sqrtRatioBX96)) {
+    var _ref4 = [sqrtRatioBX96, sqrtRatioAX96];
+    sqrtRatioAX96 = _ref4[0];
+    sqrtRatioBX96 = _ref4[1];
+  }
+  var maxLiquidityForAmount0 = useFullPrecision ? maxLiquidityForAmount0Precise : maxLiquidityForAmount0Imprecise;
+  if (JSBI.lessThanOrEqual(sqrtRatioCurrentX96, sqrtRatioAX96)) {
+    return maxLiquidityForAmount0(sqrtRatioAX96, sqrtRatioBX96, amount0);
+  } else if (JSBI.lessThan(sqrtRatioCurrentX96, sqrtRatioBX96)) {
+    var liquidity0 = maxLiquidityForAmount0(sqrtRatioCurrentX96, sqrtRatioBX96, amount0);
+    var liquidity1 = maxLiquidityForAmount1(sqrtRatioAX96, sqrtRatioCurrentX96, amount1);
+    return JSBI.lessThan(liquidity0, liquidity1) ? liquidity0 : liquidity1;
+  } else {
+    return maxLiquidityForAmount1(sqrtRatioAX96, sqrtRatioBX96, amount1);
+  }
+}
+
+/**
+ * Returns a price object corresponding to the input tick and the base/quote token
+ * Inputs must be tokens because the address order is used to interpret the price represented by the tick
+ * @param baseToken the base token of the price
+ * @param quoteToken the quote token of the price
+ * @param tick the tick for which to return the price
+ */
+function tickToPrice$1(baseToken, quoteToken, tick) {
+  var sqrtRatioX96 = TickMath.getSqrtRatioAtTick(tick);
+  var ratioX192 = JSBI.multiply(sqrtRatioX96, sqrtRatioX96);
+  return baseToken.sortsBefore(quoteToken) ? new Price(baseToken, quoteToken, Q192, ratioX192) : new Price(baseToken, quoteToken, ratioX192, Q192);
+}
+
 var Tick = function Tick(_ref) {
   var index = _ref.index,
     liquidityGross = _ref.liquidityGross,
@@ -43949,6 +44938,288 @@ var Pool = /*#__PURE__*/function () {
     key: "tickSpacing",
     get: function get() {
       return TICK_SPACINGS[this.fee];
+    }
+  }]);
+}();
+
+/**
+ * Represents a position on a Uniswap V3 Pool
+ */
+var Position = /*#__PURE__*/function () {
+  /**
+   * Constructs a position for a given pool with the given liquidity
+   * @param pool For which pool the liquidity is assigned
+   * @param liquidity The amount of liquidity that is in the position
+   * @param tickLower The lower tick of the position
+   * @param tickUpper The upper tick of the position
+   */
+  function Position(_ref) {
+    var pool = _ref.pool,
+      liquidity = _ref.liquidity,
+      tickLower = _ref.tickLower,
+      tickUpper = _ref.tickUpper;
+    // cached resuts for the getters
+    this._token0Amount = null;
+    this._token1Amount = null;
+    this._mintAmounts = null;
+    !(tickLower < tickUpper) ? process.env.NODE_ENV !== "production" ? invariant(false, 'TICK_ORDER') : invariant() : void 0;
+    !(tickLower >= TickMath.MIN_TICK && tickLower % pool.tickSpacing === 0) ? process.env.NODE_ENV !== "production" ? invariant(false, 'TICK_LOWER') : invariant() : void 0;
+    !(tickUpper <= TickMath.MAX_TICK && tickUpper % pool.tickSpacing === 0) ? process.env.NODE_ENV !== "production" ? invariant(false, 'TICK_UPPER') : invariant() : void 0;
+    this.pool = pool;
+    this.tickLower = tickLower;
+    this.tickUpper = tickUpper;
+    this.liquidity = JSBI.BigInt(liquidity);
+  }
+  /**
+   * Returns the price of token0 at the lower tick
+   */
+  var _proto = Position.prototype;
+  /**
+   * Returns the lower and upper sqrt ratios if the price 'slips' up to slippage tolerance percentage
+   * @param slippageTolerance The amount by which the price can 'slip' before the transaction will revert
+   * @returns The sqrt ratios after slippage
+   */
+  _proto.ratiosAfterSlippage = function ratiosAfterSlippage(slippageTolerance) {
+    var priceLower = this.pool.token0Price.asFraction.multiply(new Percent(1).subtract(slippageTolerance));
+    var priceUpper = this.pool.token0Price.asFraction.multiply(slippageTolerance.add(1));
+    var sqrtRatioX96Lower = encodeSqrtRatioX96(priceLower.numerator, priceLower.denominator);
+    if (JSBI.lessThanOrEqual(sqrtRatioX96Lower, TickMath.MIN_SQRT_RATIO)) {
+      sqrtRatioX96Lower = JSBI.add(TickMath.MIN_SQRT_RATIO, JSBI.BigInt(1));
+    }
+    var sqrtRatioX96Upper = encodeSqrtRatioX96(priceUpper.numerator, priceUpper.denominator);
+    if (JSBI.greaterThanOrEqual(sqrtRatioX96Upper, TickMath.MAX_SQRT_RATIO)) {
+      sqrtRatioX96Upper = JSBI.subtract(TickMath.MAX_SQRT_RATIO, JSBI.BigInt(1));
+    }
+    return {
+      sqrtRatioX96Lower: sqrtRatioX96Lower,
+      sqrtRatioX96Upper: sqrtRatioX96Upper
+    };
+  }
+  /**
+   * Returns the minimum amounts that must be sent in order to safely mint the amount of liquidity held by the position
+   * with the given slippage tolerance
+   * @param slippageTolerance Tolerance of unfavorable slippage from the current price
+   * @returns The amounts, with slippage
+   */;
+  _proto.mintAmountsWithSlippage = function mintAmountsWithSlippage(slippageTolerance) {
+    // get lower/upper prices
+    var _this$ratiosAfterSlip = this.ratiosAfterSlippage(slippageTolerance),
+      sqrtRatioX96Upper = _this$ratiosAfterSlip.sqrtRatioX96Upper,
+      sqrtRatioX96Lower = _this$ratiosAfterSlip.sqrtRatioX96Lower;
+    // construct counterfactual pools
+    var poolLower = new Pool(this.pool.token0, this.pool.token1, this.pool.fee, sqrtRatioX96Lower, 0 /* liquidity doesn't matter */, TickMath.getTickAtSqrtRatio(sqrtRatioX96Lower));
+    var poolUpper = new Pool(this.pool.token0, this.pool.token1, this.pool.fee, sqrtRatioX96Upper, 0 /* liquidity doesn't matter */, TickMath.getTickAtSqrtRatio(sqrtRatioX96Upper));
+    // because the router is imprecise, we need to calculate the position that will be created (assuming no slippage)
+    var positionThatWillBeCreated = Position.fromAmounts(_extends({
+      pool: this.pool,
+      tickLower: this.tickLower,
+      tickUpper: this.tickUpper
+    }, this.mintAmounts, {
+      useFullPrecision: false
+    }));
+    // we want the smaller amounts...
+    // ...which occurs at the upper price for amount0...
+    var amount0 = new Position({
+      pool: poolUpper,
+      liquidity: positionThatWillBeCreated.liquidity,
+      tickLower: this.tickLower,
+      tickUpper: this.tickUpper
+    }).mintAmounts.amount0;
+    // ...and the lower for amount1
+    var amount1 = new Position({
+      pool: poolLower,
+      liquidity: positionThatWillBeCreated.liquidity,
+      tickLower: this.tickLower,
+      tickUpper: this.tickUpper
+    }).mintAmounts.amount1;
+    return {
+      amount0: amount0,
+      amount1: amount1
+    };
+  }
+  /**
+   * Returns the minimum amounts that should be requested in order to safely burn the amount of liquidity held by the
+   * position with the given slippage tolerance
+   * @param slippageTolerance tolerance of unfavorable slippage from the current price
+   * @returns The amounts, with slippage
+   */;
+  _proto.burnAmountsWithSlippage = function burnAmountsWithSlippage(slippageTolerance) {
+    // get lower/upper prices
+    var _this$ratiosAfterSlip2 = this.ratiosAfterSlippage(slippageTolerance),
+      sqrtRatioX96Upper = _this$ratiosAfterSlip2.sqrtRatioX96Upper,
+      sqrtRatioX96Lower = _this$ratiosAfterSlip2.sqrtRatioX96Lower;
+    // construct counterfactual pools
+    var poolLower = new Pool(this.pool.token0, this.pool.token1, this.pool.fee, sqrtRatioX96Lower, 0 /* liquidity doesn't matter */, TickMath.getTickAtSqrtRatio(sqrtRatioX96Lower));
+    var poolUpper = new Pool(this.pool.token0, this.pool.token1, this.pool.fee, sqrtRatioX96Upper, 0 /* liquidity doesn't matter */, TickMath.getTickAtSqrtRatio(sqrtRatioX96Upper));
+    // we want the smaller amounts...
+    // ...which occurs at the upper price for amount0...
+    var amount0 = new Position({
+      pool: poolUpper,
+      liquidity: this.liquidity,
+      tickLower: this.tickLower,
+      tickUpper: this.tickUpper
+    }).amount0;
+    // ...and the lower for amount1
+    var amount1 = new Position({
+      pool: poolLower,
+      liquidity: this.liquidity,
+      tickLower: this.tickLower,
+      tickUpper: this.tickUpper
+    }).amount1;
+    return {
+      amount0: amount0.quotient,
+      amount1: amount1.quotient
+    };
+  }
+  /**
+   * Returns the minimum amounts that must be sent in order to mint the amount of liquidity held by the position at
+   * the current price for the pool
+   */;
+  /**
+   * Computes the maximum amount of liquidity received for a given amount of token0, token1,
+   * and the prices at the tick boundaries.
+   * @param pool The pool for which the position should be created
+   * @param tickLower The lower tick of the position
+   * @param tickUpper The upper tick of the position
+   * @param amount0 token0 amount
+   * @param amount1 token1 amount
+   * @param useFullPrecision If false, liquidity will be maximized according to what the router can calculate,
+   * not what core can theoretically support
+   * @returns The amount of liquidity for the position
+   */
+  Position.fromAmounts = function fromAmounts(_ref2) {
+    var pool = _ref2.pool,
+      tickLower = _ref2.tickLower,
+      tickUpper = _ref2.tickUpper,
+      amount0 = _ref2.amount0,
+      amount1 = _ref2.amount1,
+      useFullPrecision = _ref2.useFullPrecision;
+    var sqrtRatioAX96 = TickMath.getSqrtRatioAtTick(tickLower);
+    var sqrtRatioBX96 = TickMath.getSqrtRatioAtTick(tickUpper);
+    return new Position({
+      pool: pool,
+      tickLower: tickLower,
+      tickUpper: tickUpper,
+      liquidity: maxLiquidityForAmounts(pool.sqrtRatioX96, sqrtRatioAX96, sqrtRatioBX96, amount0, amount1, useFullPrecision)
+    });
+  }
+  /**
+   * Computes a position with the maximum amount of liquidity received for a given amount of token0, assuming an unlimited amount of token1
+   * @param pool The pool for which the position is created
+   * @param tickLower The lower tick
+   * @param tickUpper The upper tick
+   * @param amount0 The desired amount of token0
+   * @param useFullPrecision If true, liquidity will be maximized according to what the router can calculate,
+   * not what core can theoretically support
+   * @returns The position
+   */;
+  Position.fromAmount0 = function fromAmount0(_ref3) {
+    var pool = _ref3.pool,
+      tickLower = _ref3.tickLower,
+      tickUpper = _ref3.tickUpper,
+      amount0 = _ref3.amount0,
+      useFullPrecision = _ref3.useFullPrecision;
+    return Position.fromAmounts({
+      pool: pool,
+      tickLower: tickLower,
+      tickUpper: tickUpper,
+      amount0: amount0,
+      amount1: MaxUint256,
+      useFullPrecision: useFullPrecision
+    });
+  }
+  /**
+   * Computes a position with the maximum amount of liquidity received for a given amount of token1, assuming an unlimited amount of token0
+   * @param pool The pool for which the position is created
+   * @param tickLower The lower tick
+   * @param tickUpper The upper tick
+   * @param amount1 The desired amount of token1
+   * @returns The position
+   */;
+  Position.fromAmount1 = function fromAmount1(_ref4) {
+    var pool = _ref4.pool,
+      tickLower = _ref4.tickLower,
+      tickUpper = _ref4.tickUpper,
+      amount1 = _ref4.amount1;
+    // this function always uses full precision,
+    return Position.fromAmounts({
+      pool: pool,
+      tickLower: tickLower,
+      tickUpper: tickUpper,
+      amount0: MaxUint256,
+      amount1: amount1,
+      useFullPrecision: true
+    });
+  };
+  return _createClass(Position, [{
+    key: "token0PriceLower",
+    get: function get() {
+      return tickToPrice$1(this.pool.token0, this.pool.token1, this.tickLower);
+    }
+    /**
+     * Returns the price of token0 at the upper tick
+     */
+  }, {
+    key: "token0PriceUpper",
+    get: function get() {
+      return tickToPrice$1(this.pool.token0, this.pool.token1, this.tickUpper);
+    }
+    /**
+     * Returns the amount of token0 that this position's liquidity could be burned for at the current pool price
+     */
+  }, {
+    key: "amount0",
+    get: function get() {
+      if (this._token0Amount === null) {
+        if (this.pool.tickCurrent < this.tickLower) {
+          this._token0Amount = CurrencyAmount.fromRawAmount(this.pool.token0, SqrtPriceMath.getAmount0Delta(TickMath.getSqrtRatioAtTick(this.tickLower), TickMath.getSqrtRatioAtTick(this.tickUpper), this.liquidity, false));
+        } else if (this.pool.tickCurrent < this.tickUpper) {
+          this._token0Amount = CurrencyAmount.fromRawAmount(this.pool.token0, SqrtPriceMath.getAmount0Delta(this.pool.sqrtRatioX96, TickMath.getSqrtRatioAtTick(this.tickUpper), this.liquidity, false));
+        } else {
+          this._token0Amount = CurrencyAmount.fromRawAmount(this.pool.token0, ZERO);
+        }
+      }
+      return this._token0Amount;
+    }
+    /**
+     * Returns the amount of token1 that this position's liquidity could be burned for at the current pool price
+     */
+  }, {
+    key: "amount1",
+    get: function get() {
+      if (this._token1Amount === null) {
+        if (this.pool.tickCurrent < this.tickLower) {
+          this._token1Amount = CurrencyAmount.fromRawAmount(this.pool.token1, ZERO);
+        } else if (this.pool.tickCurrent < this.tickUpper) {
+          this._token1Amount = CurrencyAmount.fromRawAmount(this.pool.token1, SqrtPriceMath.getAmount1Delta(TickMath.getSqrtRatioAtTick(this.tickLower), this.pool.sqrtRatioX96, this.liquidity, false));
+        } else {
+          this._token1Amount = CurrencyAmount.fromRawAmount(this.pool.token1, SqrtPriceMath.getAmount1Delta(TickMath.getSqrtRatioAtTick(this.tickLower), TickMath.getSqrtRatioAtTick(this.tickUpper), this.liquidity, false));
+        }
+      }
+      return this._token1Amount;
+    }
+  }, {
+    key: "mintAmounts",
+    get: function get() {
+      if (this._mintAmounts === null) {
+        if (this.pool.tickCurrent < this.tickLower) {
+          return {
+            amount0: SqrtPriceMath.getAmount0Delta(TickMath.getSqrtRatioAtTick(this.tickLower), TickMath.getSqrtRatioAtTick(this.tickUpper), this.liquidity, true),
+            amount1: ZERO
+          };
+        } else if (this.pool.tickCurrent < this.tickUpper) {
+          return {
+            amount0: SqrtPriceMath.getAmount0Delta(this.pool.sqrtRatioX96, TickMath.getSqrtRatioAtTick(this.tickUpper), this.liquidity, true),
+            amount1: SqrtPriceMath.getAmount1Delta(TickMath.getSqrtRatioAtTick(this.tickLower), this.pool.sqrtRatioX96, this.liquidity, true)
+          };
+        } else {
+          return {
+            amount0: ZERO,
+            amount1: SqrtPriceMath.getAmount1Delta(TickMath.getSqrtRatioAtTick(this.tickLower), TickMath.getSqrtRatioAtTick(this.tickUpper), this.liquidity, true)
+          };
+        }
+      }
+      return this._mintAmounts;
     }
   }]);
 }();
@@ -48681,7 +49952,7 @@ const CHAINS = {
     bsc: {
         name: "BNB Smart chain",
         icon: jsx(Bnb, {}),
-        rpcUrl: "https://bsc-dataseed.binance.org/",
+        rpcUrl: "https://bsc-dataseed1.bnbchain.org",
         chainId: 56,
         explorerUrl: "https://bscscan.com",
         eduAddress: "0xBdEAe1cA48894A1759A8374D63925f21f2Ee2639",
@@ -48713,7 +49984,7 @@ const ALLOWED_PATHS = [
 ];
 // Helper components
 const RightArrow = () => (jsx("svg", { stroke: "currentColor", fill: "currentColor", strokeWidth: "0", viewBox: "0 0 24 24", height: "1em", width: "1em", xmlns: "http://www.w3.org/2000/svg", children: jsx("path", { d: "M13.22 19.03a.75.75 0 0 1 0-1.06L18.19 13H3.75a.75.75 0 0 1 0-1.5h14.44l-4.97-4.97a.749.749 0 0 1 .326-1.275.749.749 0 0 1 .734.215l6.25 6.25a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0Z" }) }));
-const NetworkSwitchArrow = () => (jsx("div", { className: "mx-4 cursor-pointer", children: jsxs("svg", { width: "25", height: "24", viewBox: "0 0 25 24", fill: "none", xmlns: "http://www.w3.org/2000/svg", className: "min-w-[1.5rem] transition-all duration-75 cursor-pointer hover:rotate-180", children: [jsx("path", { d: "M12.5 22C18.0228 22 22.5 17.5228 22.5 12C22.5 6.47715 18.0228 2 12.5 2C6.97715 2 2.5 6.47715 2.5 12C2.5 17.5228 6.97715 22 12.5 22Z", stroke: "#2964CC", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), jsx("path", { d: "M9 12H15", stroke: "#2964CC", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), jsx("path", { d: "M13 15L16 12L13 9", stroke: "#2964CC", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })] }) }));
+const NetworkSwitchArrow = () => (jsx("div", { className: "mx-4 cursor-pointer", children: jsxs("svg", { width: "25", height: "24", viewBox: "0 0 25 24", fill: "none", xmlns: "http://www.w3.org/2000/svg", className: "min-w-[1.5rem] transition-all duration-75 cursor-pointer hover:rotate-180", children: [jsx("path", { d: "M12.5 22C18.0228 22 22.5 17.5228 22.5 12C22.5 6.47715 18.0228 2 12.5 2C6.97715 2 2.5 6.47715 2.5 12C2.5 17.5228 6.97715 22 12.5 22Z", stroke: "var(--color-primary-29)", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), jsx("path", { d: "M9 12H15", stroke: "var(--color-primary-29)", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" }), jsx("path", { d: "M13 15L16 12L13 9", stroke: "var(--color-primary-29)", strokeWidth: "1.5", strokeLinecap: "round", strokeLinejoin: "round" })] }) }));
 const LoadingIcon = ({ className }) => (jsx("div", { className: `bridge-widget-loader ${className || ""}` }));
 const InfoIcon = ({ className }) => (jsxs("svg", { className: className, stroke: "currentColor", fill: "currentColor", strokeWidth: "0", viewBox: "0 0 24 24", height: "16", width: "16", xmlns: "http://www.w3.org/2000/svg", children: [jsx("path", { fill: "none", d: "M0 0h24v24H0V0z" }), jsx("path", { d: "M11 7h2v2h-2V7zm0 4h2v6h-2v-6zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z" })] }));
 const RefreshIcon = ({ className }) => (jsx("svg", { className: className, width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", xmlns: "http://www.w3.org/2000/svg", children: jsx("path", { d: "M17.65 6.35C16.2 4.9 14.21 4 12 4C7.58 4 4.01 7.58 4.01 12C4.01 16.42 7.58 20 12 20C15.73 20 18.84 17.45 19.73 14H17.65C16.83 16.33 14.61 18 12 18C8.69 18 6 15.31 6 12C6 8.69 8.69 6 12 6C13.66 6 15.14 6.69 16.22 7.78L13 11H20V4L17.65 6.35Z", fill: "currentColor" }) }));
@@ -48732,7 +50003,7 @@ const Toast = ({ message, type, visible, onClose }) => {
         return null;
     return (jsx("div", { className: "bridge-widget-toast", children: jsxs("div", { className: `bridge-widget-toast-content ${type}`, children: [type === "success" && (jsx(SuccessIcon, { className: "bridge-widget-toast-icon" })), type === "error" && jsx(ErrorIcon, { className: "bridge-widget-toast-icon" }), type === "info" && jsx(InfoIcon, { className: "bridge-widget-toast-icon" }), jsx("span", { className: "bridge-widget-toast-message", children: message }), jsx("button", { className: "bridge-widget-toast-close", onClick: onClose, children: "\u00D7" })] }) }));
 };
-const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defaultToChain = "arbitrum", defaultAmount = "0", signer, onSuccess, onError, }) => {
+const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defaultToChain = "arbitrum", defaultAmount = "0", signer, onSuccess, onError, theme = "sailer", }) => {
     // State
     const [activeTab, setActiveTab] = useState("bta");
     const [fromChain, setFromChain] = useState(defaultFromChain);
@@ -48755,6 +50026,12 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
     const [chainId, setChainId] = useState(null);
     const [nativeBalance, setNativeBalance] = useState(null);
     const [eduPrice, setEduPrice] = useState(0.15); // Default estimated price
+    //set theme
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            window.document.documentElement.dataset.theme = theme;
+        }
+    }, []);
     // Fetch EDU price from CryptoCompare
     useEffect(() => {
         const fetchEduPrice = async () => {
@@ -48766,8 +50043,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
                 }
             }
             catch (err) {
-                console.error("Error fetching EDU price:", err);
-                // Keep using the default price
+                // console.error("Error fetching EDU price:", err);
             }
         };
         fetchEduPrice();
@@ -48805,7 +50081,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
                     });
                 }
                 catch (err) {
-                    console.error("Failed to connect wallet:", err);
+                    // console.error("Failed to connect wallet:", err);
                     setError("Please connect your wallet to use the bridge.");
                 }
             }
@@ -48820,7 +50096,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
                 window.ethereum.removeAllListeners("chainChanged");
             }
         };
-    }, [signer]);
+    }, [signer, currentSigner]);
     // Update default chains when tab changes
     useEffect(() => {
         if (activeTab === "bta") {
@@ -48839,7 +50115,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
         if (currentSigner && chainId) {
             return CHAINS[fromChain].chainId !== chainId;
         }
-        return false;
+        return true;
     }, [chainId, currentSigner, fromChain]);
     // Check if bridge is supported on the selected path
     const bridgeNotSupported = useMemo(() => {
@@ -48858,6 +50134,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
     useEffect(() => {
         const updateFeeAndBalance = async () => {
             if (!currentSigner ||
+                isOnWrongChain ||
                 !userAddress ||
                 !isValidPath ||
                 !amount ||
@@ -48893,30 +50170,20 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
                         setFee("Gas fee only");
                     }
                 }
-                if (!hasEnough) {
-                    setError(`Insufficient EDU balance on ${CHAINS[fromChain].name}`);
-                }
-                else {
-                    setError(null);
-                }
-                // Get balance
-                const provider = currentSigner.provider;
-                const eduContract = new Contract(CHAINS[fromChain].eduAddress, [
-                    "function balanceOf(address) view returns (uint256)",
-                    "function decimals() view returns (uint8)",
-                ], provider);
-                const decimals = await eduContract?.decimals();
-                const balanceWei = await eduContract?.balanceOf(userAddress);
-                const balanceFormatted = formatUnits(balanceWei, decimals);
-                setBalance(balanceFormatted);
+                // if (!hasEnough) {
+                //   setError(`Insufficient EDU balance on ${CHAINS[fromChain].name}`);
+                // } else {
+                //   setError(null);
+                // }
                 // Get native balance
+                const provider = currentSigner.provider;
                 const nativeBalanceWei = await provider.getBalance(userAddress);
                 const nativeBalanceFormatted = formatEther(nativeBalanceWei);
                 setNativeBalance(nativeBalanceFormatted);
             }
             catch (err) {
-                console.error("Error updating fee and balance:", err);
-                setError("Failed to get fee or balance information");
+                // console.error("Error updating fee and balance:", err);
+                // setError("Failed to get fee or balance information");
             }
             finally {
                 setLoading(false);
@@ -48930,8 +50197,27 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
         toChain,
         amount,
         isValidPath,
-        refreshingBalance,
+        isOnWrongChain,
     ]);
+    useEffect(() => {
+        const getBalance = async () => {
+            if (!currentSigner || isOnWrongChain) {
+                setBalance("");
+                return;
+            }
+            // Get native balance
+            const provider = currentSigner.provider;
+            const eduContract = new Contract(CHAINS[fromChain].eduAddress, [
+                "function balanceOf(address) view returns (uint256)",
+                "function decimals() view returns (uint8)",
+            ], provider);
+            const decimals = await eduContract?.decimals();
+            const balanceWei = await eduContract?.balanceOf(userAddress);
+            const balanceFormatted = formatUnits(balanceWei, decimals);
+            setBalance(balanceFormatted);
+        };
+        getBalance();
+    }, [isOnWrongChain, refreshingBalance]);
     // Handle percentage selection
     const handlePercentageSelect = (percentage) => {
         if (!balance)
@@ -48956,9 +50242,9 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
                 params: [{ chainId: `0x${CHAINS[fromChain].chainId.toString(16)}` }],
             });
         }
-        catch (err) {
-            console.error("Failed to switch network:", err);
-            setError(`Please switch your wallet to ${CHAINS[fromChain].name} network`);
+        catch (error) {
+            // console.error("Failed to switch network:", err);
+            setError(`Failed to switch your wallet to ${CHAINS[fromChain].name} network. Try doing it manually from your wallet.`);
         }
     };
     // Handle approval
@@ -48986,7 +50272,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
             setStep("confirmation");
         }
         catch (err) {
-            console.error("Approval failed:", err);
+            // console.error("Approval failed:", err);
             setError("Failed to approve tokens");
         }
         finally {
@@ -49081,6 +50367,39 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
                         setSuccess(null);
                         setError(null);
                     } }), jsx("style", { children: `
+        :root{
+        --bridge-widget-bg-color: var(--popup);
+        --color-primary-41: #4169e1;
+        --color-primary-3a: #3a5fd9;
+        --color-primary-29: #2964cc;
+        --color-tab-hover: rgba(65, 105, 225, 0.1);
+        --color-border-color-1: #3a3b43;
+        --color-bg-1: #2d303e;
+        --percentage-bg: rgba(45, 48, 62, 0.7);
+         --percentage-button-bg: #3a414dx;
+           --percentage-button-bg-hover: #4b5169;
+           --button-disabled: #3c4156;
+           --popup: #1a1b23;
+           --gas-option-hover: #383b4d;
+        }
+
+        [data-theme="edu.fun"] {
+--bridge-widget-bg-color: #071f16;
+--color-primary-41: #02ecbc;
+ --color-primary-3a: #0b4832;
+ --color-primary-29: #09442a;
+ --color-tab-hover: #1e4838;
+  --color-border-color-1: #384942;
+   --color-bg-1: #384942;
+   --percentage-bg: #283836;
+   --percentage-button-bg: #0b4832;
+   --percentage-button-bg-hover: #09442a;
+   --button-disabled: #283836;
+   --popup: #071f16;
+   --gas-option-hover: #283836;
+          }
+
+
           /* Toast Notification Styles */
           .bridge-widget-toast {
             position: fixed;
@@ -49112,7 +50431,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           
           .bridge-widget-toast-content.info {
             background-color: #293a3a;
-            border-left: 4px solid #4169e1;
+            border-left: 4px solid var(--color-primary-41);
           }
           
           .bridge-widget-toast-icon {
@@ -49153,7 +50472,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           }
           .bridge-widget {
             font-family: "Ubuntu", sans-serif;
-            background-color: #1a1b23;
+            background-color: var(--bridge-widget-bg-color);
             color: #ffffff;
             border-radius: 0.625rem;
             width: 100%;
@@ -49204,7 +50523,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
             justify-content: center;
             background: transparent;
             color: #ffffff;
-            border: 1px solid #4169e1;
+            border: 1px solid var(--color-primary-41);
             border-radius: 0.5rem;
             padding: 0.5rem 1rem;
             font-size: 0.8rem;
@@ -49215,12 +50534,12 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           }
 
           .bridge-widget-tab.active {
-            background-color: #2964cc;
+            background-color: var(--color-primary-29);
             color: white;
           }
 
           .bridge-widget-tab:hover:not(.active) {
-            background-color: rgba(65, 105, 225, 0.1);
+            background-color: var(--color-tab-hover);
           }
 
           .bridge-widget-chain-icon {
@@ -49255,7 +50574,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           .bridge-widget-percentage {
             display: flex;
             align-items: center;
-            background-color: rgba(45, 48, 62, 0.7);
+            background-color: var(--percentage-bg);
             border-radius: 0.25rem;
             padding: 0.5rem 0.75rem;
             margin-bottom: 1rem;
@@ -49273,7 +50592,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           }
 
           .bridge-widget-percentage-button {
-            background-color: #3a414d;
+            background-color: var(--percentage-button-bg);
             border: none;
             color: white;
             border-radius: 1rem;
@@ -49285,7 +50604,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           }
 
           .bridge-widget-percentage-button:hover:not(:disabled) {
-            background-color: #4b5169;
+            background-color: var(--percentage-button-bg-hover);
           }
 
           .bridge-widget-percentage-button:disabled {
@@ -49301,7 +50620,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
             display: flex;
             align-items: center;
             background-color: transparent;
-            border: 1px solid #3a3b43;
+            border: 1px solid var(--color-border-color-1);
             border-radius: 0.25rem;
             padding: 0.5rem 1rem;
           }
@@ -49369,7 +50688,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
             align-items: center;
             gap: 0.5rem;
             background-color: transparent;
-            border: 1px solid #3a3b43;
+            border: 1px solid var(--color-border-color-1);
             border-radius: 0.25rem;
             padding: 0.5rem;
           }
@@ -49385,7 +50704,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           }
 
           .bridge-widget-transaction-details {
-            background-color: #2d303e;
+            background-color: var(--color-bg-1);
             border-radius: 0.25rem;
             padding: 0.5rem 1rem;
             margin-bottom: 1rem;
@@ -49428,7 +50747,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           .bridge-widget-tooltip .bridge-widget-tooltip-text {
             visibility: hidden;
             width: 220px;
-            background-color: #2d303e;
+            background-color: var(--color-bg-1);
             color: #fff;
             text-align: left;
             border-radius: 6px;
@@ -49442,7 +50761,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
             transition: opacity 0.3s;
             font-size: 0.75rem;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
-            border: 1px solid #3a3b43;
+            border: 1px solid var(--color-border-color-1);
           }
           
           .bridge-widget-tooltip:hover .bridge-widget-tooltip-text {
@@ -49459,7 +50778,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           .bridge-widget-gas-button {
             background: none;
             border: none;
-            color: #4169e1;
+            color: var(--color-primary-41);
             cursor: pointer;
           }
 
@@ -49467,7 +50786,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
             display: flex;
             align-items: flex-start;
             gap: 0.5rem;
-            background-color: #2d303e;
+            background-color: var(--color-bg-1);
             border-radius: 0.5rem;
             padding: 0.625rem;
             margin-bottom: 1rem;
@@ -49528,35 +50847,35 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
 
           .bridge-widget-connect,
           .bridge-widget-network-switch {
-            background-color: #2964cc;
+            background-color: var(--color-primary-29);
             color: white;
           }
 
           .bridge-widget-connect:hover,
           .bridge-widget-network-switch:hover {
-            background-color: #3a5fd9;
+            background-color: var(--color-primary-3a);
           }
 
           .bridge-widget-approve {
-            background-color: #7b68ee;
+            background-color:  var(--color-primary-29);
             color: white;
           }
 
           .bridge-widget-approve:hover:not(:disabled) {
-            background-color: #6a56e8;
+            background-color: var(--color-primary-3a);
           }
 
           .bridge-widget-bridge {
-            background-color: #2964cc;
+            background-color: var(--color-primary-29);
             color: white;
           }
 
           .bridge-widget-bridge:hover:not(:disabled) {
-            background-color: #3a5fd9;
+            background-color: var(--color-primary-3a);
           }
 
           .bridge-widget-disabled {
-            background-color: #3c4156;
+            background-color: var(--button-disabled);
             color: white;
             opacity: 0.7;
           }
@@ -49576,7 +50895,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           }
 
           .bridge-widget-footer-link {
-            color: #4169e1;
+            color: var(--color-primary-41);
             text-decoration: none;
             transition: all 0.2s;
           }
@@ -49600,7 +50919,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           }
 
           .bridge-widget-popup {
-            background-color: #1a1b23;
+            background-color: var(--popup);
             border-radius: 0.625rem;
             width: 100%;
             max-width: 30rem;
@@ -49621,22 +50940,24 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
 
           .bridge-widget-popup-content {
             text-align: center;
+            
           }
 
           .bridge-widget-popup-icon {
             margin: 0 auto 1rem;
             width: 3rem;
-            height: 3rem;
+            height: 3rem; 
           }
 
           .bridge-widget-popup-success-icon {
             color: #28a745;
-            margin-bottom: 1rem;
+            margin: 0 auto 1rem auto;
           }
 
           .bridge-widget-popup-error-icon {
             color: #e63946;
             margin-bottom: 1rem;
+            margin: 0 auto 1rem auto;
           }
 
           .bridge-widget-popup-title {
@@ -49657,7 +50978,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
             display: flex;
             align-items: center;
             gap: 0.25rem;
-            border: 1px solid #3a3b43;
+            border: 1px solid var(--color-border-color-1);
             border-radius: 0.25rem;
             padding: 0.5rem 1rem;
           }
@@ -49669,7 +50990,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           }
 
           .bridge-widget-popup-details {
-            background-color: #2d303e;
+            background-color: var(--color-bg-1);
             border-radius: 0.25rem;
             padding: 0.75rem;
             margin-bottom: 1rem;
@@ -49687,7 +51008,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           }
 
           .bridge-widget-popup-success-message {
-            border: 1px solid #3a3b43;
+            border: 1px solid var(--color-border-color-1);
             border-radius: 0.25rem;
             padding: 1rem;
             margin-bottom: 1rem;
@@ -49696,7 +51017,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
 
           .bridge-widget-popup-link {
             display: block;
-            color: #4169e1;
+            color: var(--color-primary-41);
             text-decoration: underline;
             margin-top: 0.5rem;
           }
@@ -49726,8 +51047,8 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           .bridge-widget-gas-option {
             flex: 1;
             padding: 0.75rem 0.5rem;
-            background-color: #2d303e;
-            border: 1px solid #3a3b43;
+            background-color: var(--color-bg-1);
+            border: 1px solid var(--color-border-color-1);
             border-radius: 0.5rem;
             color: white;
             font-size: 0.875rem;
@@ -49736,12 +51057,12 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           }
 
           .bridge-widget-gas-option:hover {
-            background-color: #383b4d;
+            background-color: var(--gas-option-hover);
           }
 
           .bridge-widget-gas-option.active {
-            background-color: #2964cc;
-            border-color: #2964cc;
+            background-color: var(--color-primary-29);
+            border-color: var(--color-primary-29);
           }
 
           .bridge-widget-gas-display {
@@ -49749,7 +51070,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
             flex-direction: column;
             align-items: center;
             padding: 1.5rem;
-            background-color: #2d303e;
+            background-color: var(--color-bg-1);
             border-radius: 0.5rem;
           }
 
@@ -49776,7 +51097,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
 
           .bridge-widget-loader {
             border: 4px solid rgba(65, 105, 225, 0.2);
-            border-left-color: #4169e1;
+            border-left-color: var(--color-primary-41);
             border-radius: 50%;
             width: 48px;
             height: 48px;
@@ -49797,7 +51118,7 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
           }
 
           .bg-primary-700 {
-            background-color: #4169e1;
+            background-color: var(--color-primary-41);
           }
 
           .text-white {
@@ -49810,5 +51131,951 @@ const BridgeWidget = ({ onClose, isPopup = false, defaultFromChain = "bsc", defa
         ` })] }) }));
 };
 
-export { ADDRESSES, BSC_ABI, Bridge, BridgeWidget, CHAIN_ID, CurrencyAmount$1 as CurrencyAmount, ERC20_ABI, FEE_TIERS, FEE_TO_TICK_SPACING, MAX_INT128, MAX_UINT256, Percent$1 as Percent, QUOTER_V2_ABI, Quoter, ROUTER_ABI, RPC_URL, Router, SUBGRAPH_URL, Pool as SdkPool, Route as SdkRoute, Token$1 as SdkToken, Trade as SdkTrade, SwapQuoter, TradeType$2 as TradeType, UNISWAP_V3_FACTORY_ABI, UNISWAP_V3_POOL_ABI, amount1, calculatePriceFromSqrtPriceX96, encodePath, getPoolAddress, getPoolInfo, getTokenInfo, liquidity0, priceToTick, sortTokens, tickToPrice, tickToSqrtPriceX96 };
+var PositionRange;
+(function (PositionRange) {
+    PositionRange["IS_BELOW"] = "IS_BELOW";
+    PositionRange["IS_ABOVE"] = "IS_ABOVE";
+    PositionRange["IS_IN_RANGE"] = "IS_IN_RANGE";
+})(PositionRange || (PositionRange = {}));
+// TokenPrice interface removed as it's no longer needed
+
+var _format="hh-sol-artifact-1";var contractName="IUniswapV3Pool";var sourceName="contracts/interfaces/IUniswapV3Pool.sol";var abi=[{anonymous:false,inputs:[{indexed:true,internalType:"address",name:"owner",type:"address"},{indexed:true,internalType:"int24",name:"tickLower",type:"int24"},{indexed:true,internalType:"int24",name:"tickUpper",type:"int24"},{indexed:false,internalType:"uint128",name:"amount",type:"uint128"},{indexed:false,internalType:"uint256",name:"amount0",type:"uint256"},{indexed:false,internalType:"uint256",name:"amount1",type:"uint256"}],name:"Burn",type:"event"},{anonymous:false,inputs:[{indexed:true,internalType:"address",name:"owner",type:"address"},{indexed:false,internalType:"address",name:"recipient",type:"address"},{indexed:true,internalType:"int24",name:"tickLower",type:"int24"},{indexed:true,internalType:"int24",name:"tickUpper",type:"int24"},{indexed:false,internalType:"uint128",name:"amount0",type:"uint128"},{indexed:false,internalType:"uint128",name:"amount1",type:"uint128"}],name:"Collect",type:"event"},{anonymous:false,inputs:[{indexed:true,internalType:"address",name:"sender",type:"address"},{indexed:true,internalType:"address",name:"recipient",type:"address"},{indexed:false,internalType:"uint128",name:"amount0",type:"uint128"},{indexed:false,internalType:"uint128",name:"amount1",type:"uint128"}],name:"CollectProtocol",type:"event"},{anonymous:false,inputs:[{indexed:true,internalType:"address",name:"sender",type:"address"},{indexed:true,internalType:"address",name:"recipient",type:"address"},{indexed:false,internalType:"uint256",name:"amount0",type:"uint256"},{indexed:false,internalType:"uint256",name:"amount1",type:"uint256"},{indexed:false,internalType:"uint256",name:"paid0",type:"uint256"},{indexed:false,internalType:"uint256",name:"paid1",type:"uint256"}],name:"Flash",type:"event"},{anonymous:false,inputs:[{indexed:false,internalType:"uint16",name:"observationCardinalityNextOld",type:"uint16"},{indexed:false,internalType:"uint16",name:"observationCardinalityNextNew",type:"uint16"}],name:"IncreaseObservationCardinalityNext",type:"event"},{anonymous:false,inputs:[{indexed:false,internalType:"uint160",name:"sqrtPriceX96",type:"uint160"},{indexed:false,internalType:"int24",name:"tick",type:"int24"}],name:"Initialize",type:"event"},{anonymous:false,inputs:[{indexed:false,internalType:"address",name:"sender",type:"address"},{indexed:true,internalType:"address",name:"owner",type:"address"},{indexed:true,internalType:"int24",name:"tickLower",type:"int24"},{indexed:true,internalType:"int24",name:"tickUpper",type:"int24"},{indexed:false,internalType:"uint128",name:"amount",type:"uint128"},{indexed:false,internalType:"uint256",name:"amount0",type:"uint256"},{indexed:false,internalType:"uint256",name:"amount1",type:"uint256"}],name:"Mint",type:"event"},{anonymous:false,inputs:[{indexed:false,internalType:"uint8",name:"feeProtocol0Old",type:"uint8"},{indexed:false,internalType:"uint8",name:"feeProtocol1Old",type:"uint8"},{indexed:false,internalType:"uint8",name:"feeProtocol0New",type:"uint8"},{indexed:false,internalType:"uint8",name:"feeProtocol1New",type:"uint8"}],name:"SetFeeProtocol",type:"event"},{anonymous:false,inputs:[{indexed:true,internalType:"address",name:"sender",type:"address"},{indexed:true,internalType:"address",name:"recipient",type:"address"},{indexed:false,internalType:"int256",name:"amount0",type:"int256"},{indexed:false,internalType:"int256",name:"amount1",type:"int256"},{indexed:false,internalType:"uint160",name:"sqrtPriceX96",type:"uint160"},{indexed:false,internalType:"uint128",name:"liquidity",type:"uint128"},{indexed:false,internalType:"int24",name:"tick",type:"int24"}],name:"Swap",type:"event"},{inputs:[{internalType:"int24",name:"tickLower",type:"int24"},{internalType:"int24",name:"tickUpper",type:"int24"},{internalType:"uint128",name:"amount",type:"uint128"}],name:"burn",outputs:[{internalType:"uint256",name:"amount0",type:"uint256"},{internalType:"uint256",name:"amount1",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"address",name:"recipient",type:"address"},{internalType:"int24",name:"tickLower",type:"int24"},{internalType:"int24",name:"tickUpper",type:"int24"},{internalType:"uint128",name:"amount0Requested",type:"uint128"},{internalType:"uint128",name:"amount1Requested",type:"uint128"}],name:"collect",outputs:[{internalType:"uint128",name:"amount0",type:"uint128"},{internalType:"uint128",name:"amount1",type:"uint128"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"address",name:"recipient",type:"address"},{internalType:"uint128",name:"amount0Requested",type:"uint128"},{internalType:"uint128",name:"amount1Requested",type:"uint128"}],name:"collectProtocol",outputs:[{internalType:"uint128",name:"amount0",type:"uint128"},{internalType:"uint128",name:"amount1",type:"uint128"}],stateMutability:"nonpayable",type:"function"},{inputs:[],name:"factory",outputs:[{internalType:"address",name:"",type:"address"}],stateMutability:"view",type:"function"},{inputs:[],name:"fee",outputs:[{internalType:"uint24",name:"",type:"uint24"}],stateMutability:"view",type:"function"},{inputs:[],name:"feeGrowthGlobal0X128",outputs:[{internalType:"uint256",name:"",type:"uint256"}],stateMutability:"view",type:"function"},{inputs:[],name:"feeGrowthGlobal1X128",outputs:[{internalType:"uint256",name:"",type:"uint256"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"address",name:"recipient",type:"address"},{internalType:"uint256",name:"amount0",type:"uint256"},{internalType:"uint256",name:"amount1",type:"uint256"},{internalType:"bytes",name:"data",type:"bytes"}],name:"flash",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"uint16",name:"observationCardinalityNext",type:"uint16"}],name:"increaseObservationCardinalityNext",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"uint160",name:"sqrtPriceX96",type:"uint160"}],name:"initialize",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[],name:"liquidity",outputs:[{internalType:"uint128",name:"",type:"uint128"}],stateMutability:"view",type:"function"},{inputs:[],name:"maxLiquidityPerTick",outputs:[{internalType:"uint128",name:"",type:"uint128"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"address",name:"recipient",type:"address"},{internalType:"int24",name:"tickLower",type:"int24"},{internalType:"int24",name:"tickUpper",type:"int24"},{internalType:"uint128",name:"amount",type:"uint128"},{internalType:"bytes",name:"data",type:"bytes"}],name:"mint",outputs:[{internalType:"uint256",name:"amount0",type:"uint256"},{internalType:"uint256",name:"amount1",type:"uint256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"uint256",name:"index",type:"uint256"}],name:"observations",outputs:[{internalType:"uint32",name:"blockTimestamp",type:"uint32"},{internalType:"int56",name:"tickCumulative",type:"int56"},{internalType:"uint160",name:"secondsPerLiquidityCumulativeX128",type:"uint160"},{internalType:"bool",name:"initialized",type:"bool"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"uint32[]",name:"secondsAgos",type:"uint32[]"}],name:"observe",outputs:[{internalType:"int56[]",name:"tickCumulatives",type:"int56[]"},{internalType:"uint160[]",name:"secondsPerLiquidityCumulativeX128s",type:"uint160[]"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"bytes32",name:"key",type:"bytes32"}],name:"positions",outputs:[{internalType:"uint128",name:"_liquidity",type:"uint128"},{internalType:"uint256",name:"feeGrowthInside0LastX128",type:"uint256"},{internalType:"uint256",name:"feeGrowthInside1LastX128",type:"uint256"},{internalType:"uint128",name:"tokensOwed0",type:"uint128"},{internalType:"uint128",name:"tokensOwed1",type:"uint128"}],stateMutability:"view",type:"function"},{inputs:[],name:"protocolFees",outputs:[{internalType:"uint128",name:"token0",type:"uint128"},{internalType:"uint128",name:"token1",type:"uint128"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"uint8",name:"feeProtocol0",type:"uint8"},{internalType:"uint8",name:"feeProtocol1",type:"uint8"}],name:"setFeeProtocol",outputs:[],stateMutability:"nonpayable",type:"function"},{inputs:[],name:"slot0",outputs:[{internalType:"uint160",name:"sqrtPriceX96",type:"uint160"},{internalType:"int24",name:"tick",type:"int24"},{internalType:"uint16",name:"observationIndex",type:"uint16"},{internalType:"uint16",name:"observationCardinality",type:"uint16"},{internalType:"uint16",name:"observationCardinalityNext",type:"uint16"},{internalType:"uint8",name:"feeProtocol",type:"uint8"},{internalType:"bool",name:"unlocked",type:"bool"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"int24",name:"tickLower",type:"int24"},{internalType:"int24",name:"tickUpper",type:"int24"}],name:"snapshotCumulativesInside",outputs:[{internalType:"int56",name:"tickCumulativeInside",type:"int56"},{internalType:"uint160",name:"secondsPerLiquidityInsideX128",type:"uint160"},{internalType:"uint32",name:"secondsInside",type:"uint32"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"address",name:"recipient",type:"address"},{internalType:"bool",name:"zeroForOne",type:"bool"},{internalType:"int256",name:"amountSpecified",type:"int256"},{internalType:"uint160",name:"sqrtPriceLimitX96",type:"uint160"},{internalType:"bytes",name:"data",type:"bytes"}],name:"swap",outputs:[{internalType:"int256",name:"amount0",type:"int256"},{internalType:"int256",name:"amount1",type:"int256"}],stateMutability:"nonpayable",type:"function"},{inputs:[{internalType:"int16",name:"wordPosition",type:"int16"}],name:"tickBitmap",outputs:[{internalType:"uint256",name:"",type:"uint256"}],stateMutability:"view",type:"function"},{inputs:[],name:"tickSpacing",outputs:[{internalType:"int24",name:"",type:"int24"}],stateMutability:"view",type:"function"},{inputs:[{internalType:"int24",name:"tick",type:"int24"}],name:"ticks",outputs:[{internalType:"uint128",name:"liquidityGross",type:"uint128"},{internalType:"int128",name:"liquidityNet",type:"int128"},{internalType:"uint256",name:"feeGrowthOutside0X128",type:"uint256"},{internalType:"uint256",name:"feeGrowthOutside1X128",type:"uint256"},{internalType:"int56",name:"tickCumulativeOutside",type:"int56"},{internalType:"uint160",name:"secondsPerLiquidityOutsideX128",type:"uint160"},{internalType:"uint32",name:"secondsOutside",type:"uint32"},{internalType:"bool",name:"initialized",type:"bool"}],stateMutability:"view",type:"function"},{inputs:[],name:"token0",outputs:[{internalType:"address",name:"",type:"address"}],stateMutability:"view",type:"function"},{inputs:[],name:"token1",outputs:[{internalType:"address",name:"",type:"address"}],stateMutability:"view",type:"function"}];var bytecode="0x";var deployedBytecode="0x";var linkReferences={};var deployedLinkReferences={};var IUniswapV3PoolABI = {_format:_format,contractName:contractName,sourceName:sourceName,abi:abi,bytecode:bytecode,deployedBytecode:deployedBytecode,linkReferences:linkReferences,deployedLinkReferences:deployedLinkReferences};
+
+// Constants
+const MAX_INT128 = JSBI.subtract(JSBI.exponentiate(JSBI.BigInt(2), JSBI.BigInt(128)), JSBI.BigInt(1));
+const FEE_TO_TICKSPACING = {
+    100: 1, // 0.01% fee tier -> 1 tick spacing
+    500: 10, // 0.05% fee tier -> 10 tick spacing
+    3000: 60, // 0.3% fee tier -> 60 tick spacing
+    10000: 200 // 1% fee tier -> 200 tick spacing
+};
+/**
+ * PoolManager class for managing liquidity pools
+ */
+class PoolManager {
+    /**
+     * Constructor for PoolManager
+     * @param provider Ethers provider
+     * @param signer Optional ethers signer for transactions
+     * @param config Configuration options
+     */
+    constructor(provider, signer, config) {
+        this.provider = provider;
+        this.signer = signer;
+        // Set default ABIs if not provided
+        this.nftPositionManagerAbi = config?.nftPositionManagerAbi || NFT_POSITION_MANGER_ABI;
+        this.uniswapV3FactoryAbi = config?.uniswapV3FactoryAbi || [
+            "function getPool(address tokenA, address tokenB, uint24 fee) external view returns (address pool)",
+            "function createPool(address tokenA, address tokenB, uint24 fee) external returns (address pool)"
+        ];
+        this.erc20Abi = config?.erc20Abi || [
+            "function balanceOf(address owner) external view returns (uint256)",
+            "function approve(address spender, uint256 amount) external returns (bool)",
+            "function allowance(address owner, address spender) external view returns (uint256)",
+            "function decimals() external view returns (uint8)",
+            "function symbol() external view returns (string)",
+            "function name() external view returns (string)"
+        ];
+        // Set addresses and chain ID
+        this.nftPositionManagerAddress = config?.nftPositionManagerAddress || '';
+        this.uniswapV3FactoryAddress = config?.uniswapV3FactoryAddress || '';
+        this.chainId = config?.chainId || 1;
+        this.nativeWrappedTokenAddress = config?.nativeWrappedTokenAddress || '';
+    }
+    /**
+     * Initialize a new pool
+     * @param params Pool initialization parameters
+     * @returns The address of the created pool
+     */
+    async initializePool(params) {
+        if (!this.signer) {
+            throw new Error('Signer is required for initializing a pool');
+        }
+        const nftPositionManager = new Contract(this.nftPositionManagerAddress, this.nftPositionManagerAbi, this.signer);
+        try {
+            const tx = await nftPositionManager.createAndInitializePoolIfNecessary(params.token0.address, params.token1.address, params.fee, params.sqrtPriceX96);
+            const receipt = await tx.wait();
+            // Extract pool address from transaction receipt
+            // This is a simplified approach; in a real implementation, you would need to parse the event logs
+            const factory = new Contract(this.uniswapV3FactoryAddress, this.uniswapV3FactoryAbi, this.provider);
+            const poolAddress = await factory.getPool(params.token0.address, params.token1.address, params.fee);
+            return poolAddress;
+        }
+        catch (error) {
+            throw new Error(`Failed to initialize pool: ${error.message}`);
+        }
+    }
+    /**
+     * Get pool information
+     * @param poolAddress The address of the pool
+     * @returns Pool information
+     */
+    async getPoolInfo(poolAddress) {
+        const poolContract = new Contract(poolAddress, IUniswapV3PoolABI.abi, this.provider);
+        try {
+            const [token0, token1, fee, liquidity, slot0] = await Promise.all([
+                poolContract.token0(),
+                poolContract.token1(),
+                poolContract.fee(),
+                poolContract.liquidity(),
+                poolContract.slot0(),
+            ]);
+            const token0Contract = new Contract(token0, this.erc20Abi, this.provider);
+            const token1Contract = new Contract(token1, this.erc20Abi, this.provider);
+            const [reserve0, reserve1] = await Promise.all([
+                {
+                    balance: await token0Contract.balanceOf(poolAddress),
+                    name: await token0Contract.symbol(),
+                    decimals: await token0Contract.decimals(),
+                },
+                {
+                    balance: await token1Contract.balanceOf(poolAddress),
+                    name: await token1Contract.symbol(),
+                    decimals: await token1Contract.decimals(),
+                },
+            ]);
+            return {
+                token0,
+                token1,
+                fee: Number(fee),
+                liquidity,
+                sqrtPriceX96: slot0[0],
+                tick: Number(slot0[1]),
+                reserve0,
+                reserve1,
+            };
+        }
+        catch (error) {
+            throw new Error(`Failed to get pool info: ${error.message}`);
+        }
+    }
+    /**
+     * Add liquidity to a pool
+     * @param params Parameters for adding liquidity
+     * @returns Transaction result with tokenId, liquidity, amount0, and amount1
+     */
+    async addLiquidity(params) {
+        if (!this.signer) {
+            throw new Error('Signer is required for adding liquidity');
+        }
+        const nftPositionManager = new Contract(this.nftPositionManagerAddress, this.nftPositionManagerAbi, this.signer);
+        // Set default deadline if not provided
+        const deadline = params.deadline || Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from now
+        try {
+            const mintParams = {
+                token0: params.token0.address,
+                token1: params.token1.address,
+                fee: params.fee,
+                tickLower: params.tickLower,
+                tickUpper: params.tickUpper,
+                amount0Desired: params.amount0Desired,
+                amount1Desired: params.amount1Desired,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min,
+                recipient: params.recipient,
+                deadline
+            };
+            // Check if one of the tokens is WEDU (native EDU)
+            const isToken0Native = params.token0.address.toLowerCase() === this.nativeWrappedTokenAddress.toLowerCase();
+            const isToken1Native = params.token1.address.toLowerCase() === this.nativeWrappedTokenAddress.toLowerCase();
+            const useNative = params.useNative || isToken0Native || isToken1Native;
+            // Determine value to send with transaction if using native EDU
+            const value = useNative
+                ? (isToken0Native
+                    ? params.amount0Desired
+                    : isToken1Native
+                        ? params.amount1Desired
+                        : 0)
+                : 0;
+            // Use multicall for better handling of native EDU
+            const multicallData = [];
+            // Add mint call to multicall
+            multicallData.push(nftPositionManager.interface.encodeFunctionData("mint", [mintParams]));
+            // Add refundETH call to multicall to handle any leftover ETH
+            if (useNative) {
+                multicallData.push(nftPositionManager.interface.encodeFunctionData("refundETH", []));
+            }
+            // Execute multicall
+            const tx = await nftPositionManager.multicall(multicallData, { value });
+            const receipt = await tx.wait();
+            // Parse the event logs to get the result
+            const events = receipt.logs.map((log) => {
+                try {
+                    return nftPositionManager.interface.parseLog(log);
+                }
+                catch (e) {
+                    return null;
+                }
+            }).filter(Boolean);
+            // When adding liquidity, two events are emitted:
+            // 1. Transfer event for the NFT creation
+            // 2. IncreaseLiquidity event for the liquidity addition
+            const transferEvent = events.find((event) => event.name === 'Transfer');
+            const increaseLiquidityEvent = events.find((event) => event.name === 'IncreaseLiquidity');
+            // Create result object with transaction hash
+            const result = {
+                transactionHash: receipt.hash
+            };
+            // Add data from events if available
+            if (transferEvent && transferEvent.args.tokenId) {
+                result.tokenId = transferEvent.args.tokenId.toString();
+            }
+            else if (increaseLiquidityEvent && increaseLiquidityEvent.args.tokenId) {
+                result.tokenId = increaseLiquidityEvent.args.tokenId.toString();
+            }
+            if (increaseLiquidityEvent) {
+                if (increaseLiquidityEvent.args.liquidity) {
+                    result.liquidity = increaseLiquidityEvent.args.liquidity.toString();
+                }
+                if (increaseLiquidityEvent.args.amount0) {
+                    result.amount0 = increaseLiquidityEvent.args.amount0.toString();
+                }
+                if (increaseLiquidityEvent.args.amount1) {
+                    result.amount1 = increaseLiquidityEvent.args.amount1.toString();
+                }
+            }
+            if (!transferEvent || !increaseLiquidityEvent) {
+                console.warn('Could not parse all events from transaction logs. Returning partial data.');
+                console.log('Events:', events);
+            }
+            return result;
+        }
+        catch (error) {
+            throw new Error(`Failed to add liquidity: ${error.message}`);
+        }
+    }
+    /**
+     * Increase liquidity in an existing position
+     * @param params Parameters for increasing liquidity
+     * @returns Transaction result with liquidity, amount0, and amount1
+     */
+    async increaseLiquidity(params) {
+        if (!this.signer) {
+            throw new Error('Signer is required for increasing liquidity');
+        }
+        const nftPositionManager = new Contract(this.nftPositionManagerAddress, this.nftPositionManagerAbi, this.signer);
+        // Set default deadline if not provided
+        const deadline = params.deadline || Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from now
+        try {
+            // Get position details to check if one of the tokens is WEDU
+            const position = await nftPositionManager.positions(params.tokenId);
+            const isToken0Native = position.token0.toLowerCase() === this.nativeWrappedTokenAddress.toLowerCase();
+            const isToken1Native = position.token1.toLowerCase() === this.nativeWrappedTokenAddress.toLowerCase();
+            const useNative = isToken0Native || isToken1Native;
+            // Get signer address for recipient
+            const signerAddress = await this.signer.getAddress();
+            const increaseLiquidityParams = {
+                tokenId: params.tokenId,
+                amount0Desired: params.amount0Desired,
+                amount1Desired: params.amount1Desired,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min,
+                deadline
+            };
+            // Determine value to send with transaction if using native EDU
+            const value = useNative
+                ? (isToken0Native
+                    ? params.amount0Desired
+                    : isToken1Native
+                        ? params.amount1Desired
+                        : 0)
+                : 0;
+            // Use multicall for better handling of native EDU
+            const multicallData = [];
+            // Add increaseLiquidity call to multicall
+            multicallData.push(nftPositionManager.interface.encodeFunctionData("increaseLiquidity", [increaseLiquidityParams]));
+            // Add refundETH call to multicall to handle any leftover ETH
+            if (useNative) {
+                multicallData.push(nftPositionManager.interface.encodeFunctionData("refundETH", []));
+            }
+            // Execute multicall
+            const tx = await nftPositionManager.multicall(multicallData, { value });
+            const receipt = await tx.wait();
+            // Parse the event logs to get the result
+            const events = receipt.logs.map((log) => {
+                try {
+                    return nftPositionManager.interface.parseLog(log);
+                }
+                catch (e) {
+                    return null;
+                }
+            }).filter(Boolean);
+            const increaseLiquidityEvent = events.find((event) => event.name === 'IncreaseLiquidity');
+            // Create result object with transaction hash
+            const result = {
+                transactionHash: receipt.hash
+            };
+            // Add data from events if available
+            if (increaseLiquidityEvent) {
+                if (increaseLiquidityEvent.args.liquidity) {
+                    result.liquidity = increaseLiquidityEvent.args.liquidity.toString();
+                }
+                if (increaseLiquidityEvent.args.amount0) {
+                    result.amount0 = increaseLiquidityEvent.args.amount0.toString();
+                }
+                if (increaseLiquidityEvent.args.amount1) {
+                    result.amount1 = increaseLiquidityEvent.args.amount1.toString();
+                }
+            }
+            if (!increaseLiquidityEvent) {
+                console.warn('Could not parse IncreaseLiquidity event from transaction logs. Returning partial data.');
+                console.log('Events:', events);
+            }
+            return result;
+        }
+        catch (error) {
+            throw new Error(`Failed to increase liquidity: ${error.message}`);
+        }
+    }
+    /**
+     * Decrease liquidity in an existing position
+     * @param params Parameters for decreasing liquidity
+     * @returns Transaction result with amount0 and amount1
+     */
+    async decreaseLiquidity(params) {
+        if (!this.signer) {
+            throw new Error('Signer is required for decreasing liquidity');
+        }
+        const nftPositionManager = new Contract(this.nftPositionManagerAddress, this.nftPositionManagerAbi, this.signer);
+        // Set default deadline if not provided
+        const deadline = params.deadline || Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from now
+        try {
+            // Get position details to check if one of the tokens is WEDU
+            const position = await nftPositionManager.positions(params.tokenId);
+            const isToken0Native = position.token0.toLowerCase() === this.nativeWrappedTokenAddress.toLowerCase();
+            const isToken1Native = position.token1.toLowerCase() === this.nativeWrappedTokenAddress.toLowerCase();
+            const useNative = isToken0Native || isToken1Native;
+            // Get signer address for recipient
+            const signerAddress = await this.signer.getAddress();
+            // If percentageToRemove is provided, calculate the liquidity to remove
+            let liquidity = params.liquidity;
+            if (params.percentageToRemove) {
+                liquidity = new BigNumber(position.liquidity.toString())
+                    .times(params.percentageToRemove)
+                    .toFixed(0);
+            }
+            const decreaseLiquidityParams = {
+                tokenId: params.tokenId,
+                liquidity,
+                amount0Min: params.amount0Min,
+                amount1Min: params.amount1Min,
+                deadline
+            };
+            // Use multicall for better handling of native EDU
+            const multicallData = [];
+            // Add decreaseLiquidity call to multicall
+            multicallData.push(nftPositionManager.interface.encodeFunctionData("decreaseLiquidity", [decreaseLiquidityParams]));
+            // Add collect call to multicall to collect the tokens
+            const collectParams = {
+                tokenId: params.tokenId,
+                recipient: useNative ? await nftPositionManager.getAddress() : signerAddress,
+                amount0Max: MAX_INT128.toString(),
+                amount1Max: MAX_INT128.toString()
+            };
+            multicallData.push(nftPositionManager.interface.encodeFunctionData("collect", [collectParams]));
+            // If one of the tokens is WEDU, add unwrapWETH9 to unwrap the native EDU
+            if (useNative) {
+                multicallData.push(nftPositionManager.interface.encodeFunctionData("unwrapWETH9", [
+                    0, // amountMinimum (0 to unwrap all)
+                    signerAddress // recipient
+                ]));
+            }
+            // If token0 is not WEDU, add sweepToken to collect token0
+            if (!isToken0Native) {
+                multicallData.push(nftPositionManager.interface.encodeFunctionData("sweepToken", [
+                    position.token0,
+                    0, // amountMinimum (0 to sweep all)
+                    signerAddress // recipient
+                ]));
+            }
+            // If token1 is not WEDU, add sweepToken to collect token1
+            if (!isToken1Native) {
+                multicallData.push(nftPositionManager.interface.encodeFunctionData("sweepToken", [
+                    position.token1,
+                    0, // amountMinimum (0 to sweep all)
+                    signerAddress // recipient
+                ]));
+            }
+            // Add refundETH call to multicall to handle any leftover ETH
+            multicallData.push(nftPositionManager.interface.encodeFunctionData("refundETH", []));
+            // If we're removing 100% of the liquidity, add burn call to multicall
+            if (params.percentageToRemove === 1) {
+                multicallData.push(nftPositionManager.interface.encodeFunctionData("burn", [params.tokenId]));
+            }
+            // Execute multicall
+            const tx = await nftPositionManager.multicall(multicallData);
+            const receipt = await tx.wait();
+            // Parse the event logs to get the result
+            const events = receipt.logs.map((log) => {
+                try {
+                    return nftPositionManager.interface.parseLog(log);
+                }
+                catch (e) {
+                    return null;
+                }
+            }).filter(Boolean);
+            const decreaseLiquidityEvent = events.find((event) => event.name === 'DecreaseLiquidity');
+            // Create result object with transaction hash
+            const result = {
+                transactionHash: receipt.hash
+            };
+            // Add data from events if available
+            if (decreaseLiquidityEvent) {
+                if (decreaseLiquidityEvent.args.amount0) {
+                    result.amount0 = decreaseLiquidityEvent.args.amount0.toString();
+                }
+                if (decreaseLiquidityEvent.args.amount1) {
+                    result.amount1 = decreaseLiquidityEvent.args.amount1.toString();
+                }
+            }
+            if (!decreaseLiquidityEvent) {
+                console.warn('Could not parse DecreaseLiquidity event from transaction logs. Returning partial data.');
+                console.log('Events:', events);
+            }
+            return result;
+        }
+        catch (error) {
+            throw new Error(`Failed to decrease liquidity: ${error.message}`);
+        }
+    }
+    /**
+     * Collect fees from a position
+     * @param params Parameters for collecting fees
+     * @returns Transaction result with amount0 and amount1
+     */
+    async collectFees(params) {
+        if (!this.signer) {
+            throw new Error('Signer is required for collecting fees');
+        }
+        const nftPositionManager = new Contract(this.nftPositionManagerAddress, this.nftPositionManagerAbi, this.signer);
+        try {
+            const collectParams = {
+                tokenId: params.tokenId,
+                recipient: params.recipient,
+                amount0Max: params.amount0Max || MAX_INT128.toString(),
+                amount1Max: params.amount1Max || MAX_INT128.toString()
+            };
+            const tx = await nftPositionManager.collect(collectParams);
+            const receipt = await tx.wait();
+            // Parse the event logs to get the result
+            const events = receipt.logs.map((log) => {
+                try {
+                    return nftPositionManager.interface.parseLog(log);
+                }
+                catch (e) {
+                    return null;
+                }
+            }).filter(Boolean);
+            const collectEvent = events.find((event) => event.name === 'Collect');
+            // Create result object with transaction hash
+            const result = {
+                transactionHash: receipt.hash
+            };
+            // Add data from events if available
+            if (collectEvent) {
+                if (collectEvent.args.amount0) {
+                    result.amount0 = collectEvent.args.amount0.toString();
+                }
+                if (collectEvent.args.amount1) {
+                    result.amount1 = collectEvent.args.amount1.toString();
+                }
+            }
+            if (!collectEvent) {
+                console.warn('Could not parse Collect event from transaction logs. Returning partial data.');
+                console.log('Events:', events);
+            }
+            return result;
+        }
+        catch (error) {
+            throw new Error(`Failed to collect fees: ${error.message}`);
+        }
+    }
+    /**
+     * Burn a position NFT
+     * @param tokenId The ID of the position token to burn
+     * @returns Transaction receipt
+     */
+    async burnPosition(tokenId) {
+        if (!this.signer) {
+            throw new Error('Signer is required for burning a position');
+        }
+        const nftPositionManager = new Contract(this.nftPositionManagerAddress, this.nftPositionManagerAbi, this.signer);
+        try {
+            const tx = await nftPositionManager.burn(tokenId);
+            return await tx.wait();
+        }
+        catch (error) {
+            throw new Error(`Failed to burn position: ${error.message}`);
+        }
+    }
+    /**
+     * Get all positions for an address
+     * @param address The address to get positions for
+     * @returns Array of positions
+     */
+    async getPositions(address) {
+        const nftPositionManager = new Contract(this.nftPositionManagerAddress, this.nftPositionManagerAbi, this.provider);
+        const factory = new Contract(this.uniswapV3FactoryAddress, this.uniswapV3FactoryAbi, this.provider);
+        try {
+            // Get number of positions
+            const balance = await nftPositionManager.balanceOf(address);
+            // Get all position IDs
+            const positionIds = [];
+            for (let i = 0; i < balance; i++) {
+                const tokenId = await nftPositionManager.tokenOfOwnerByIndex(address, i);
+                positionIds.push(tokenId);
+            }
+            // Get details for each position
+            const positions = await Promise.all(positionIds.map(async (tokenId) => {
+                const position = await nftPositionManager.positions(tokenId);
+                const poolAddress = await factory.getPool(position.token0, position.token1, position.fee);
+                const poolContract = new Contract(poolAddress, IUniswapV3PoolABI.abi, this.provider);
+                const token0Contract = new Contract(position.token0, this.erc20Abi, this.provider);
+                const token1Contract = new Contract(position.token1, this.erc20Abi, this.provider);
+                const [token0Decimals, token0Symbol, token0Name] = await Promise.all([
+                    token0Contract.decimals(),
+                    token0Contract.symbol(),
+                    token0Contract.name()
+                ]);
+                const [token1Decimals, token1Symbol, token1Name] = await Promise.all([
+                    token1Contract.decimals(),
+                    token1Contract.symbol(),
+                    token1Contract.name()
+                ]);
+                const token0 = {
+                    address: position.token0,
+                    symbol: token0Symbol,
+                    name: token0Name,
+                    decimals: Number(token0Decimals)
+                };
+                const token1 = {
+                    address: position.token1,
+                    symbol: token1Symbol,
+                    name: token1Name,
+                    decimals: Number(token1Decimals)
+                };
+                // Get unclaimed fees
+                const { amount0: unclaimedFee0, amount1: unclaimedFee1 } = await nftPositionManager.collect.staticCall({
+                    tokenId,
+                    recipient: address,
+                    amount0Max: MAX_INT128.toString(),
+                    amount1Max: MAX_INT128.toString()
+                });
+                // Get pool state
+                const { tick: currentTick, sqrtPriceX96 } = await poolContract.slot0();
+                const liquidity = await poolContract.liquidity();
+                // Create SDK Pool instance
+                const sdkToken0 = new Token$1(this.chainId, position.token0, Number(token0Decimals), token0Symbol, token0Name);
+                const sdkToken1 = new Token$1(this.chainId, position.token1, Number(token1Decimals), token1Symbol, token1Name);
+                const pool = new Pool(sdkToken0, sdkToken1, Number(position.fee), sqrtPriceX96.toString(), liquidity.toString(), Number(currentTick));
+                // Create Position instance
+                const sdkPosition = new Position({
+                    pool,
+                    liquidity: position.liquidity.toString(),
+                    tickLower: Number(position.tickLower),
+                    tickUpper: Number(position.tickUpper)
+                });
+                // Calculate price
+                const price = this.sqrtPriceX96ToPrice(sqrtPriceX96.toString(), Number(token0Decimals), Number(token1Decimals));
+                // Check if position is in range
+                const isInRange = currentTick >= position.tickLower && currentTick < position.tickUpper;
+                // Calculate position value and APR (simplified)
+                const amount0 = formatUnits(sdkPosition.amount0.quotient.toString(), token0Decimals);
+                const amount1 = formatUnits(sdkPosition.amount1.quotient.toString(), token1Decimals);
+                // This is a simplified calculation; in a real implementation, you would need to get token prices
+                const positionValue = "0"; // Placeholder
+                const apr = "0"; // Placeholder
+                return {
+                    poolAddress,
+                    tokenId: tokenId.toString(),
+                    token0,
+                    token1,
+                    fee: position.fee.toString(),
+                    tickLower: position.tickLower.toString(),
+                    tickUpper: position.tickUpper.toString(),
+                    liquidity: position.liquidity.toString(),
+                    amount0,
+                    amount1,
+                    tokensOwed0: formatUnits(position.tokensOwed0.toString(), token0Decimals),
+                    tokensOwed1: formatUnits(position.tokensOwed1.toString(), token1Decimals),
+                    isBelowPrice1: currentTick < position.tickLower,
+                    isAbovePrice1: currentTick > position.tickUpper,
+                    isInRange,
+                    tickCurrent: currentTick.toString(),
+                    currentPrice: price.toString(),
+                    sqrtPriceX96: sqrtPriceX96.toString(),
+                    feeGrowthInside0LastX128: position.feeGrowthInside0LastX128.toString(),
+                    feeGrowthInside1LastX128: position.feeGrowthInside1LastX128.toString(),
+                    feesEarned0: formatUnits(unclaimedFee0.toString(), token0Decimals),
+                    feesEarned1: formatUnits(unclaimedFee1.toString(), token1Decimals),
+                    totalValueLocked: positionValue,
+                    positionValue,
+                    apr,
+                    createdAt: new Date().toISOString(), // Placeholder; in a real implementation, you would get this from events
+                    nftPositionManagerId: this.nftPositionManagerAddress,
+                    owner: address
+                };
+            }));
+            return positions;
+        }
+        catch (error) {
+            throw new Error(`Failed to get positions: ${error.message}`);
+        }
+    }
+    /**
+     * Get portfolio summary for an address
+     * @param address The address to get portfolio for
+     * @returns Portfolio summary
+     */
+    async getPortfolio(address) {
+        try {
+            const positions = await this.getPositions(address);
+            // Calculate portfolio summary
+            const totalValueLocked = positions.reduce((sum, position) => sum + parseFloat(position.totalValueLocked), 0).toString();
+            const totalFees = positions.reduce((sum, position) => sum +
+                parseFloat(position.feesEarned0) +
+                parseFloat(position.feesEarned1), 0).toString();
+            const totalPositions = positions.length;
+            const totalFeesEarned0 = positions.reduce((sum, position) => sum + parseFloat(position.feesEarned0), 0).toString();
+            const totalFeesEarned1 = positions.reduce((sum, position) => sum + parseFloat(position.feesEarned1), 0).toString();
+            const totalPositionsInRange = positions.filter(position => position.isInRange).length;
+            const totalPositionsOutOfRange = positions.filter(position => !position.isInRange).length;
+            // Calculate weighted average APR
+            const totalApr = positions.length > 0
+                ? (positions.reduce((sum, position) => sum + parseFloat(position.apr) * parseFloat(position.positionValue), 0) / parseFloat(totalValueLocked)).toString()
+                : "0";
+            return {
+                positions,
+                totalValueLocked,
+                totalFees,
+                totalPositions,
+                totalFeesEarned0,
+                totalFeesEarned1,
+                totalPositionsInRange,
+                totalPositionsOutOfRange,
+                totalApr
+            };
+        }
+        catch (error) {
+            throw new Error(`Failed to get portfolio: ${error.message}`);
+        }
+    }
+    // getTokenUSDValue function removed
+    /**
+     * Get pool statistics
+     * @param poolAddress The address of the pool
+     * @returns Pool statistics
+     */
+    async getPoolStats(poolAddress) {
+        try {
+            const poolInfo = await this.getPoolInfo(poolAddress);
+            const token0Contract = new Contract(poolInfo.token0, this.erc20Abi, this.provider);
+            const token1Contract = new Contract(poolInfo.token1, this.erc20Abi, this.provider);
+            const [token0Decimals, token0Symbol, token0Name] = await Promise.all([
+                token0Contract.decimals(),
+                token0Contract.symbol(),
+                token0Contract.name()
+            ]);
+            const [token1Decimals, token1Symbol, token1Name] = await Promise.all([
+                token1Contract.decimals(),
+                token1Contract.symbol(),
+                token1Contract.name()
+            ]);
+            const token0 = {
+                address: poolInfo.token0,
+                symbol: token0Symbol,
+                name: token0Name,
+                decimals: Number(token0Decimals)
+            };
+            const token1 = {
+                address: poolInfo.token1,
+                symbol: token1Symbol,
+                name: token1Name,
+                decimals: Number(token1Decimals)
+            };
+            // Calculate token prices
+            const sqrtPriceX96 = poolInfo.sqrtPriceX96.toString();
+            const token0Price = this.sqrtPriceX96ToPrice(sqrtPriceX96, Number(token0Decimals), Number(token1Decimals));
+            const token1Price = (1 / parseFloat(token0Price)).toString();
+            // These would typically come from a subgraph or other data source
+            // Placeholders for demonstration
+            const volume24h = "0";
+            const volume7d = "0";
+            const fees24h = "0";
+            const fees7d = "0";
+            const tvl = "0";
+            const apr = "0";
+            const priceChange24h = "0";
+            return {
+                poolAddress,
+                token0,
+                token1,
+                fee: poolInfo.fee,
+                liquidity: poolInfo.liquidity.toString(),
+                volume24h,
+                volume7d,
+                fees24h,
+                fees7d,
+                tvl,
+                apr,
+                priceChange24h,
+                token0Price,
+                token1Price,
+                tick: poolInfo.tick
+            };
+        }
+        catch (error) {
+            throw new Error(`Failed to get pool stats: ${error.message}`);
+        }
+    }
+    /**
+     * Calculate price from sqrtPriceX96
+     * @param sqrtPriceX96 The sqrt price X96
+     * @param token0Decimals Decimals of token0
+     * @param token1Decimals Decimals of token1
+     * @returns The price
+     */
+    sqrtPriceX96ToPrice(sqrtPriceX96, token0Decimals, token1Decimals) {
+        // Convert to BigNumber for calculation
+        const sqrtPriceX96BN = new BigNumber(sqrtPriceX96);
+        const Q96 = new BigNumber(2).pow(96);
+        // Calculate price = (sqrtPriceX96 / 2^96)^2 * 10^(token0Decimals - token1Decimals)
+        const price = sqrtPriceX96BN.div(Q96).pow(2)
+            .times(new BigNumber(10).pow(token0Decimals - token1Decimals));
+        return price.toString();
+    }
+    /**
+     * Approve token for spending
+     * @param tokenAddress The address of the token to approve
+     * @param amount The amount to approve
+     * @returns Transaction receipt
+     */
+    async approveToken(tokenAddress, amount) {
+        if (!this.signer) {
+            throw new Error('Signer is required for approving tokens');
+        }
+        const tokenContract = new Contract(tokenAddress, this.erc20Abi, this.signer);
+        const signerAddress = await this.signer.getAddress();
+        const allowance = await tokenContract.allowance(signerAddress, this.nftPositionManagerAddress);
+        if (BigNumber(allowance.toString()).lt(amount)) {
+            const tx = await tokenContract.approve(this.nftPositionManagerAddress, MaxUint256$3 // Approve maximum amount
+            );
+            return await tx.wait();
+        }
+        // Already approved
+        return {};
+    }
+    /**
+     * Deploy liquidity to a pool
+     * @param token0 Address of token0
+     * @param token1 Address of token1
+     * @param fee Fee tier
+     * @param amount0 Amount of token0 to add
+     * @param amount1 Amount of token1 to add
+     * @param recipient Recipient of the position
+     * @param tickLower Lower tick
+     * @param tickUpper Upper tick
+     * @returns Transaction result with tokenId, liquidity, amount0, and amount1
+     */
+    async deployLiquidity(token0, token1, fee, amount0, amount1, recipient, tickLower = -887220, // Full range by default
+    tickUpper = 887220 // Full range by default
+    ) {
+        if (!this.signer) {
+            throw new Error('Signer is required for deploying liquidity');
+        }
+        // Sort tokens if needed
+        let sortedToken0 = token0;
+        let sortedToken1 = token1;
+        let sortedAmount0 = amount0;
+        let sortedAmount1 = amount1;
+        if (BigNumber(token0).gt(token1)) {
+            sortedToken0 = token1;
+            sortedToken1 = token0;
+            sortedAmount0 = amount1;
+            sortedAmount1 = amount0;
+        }
+        // Calculate sqrtPriceX96 based on token amounts and decimals
+        const token0Contract = new Contract(sortedToken0, this.erc20Abi, this.provider);
+        const token1Contract = new Contract(sortedToken1, this.erc20Abi, this.provider);
+        const token0Decimals = await token0Contract.decimals();
+        const token1Decimals = await token1Contract.decimals();
+        // Adjust amounts for decimals
+        const adjustedAmount0 = new BigNumber(sortedAmount0).times(new BigNumber(10).pow(token0Decimals));
+        const adjustedAmount1 = new BigNumber(sortedAmount1).times(new BigNumber(10).pow(token1Decimals));
+        // Calculate sqrtPriceX96
+        const sqrtPriceX96 = this.encodePriceSqrt(adjustedAmount1.toString(), adjustedAmount0.toString());
+        // Initialize pool if it doesn't exist
+        const nftPositionManager = new Contract(this.nftPositionManagerAddress, this.nftPositionManagerAbi, this.signer);
+        // Check if pool exists
+        const factory = new Contract(this.uniswapV3FactoryAddress, this.uniswapV3FactoryAbi, this.provider);
+        const poolAddress = await factory.getPool(sortedToken0, sortedToken1, fee);
+        if (poolAddress === ZeroAddress) {
+            // Pool doesn't exist, create it
+            await nftPositionManager.createAndInitializePoolIfNecessary(sortedToken0, sortedToken1, fee, sqrtPriceX96);
+        }
+        // Add liquidity
+        const deadline = Math.floor(Date.now() / 1000) + 60 * 20; // 20 minutes from now
+        const mintParams = {
+            token0: sortedToken0,
+            token1: sortedToken1,
+            fee: fee,
+            tickLower: tickLower,
+            tickUpper: tickUpper,
+            amount0Desired: sortedAmount0,
+            amount1Desired: sortedAmount1,
+            amount0Min: 0,
+            amount1Min: 0,
+            recipient: recipient,
+            deadline
+        };
+        // Check if one of the tokens is WEDU (native EDU)
+        const isToken0Native = sortedToken0.toLowerCase() === this.nativeWrappedTokenAddress.toLowerCase();
+        const isToken1Native = sortedToken1.toLowerCase() === this.nativeWrappedTokenAddress.toLowerCase();
+        const useNative = isToken0Native || isToken1Native;
+        // Determine value to send with transaction if using native EDU
+        const value = isToken0Native
+            ? sortedAmount0
+            : isToken1Native
+                ? sortedAmount1
+                : 0;
+        try {
+            // Use multicall for better handling of native EDU
+            const multicallData = [];
+            // Add mint call to multicall
+            multicallData.push(nftPositionManager.interface.encodeFunctionData("mint", [mintParams]));
+            // Add refundETH call to multicall to handle any leftover ETH
+            if (useNative) {
+                multicallData.push(nftPositionManager.interface.encodeFunctionData("refundETH", []));
+            }
+            // Execute multicall
+            const tx = await nftPositionManager.multicall(multicallData, { value });
+            const receipt = await tx.wait();
+            // Parse the event logs to get the result
+            const events = receipt.logs.map((log) => {
+                try {
+                    return nftPositionManager.interface.parseLog(log);
+                }
+                catch (e) {
+                    return null;
+                }
+            }).filter(Boolean);
+            // When deploying liquidity, two events are emitted:
+            // 1. Transfer event for the NFT creation
+            // 2. IncreaseLiquidity event for the liquidity addition
+            const transferEvent = events.find((event) => event.name === 'Transfer');
+            const increaseLiquidityEvent = events.find((event) => event.name === 'IncreaseLiquidity');
+            // Create result object with transaction hash
+            const result = {
+                transactionHash: receipt.hash
+            };
+            // Add data from events if available
+            if (transferEvent && transferEvent.args.tokenId) {
+                result.tokenId = transferEvent.args.tokenId.toString();
+            }
+            else if (increaseLiquidityEvent && increaseLiquidityEvent.args.tokenId) {
+                result.tokenId = increaseLiquidityEvent.args.tokenId.toString();
+            }
+            if (increaseLiquidityEvent) {
+                if (increaseLiquidityEvent.args.liquidity) {
+                    result.liquidity = increaseLiquidityEvent.args.liquidity.toString();
+                }
+                if (increaseLiquidityEvent.args.amount0) {
+                    result.amount0 = increaseLiquidityEvent.args.amount0.toString();
+                }
+                if (increaseLiquidityEvent.args.amount1) {
+                    result.amount1 = increaseLiquidityEvent.args.amount1.toString();
+                }
+            }
+            if (!transferEvent || !increaseLiquidityEvent) {
+                console.warn('Could not parse all events from transaction logs. Returning partial data.');
+                console.log('Events:', events);
+            }
+            return result;
+        }
+        catch (error) {
+            throw new Error(`Failed to deploy liquidity: ${error.message}`);
+        }
+    }
+    /**
+     * Encode price sqrt for pool initialization
+     * @param reserve1 Reserve of token1
+     * @param reserve0 Reserve of token0
+     * @returns Encoded sqrt price
+     */
+    encodePriceSqrt(reserve1, reserve0) {
+        return new BigNumber(reserve1)
+            .div(reserve0)
+            .sqrt()
+            .multipliedBy(new BigNumber(2).pow(96))
+            .integerValue(3)
+            .toString();
+    }
+    /**
+     * Calculate price range from base price
+     * @param sqrtPriceX96 The sqrt price X96
+     * @param feeTier The fee tier
+     * @param token0Decimals Decimals of token0
+     * @param token1Decimals Decimals of token1
+     * @param rangeType The range type (NARROW, COMMON, WIDE, INFINITE)
+     * @returns The price range
+     */
+    calculatePriceRange(sqrtPriceX96, feeTier, token0Decimals, token1Decimals, rangeType) {
+        // Define range presets
+        const RANGES = {
+            NARROW: 0.05, // ±5%
+            COMMON: 0.1, // ±10%
+            WIDE: 0.2, // ±20%
+            INFINITE: null, // Full range
+        };
+        // Get current tick from sqrt price
+        const currentTick = TickMath.getTickAtSqrtRatio(JSBI.BigInt(sqrtPriceX96));
+        // Handle infinite range
+        if (rangeType === "INFINITE") {
+            const minTick = TickMath.MIN_TICK;
+            const maxTick = TickMath.MAX_TICK;
+            const minSqrtPriceX96 = TickMath.getSqrtRatioAtTick(minTick);
+            const maxSqrtPriceX96 = TickMath.getSqrtRatioAtTick(maxTick);
+            const minPrice = this.sqrtPriceX96ToPrice(minSqrtPriceX96.toString(), token0Decimals, token1Decimals);
+            const maxPrice = this.sqrtPriceX96ToPrice(maxSqrtPriceX96.toString(), token0Decimals, token1Decimals);
+            return {
+                minPrice: parseFloat(minPrice),
+                maxPrice: parseFloat(maxPrice),
+                tickLower: minTick,
+                tickUpper: maxTick,
+                minSqrtPriceX96: minSqrtPriceX96.toString(),
+                maxSqrtPriceX96: maxSqrtPriceX96.toString(),
+            };
+        }
+        // Get percentage range based on type
+        const percentRange = RANGES[rangeType];
+        if (percentRange === undefined) {
+            throw new Error("Invalid range type. Use NARROW, COMMON, WIDE, or INFINITE");
+        }
+        // Calculate tick range
+        // Multiply by tickSpacing to ensure valid ticks
+        const tickSpacing = FEE_TO_TICKSPACING[feeTier];
+        const tickRange = Math.floor(percentRange * 100);
+        const minTick = Math.ceil((currentTick - tickRange) / tickSpacing) * tickSpacing;
+        const maxTick = Math.floor((currentTick + tickRange) / tickSpacing) * tickSpacing;
+        // Ensure ticks are within bounds
+        const boundedMinTick = Math.max(minTick, TickMath.MIN_TICK);
+        const boundedMaxTick = Math.min(maxTick, TickMath.MAX_TICK);
+        // Convert ticks back to sqrtPriceX96
+        const minSqrtPriceX96 = TickMath.getSqrtRatioAtTick(boundedMinTick);
+        const maxSqrtPriceX96 = TickMath.getSqrtRatioAtTick(boundedMaxTick);
+        // Convert to actual prices
+        const minPrice = parseFloat(this.sqrtPriceX96ToPrice(minSqrtPriceX96.toString(), token0Decimals, token1Decimals));
+        const maxPrice = parseFloat(this.sqrtPriceX96ToPrice(maxSqrtPriceX96.toString(), token0Decimals, token1Decimals));
+        return {
+            minPrice,
+            maxPrice,
+            tickLower: boundedMinTick,
+            tickUpper: boundedMaxTick,
+            minSqrtPriceX96: minSqrtPriceX96.toString(),
+            maxSqrtPriceX96: maxSqrtPriceX96.toString(),
+        };
+    }
+}
+
+export { ADDRESSES, BSC_ABI, Bridge, BridgeWidget, CHAIN_ID, CurrencyAmount$1 as CurrencyAmount, ERC20_ABI, FEE_TIERS, FEE_TO_TICK_SPACING, MAX_INT128$1 as MAX_INT128, MAX_UINT256, NFT_POSITION_MANGER_ABI, Percent$1 as Percent, PoolManager, PositionRange, QUOTER_V2_ABI, Quoter, ROUTER_ABI, RPC_URL, Router, SUBGRAPH_URL, Pool as SdkPool, Route as SdkRoute, Token$1 as SdkToken, Trade as SdkTrade, SwapQuoter, TradeType$2 as TradeType, UNISWAP_V3_FACTORY_ABI, UNISWAP_V3_POOL_ABI, amount1, calculatePriceFromSqrtPriceX96, encodePath, getPoolAddress, getPoolInfo, getTokenInfo, liquidity0, priceToTick, sortTokens, tickToPrice, tickToSqrtPriceX96 };
 //# sourceMappingURL=index.esm.js.map

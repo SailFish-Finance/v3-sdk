@@ -16,6 +16,7 @@ interface BridgeWidgetProps {
     signer?: ethers.Signer;
     onSuccess?: (txHash: string) => void;
     onError?: (error: Error) => void;
+    theme?: "sailer" | "edu.fun";
 }
 export declare const BridgeWidget: React.FC<BridgeWidgetProps>;
 export {};

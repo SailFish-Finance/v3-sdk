@@ -20,6 +20,12 @@ npm install @sailfishdex/v3-sdk
 - **Token Approval**: Methods for checking and approving token allowances
 - **Token Bridging**: Bridge EDU tokens between BSC, Arbitrum, and EDUCHAIN
 - **UI Components**: Ready-to-use React components for token bridging
+- **Liquidity Pool Management**: Comprehensive tools for managing liquidity pools
+  - Initialize new pools
+  - Add, increase, and decrease liquidity
+  - Collect fees from positions
+  - View detailed portfolio information
+  - Calculate price ranges for different strategies
 
 ## Usage
 
@@ -343,6 +349,46 @@ const bridge = new Bridge(providerOrSigner);
 - **approveEduOnArb(amount)**: Approve EDU tokens for the bridge on Arbitrum
 - **bridgeEduFromArbToEdu(amount)**: Bridge EDU tokens from Arbitrum to EDUCHAIN
 
+### PoolManager
+
+The `PoolManager` class is used for managing liquidity pools.
+
+#### Constructor
+
+```javascript
+const poolManager = new PoolManager(provider, signer, config);
+```
+
+Where `config` is an optional object with the following properties:
+```javascript
+{
+  nftPositionManagerAddress: string, // Address of the NFT Position Manager contract
+  uniswapV3FactoryAddress: string,   // Address of the Uniswap V3 Factory contract
+  nftPositionManagerAbi?: any,       // Optional ABI for the NFT Position Manager
+  uniswapV3FactoryAbi?: any,         // Optional ABI for the Uniswap V3 Factory
+  erc20Abi?: any,                    // Optional ABI for ERC20 tokens
+  chainId: number,                   // Chain ID (41923 for EDUCHAIN)
+  nativeWrappedTokenAddress: string  // Address of the wrapped native token (WEDU)
+}
+```
+
+> **Note**: When dealing with liquidity operations, WEDU represents the wrapped version of native EDU. The SDK automatically handles native EDU when WEDU is used in liquidity functions, allowing you to directly use native EDU in your transactions.
+
+#### Methods
+
+- **initializePool(params)**: Initialize a new pool with specified tokens and fee tier
+- **getPoolInfo(poolAddress)**: Get detailed information about a pool
+- **addLiquidity(params)**: Add liquidity to an existing pool. Takes an `AddLiquidityParams` object with detailed parameters and assumes the pool already exists.
+- **deployLiquidity(token0, token1, fee, amount0, amount1, recipient, tickLower, tickUpper)**: A convenience function that both creates a pool (if it doesn't exist) and adds liquidity to it. Handles token sorting automatically and calculates sqrtPriceX96 based on token amounts.
+- **increaseLiquidity(params)**: Increase liquidity in an existing position
+- **decreaseLiquidity(params)**: Decrease liquidity in an existing position
+- **collectFees(params)**: Collect fees earned from a position
+- **burnPosition(tokenId)**: Burn a position NFT
+- **getPositions(address)**: Get all positions for an address
+- **getPortfolio(address)**: Get portfolio summary for an address
+- **getPoolStats(poolAddress)**: Get statistics for a pool
+- **calculatePriceRange(sqrtPriceX96, feeTier, token0Decimals, token1Decimals, rangeType)**: Calculate price range for different strategies
+
 ### TradeType
 
 An enum representing the type of trade:
@@ -354,13 +400,24 @@ An enum representing the type of trade:
 
 The SDK includes several examples in the `examples` directory:
 
+### Swap Examples
 - **basic-usage.js**: Demonstrates how to get the best route and quote for a swap
 - **execute-swap.js**: Shows how to execute a direct swap transaction
 - **multi-hop-swap.js**: Illustrates working with multi-hop routes
 - **multihop-wiser-esd.js**: Specific example of a multi-hop swap between WISER and ESD tokens using WEDU as an intermediary token
+
+### Bridge Examples
 - **bridge-edu.js**: Shows how to bridge EDU tokens from BSC to Arbitrum using LayerZero
 - **bridge-arb-to-edu.js**: Shows how to bridge EDU tokens from Arbitrum to EDUCHAIN
 - **bridge-widget-usage.js**: Demonstrates how to use the BridgeWidget React component in a web application
+
+### Liquidity Pool Management Examples
+- **initialize-pool.js**: Shows how to initialize a new pool with WEDU and a custom token
+- **add-liquidity.js**: Demonstrates adding liquidity to a pool with a specific price ratio
+- **remove-liquidity.js**: Shows how to remove a percentage of liquidity from an existing position
+- **view-portfolio.js**: Demonstrates how to view detailed portfolio information
+- **collect-fees.js**: Shows how to collect fees earned from a position
+- **deploy-liquidity.js**: Demonstrates deploying liquidity to a pool and calculating different price range strategies
 
 ## Contract Addresses
 

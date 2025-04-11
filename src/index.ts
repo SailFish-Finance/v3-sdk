@@ -7,6 +7,8 @@ export * from "./router";
 export * from "./types";
 export { BridgeWidget } from "./ui/BridgeWidget";
 export * from "./utils";
+export * from "./poolTypes";
+export { PoolManager } from "./poolManager";
 
 // Re-export commonly used types from dependencies
 export {

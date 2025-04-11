@@ -169,6 +169,7 @@ declare const ADDRESSES: {
     QUOTER: string;
     QUOTER_V2: string;
     TICK_LENS: string;
+    USDC: string;
 };
 declare const CHAIN_ID = 41923;
 declare const RPC_URL = "https://rpc.edu-chain.raas.gelato.cloud";
@@ -284,6 +285,79 @@ declare const UNISWAP_V3_FACTORY_ABI: {
     }[];
     stateMutability: string;
 }[];
+declare const NFT_POSITION_MANGER_ABI: ({
+    type: string;
+    inputs: {
+        name: string;
+        type: string;
+        internalType: string;
+    }[];
+    stateMutability: string;
+    name?: undefined;
+    outputs?: undefined;
+    anonymous?: undefined;
+} | {
+    type: string;
+    stateMutability: string;
+    inputs?: undefined;
+    name?: undefined;
+    outputs?: undefined;
+    anonymous?: undefined;
+} | {
+    type: string;
+    name: string;
+    inputs: {
+        name: string;
+        type: string;
+        internalType: string;
+    }[];
+    outputs: {
+        name: string;
+        type: string;
+        internalType: string;
+    }[];
+    stateMutability: string;
+    anonymous?: undefined;
+} | {
+    type: string;
+    name: string;
+    inputs: {
+        name: string;
+        type: string;
+        internalType: string;
+        components: {
+            name: string;
+            type: string;
+            internalType: string;
+        }[];
+    }[];
+    outputs: {
+        name: string;
+        type: string;
+        internalType: string;
+    }[];
+    stateMutability: string;
+    anonymous?: undefined;
+} | {
+    type: string;
+    name: string;
+    inputs: {
+        name: string;
+        type: string;
+        indexed: boolean;
+        internalType: string;
+    }[];
+    anonymous: boolean;
+    stateMutability?: undefined;
+    outputs?: undefined;
+} | {
+    type: string;
+    name: string;
+    inputs: never[];
+    stateMutability?: undefined;
+    outputs?: undefined;
+    anonymous?: undefined;
+})[];
 declare const UNISWAP_V3_POOL_ABI: {
     type: string;
     name: string;
@@ -307,7 +381,7 @@ declare const FEE_TO_TICK_SPACING: {
     [FEE_TIERS.MEDIUM]: number;
     [FEE_TIERS.HIGH]: number;
 };
-declare const SUBGRAPH_URL = "https://api.goldsky.com/api/public/project_cm5nst0b7iiqy01t6hxww7gao/subgraphs/sailfish-v3-occ-mainnet/1.0.0/gn";
+declare const SUBGRAPH_URL = "https://api.goldsky.com/api/public/project_cm1s79wa2tlb701tbchmeaflf/subgraphs/sailfish-v3-occ-mainnet/1.0.3/gn";
 
 interface Token {
     address: string;
@@ -663,6 +737,7 @@ interface BridgeWidgetProps {
     signer?: ethers.Signer;
     onSuccess?: (txHash: string) => void;
     onError?: (error: Error) => void;
+    theme?: "sailer" | "edu.fun";
 }
 declare const BridgeWidget: React.FC<BridgeWidgetProps>;
 
@@ -748,4 +823,312 @@ declare function tickToPrice(tick: number): number;
  */
 declare function tickToSqrtPriceX96(tick: number): BigNumber;
 
-export { ADDRESSES, BSC_ABI, Bridge, BridgeWidget, CHAIN_ID, ERC20_ABI, type ExactInputParams, type ExactInputSingleParams, type ExactOutputParams, type ExactOutputSingleParams, FEE_TIERS, FEE_TO_TICK_SPACING, MAX_INT128, MAX_UINT256, type Pool, type PoolInfo, QUOTER_V2_ABI, type QuoteExactInputSingleParams, type QuoteExactOutputSingleParams, type QuoteResult, Quoter, ROUTER_ABI, RPC_URL, type Route, type RouteWithQuote, Router, type RoutesResult, SUBGRAPH_URL, type SwapOptions, type Token, UNISWAP_V3_FACTORY_ABI, UNISWAP_V3_POOL_ABI, amount1, calculatePriceFromSqrtPriceX96, encodePath, getPoolAddress, getPoolInfo, getTokenInfo, liquidity0, priceToTick, sortTokens, tickToPrice, tickToSqrtPriceX96 };
+interface PoolPosition {
+    poolAddress: string;
+    tokenId: string;
+    token0: Token;
+    token1: Token;
+    fee: string;
+    tickLower: string;
+    tickUpper: string;
+    liquidity: string;
+    amount0: string;
+    amount1: string;
+    tokensOwed0: string;
+    tokensOwed1: string;
+    isBelowPrice1: boolean;
+    isAbovePrice1: boolean;
+    isInRange: boolean;
+    tickCurrent: string;
+    currentPrice: string;
+    sqrtPriceX96: string;
+    feeGrowthInside0LastX128: string;
+    feeGrowthInside1LastX128: string;
+    feesEarned0: string;
+    feesEarned1: string;
+    totalValueLocked: string;
+    positionValue: string;
+    apr: string;
+    createdAt: string;
+    nftPositionManagerId: string;
+    owner: string;
+}
+interface PoolPortfolio {
+    positions: PoolPosition[];
+    totalValueLocked: string;
+    totalFees: string;
+    totalPositions: number;
+    totalFeesEarned0: string;
+    totalFeesEarned1: string;
+    totalPositionsInRange: number;
+    totalPositionsOutOfRange: number;
+    totalApr: string;
+}
+interface AddLiquidityParams {
+    token0: Token;
+    token1: Token;
+    fee: number;
+    recipient: string;
+    amount0Desired: string;
+    amount1Desired: string;
+    amount0Min: string;
+    amount1Min: string;
+    tickLower: number;
+    tickUpper: number;
+    deadline?: number;
+    useNative?: boolean;
+}
+interface IncreaseLiquidityParams {
+    tokenId: string;
+    amount0Desired: string;
+    amount1Desired: string;
+    amount0Min: string;
+    amount1Min: string;
+    deadline?: number;
+}
+interface DecreaseLiquidityParams {
+    tokenId: string;
+    liquidity: string;
+    amount0Min: string;
+    amount1Min: string;
+    deadline?: number;
+    percentageToRemove?: number;
+}
+interface CollectFeesParams {
+    tokenId: string;
+    recipient: string;
+    amount0Max?: BigNumberish;
+    amount1Max?: BigNumberish;
+}
+interface PoolInitializeParams {
+    token0: Token;
+    token1: Token;
+    fee: number;
+    sqrtPriceX96: BigNumberish;
+}
+interface PositionDetails {
+    tickLower: number;
+    tickUpper: number;
+    liquidity: string;
+    token0: Token;
+    token1: Token;
+    fee: number;
+    poolAddress: string;
+    nftPositionManagerId: string;
+    owner: string;
+    feesEarned0: string;
+    feesEarned1: string;
+    createdAt: string;
+}
+interface TickData {
+    tickIdx: number;
+    liquidityNet: string;
+    liquidityGross: string;
+}
+interface BarChartTick {
+    tickIdx: number;
+    liquidityActive: number;
+    liquidityLockedToken0: number;
+    liquidityLockedToken1: number;
+    price0: number;
+    price1: number;
+    isCurrent: boolean;
+}
+declare enum PositionRange {
+    IS_BELOW = "IS_BELOW",
+    IS_ABOVE = "IS_ABOVE",
+    IS_IN_RANGE = "IS_IN_RANGE"
+}
+interface PriceRange {
+    minPrice: number;
+    maxPrice: number;
+    tickLower: number;
+    tickUpper: number;
+    minSqrtPriceX96: string;
+    maxSqrtPriceX96: string;
+}
+type RangeType = "NARROW" | "COMMON" | "WIDE" | "INFINITE";
+interface PoolRewards {
+    tokenId: string;
+    rewardToken: Token;
+    rewardAmount: string;
+    rewardRate: string;
+    rewardPeriodEnd: string;
+    earned: string;
+    apr: string;
+}
+interface PoolStats {
+    poolAddress: string;
+    token0: Token;
+    token1: Token;
+    fee: number;
+    liquidity: string;
+    volume24h: string;
+    volume7d: string;
+    fees24h: string;
+    fees7d: string;
+    tvl: string;
+    apr: string;
+    priceChange24h: string;
+    token0Price: string;
+    token1Price: string;
+    tick: number;
+}
+
+/**
+ * PoolManager class for managing liquidity pools
+ */
+declare class PoolManager {
+    private provider;
+    private signer?;
+    private nftPositionManagerAddress;
+    private uniswapV3FactoryAddress;
+    private nftPositionManagerAbi;
+    private uniswapV3FactoryAbi;
+    private erc20Abi;
+    private chainId;
+    private nativeWrappedTokenAddress;
+    /**
+     * Constructor for PoolManager
+     * @param provider Ethers provider
+     * @param signer Optional ethers signer for transactions
+     * @param config Configuration options
+     */
+    constructor(provider: ethers.Provider, signer?: ethers.Signer, config?: {
+        nftPositionManagerAddress: string;
+        uniswapV3FactoryAddress: string;
+        nftPositionManagerAbi?: any;
+        uniswapV3FactoryAbi?: any;
+        erc20Abi?: any;
+        chainId: number;
+        nativeWrappedTokenAddress: string;
+    });
+    /**
+     * Initialize a new pool
+     * @param params Pool initialization parameters
+     * @returns The address of the created pool
+     */
+    initializePool(params: PoolInitializeParams): Promise<string>;
+    /**
+     * Get pool information
+     * @param poolAddress The address of the pool
+     * @returns Pool information
+     */
+    getPoolInfo(poolAddress: string): Promise<PoolInfo>;
+    /**
+     * Add liquidity to a pool
+     * @param params Parameters for adding liquidity
+     * @returns Transaction result with tokenId, liquidity, amount0, and amount1
+     */
+    addLiquidity(params: AddLiquidityParams): Promise<{
+        tokenId: string;
+        liquidity: string;
+        amount0: string;
+        amount1: string;
+    }>;
+    /**
+     * Increase liquidity in an existing position
+     * @param params Parameters for increasing liquidity
+     * @returns Transaction result with liquidity, amount0, and amount1
+     */
+    increaseLiquidity(params: IncreaseLiquidityParams): Promise<{
+        liquidity: string;
+        amount0: string;
+        amount1: string;
+    }>;
+    /**
+     * Decrease liquidity in an existing position
+     * @param params Parameters for decreasing liquidity
+     * @returns Transaction result with amount0 and amount1
+     */
+    decreaseLiquidity(params: DecreaseLiquidityParams): Promise<{
+        amount0: string;
+        amount1: string;
+    }>;
+    /**
+     * Collect fees from a position
+     * @param params Parameters for collecting fees
+     * @returns Transaction result with amount0 and amount1
+     */
+    collectFees(params: CollectFeesParams): Promise<{
+        amount0: string;
+        amount1: string;
+    }>;
+    /**
+     * Burn a position NFT
+     * @param tokenId The ID of the position token to burn
+     * @returns Transaction receipt
+     */
+    burnPosition(tokenId: string): Promise<ethers.TransactionReceipt>;
+    /**
+     * Get all positions for an address
+     * @param address The address to get positions for
+     * @returns Array of positions
+     */
+    getPositions(address: string): Promise<PoolPosition[]>;
+    /**
+     * Get portfolio summary for an address
+     * @param address The address to get portfolio for
+     * @returns Portfolio summary
+     */
+    getPortfolio(address: string): Promise<PoolPortfolio>;
+    /**
+     * Get pool statistics
+     * @param poolAddress The address of the pool
+     * @returns Pool statistics
+     */
+    getPoolStats(poolAddress: string): Promise<PoolStats>;
+    /**
+     * Calculate price from sqrtPriceX96
+     * @param sqrtPriceX96 The sqrt price X96
+     * @param token0Decimals Decimals of token0
+     * @param token1Decimals Decimals of token1
+     * @returns The price
+     */
+    private sqrtPriceX96ToPrice;
+    /**
+     * Approve token for spending
+     * @param tokenAddress The address of the token to approve
+     * @param amount The amount to approve
+     * @returns Transaction receipt
+     */
+    private approveToken;
+    /**
+     * Deploy liquidity to a pool
+     * @param token0 Address of token0
+     * @param token1 Address of token1
+     * @param fee Fee tier
+     * @param amount0 Amount of token0 to add
+     * @param amount1 Amount of token1 to add
+     * @param recipient Recipient of the position
+     * @param tickLower Lower tick
+     * @param tickUpper Upper tick
+     * @returns Transaction result with tokenId, liquidity, amount0, and amount1
+     */
+    deployLiquidity(token0: string, token1: string, fee: number, amount0: string, amount1: string, recipient: string, tickLower?: number, // Full range by default
+    tickUpper?: number): Promise<{
+        tokenId: string;
+        liquidity: string;
+        amount0: string;
+        amount1: string;
+    }>;
+    /**
+     * Encode price sqrt for pool initialization
+     * @param reserve1 Reserve of token1
+     * @param reserve0 Reserve of token0
+     * @returns Encoded sqrt price
+     */
+    private encodePriceSqrt;
+    /**
+     * Calculate price range from base price
+     * @param sqrtPriceX96 The sqrt price X96
+     * @param feeTier The fee tier
+     * @param token0Decimals Decimals of token0
+     * @param token1Decimals Decimals of token1
+     * @param rangeType The range type (NARROW, COMMON, WIDE, INFINITE)
+     * @returns The price range
+     */
+    calculatePriceRange(sqrtPriceX96: string, feeTier: number, token0Decimals: number, token1Decimals: number, rangeType: RangeType): PriceRange;
+}
+
+export { ADDRESSES, type AddLiquidityParams, BSC_ABI, type BarChartTick, Bridge, BridgeWidget, CHAIN_ID, type CollectFeesParams, type DecreaseLiquidityParams, ERC20_ABI, type ExactInputParams, type ExactInputSingleParams, type ExactOutputParams, type ExactOutputSingleParams, FEE_TIERS, FEE_TO_TICK_SPACING, type IncreaseLiquidityParams, MAX_INT128, MAX_UINT256, NFT_POSITION_MANGER_ABI, type Pool, type PoolInfo, type PoolInitializeParams, PoolManager, type PoolPortfolio, type PoolPosition, type PoolRewards, type PoolStats, type PositionDetails, PositionRange, type PriceRange, QUOTER_V2_ABI, type QuoteExactInputSingleParams, type QuoteExactOutputSingleParams, type QuoteResult, Quoter, ROUTER_ABI, RPC_URL, type RangeType, type Route, type RouteWithQuote, Router, type RoutesResult, SUBGRAPH_URL, type SwapOptions, type TickData, type Token, UNISWAP_V3_FACTORY_ABI, UNISWAP_V3_POOL_ABI, amount1, calculatePriceFromSqrtPriceX96, encodePath, getPoolAddress, getPoolInfo, getTokenInfo, liquidity0, priceToTick, sortTokens, tickToPrice, tickToSqrtPriceX96 };

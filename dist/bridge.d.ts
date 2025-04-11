@@ -1,4 +1,4 @@
-import { ethers, Signer, Provider } from 'ethers';
+import { ethers, Provider, Signer } from "ethers";
 /**
  * Bridge class for bridging tokens between chains
  */
